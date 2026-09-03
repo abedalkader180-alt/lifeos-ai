@@ -1,0 +1,310 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>LifeOS AI - Your AI Life Organizer</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <style>
+        * { font-family: 'Inter', sans-serif; }
+        .gradient-text {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+        .hero-gradient {
+            background: linear-gradient(135deg, #1a1a2e 0%, #16213e 50%, #0f3460 100%);
+        }
+        .card-hover {
+            transition: all 0.3s ease;
+        }
+        .card-hover:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 20px 40px rgba(102, 126, 234, 0.2);
+        }
+        .animate-float {
+            animation: float 6s ease-in-out infinite;
+        }
+        @keyframes float {
+            0%, 100% { transform: translateY(0px); }
+            50% { transform: translateY(-20px); }
+        }
+        .glass {
+            background: rgba(255, 255, 255, 0.05);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+    </style>
+</head>
+<body class="bg-gray-900 text-white overflow-x-hidden">
+
+    <!-- Navigation -->
+    <nav class="fixed w-full z-50 glass">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex justify-between items-center h-16">
+                <div class="flex items-center">
+                    <i data-lucide="brain" class="w-8 h-8 text-purple-400 mr-2"></i>
+                    <span class="text-xl font-bold">LifeOS<span class="text-purple-400">AI</span></span>
+                </div>
+                <div class="hidden md:flex space-x-8">
+                    <a href="#features" class="hover:text-purple-400 transition">Features</a>
+                    <a href="#how-it-works" class="hover:text-purple-400 transition">How It Works</a>
+                    <a href="#pricing" class="hover:text-purple-400 transition">Pricing</a>
+                </div>
+                <div class="flex items-center space-x-4">
+                    <a href="app.html" class="text-gray-300 hover:text-white transition">Sign In</a>
+                    <a href="app.html" class="bg-purple-600 hover:bg-purple-700 px-6 py-2 rounded-full font-medium transition">Get Started Free</a>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Hero Section -->
+    <section class="hero-gradient min-h-screen flex items-center pt-16 relative overflow-hidden">
+        <div class="absolute inset-0 opacity-20">
+            <div class="absolute top-20 left-10 w-72 h-72 bg-purple-500 rounded-full mix-blend-multiply filter blur-xl animate-float"></div>
+            <div class="absolute top-40 right-10 w-72 h-72 bg-blue-500 rounded-full mix-blend-multiply filter blur-xl animate-float" style="animation-delay: 2s;"></div>
+            <div class="absolute bottom-20 left-1/2 w-72 h-72 bg-pink-500 rounded-full mix-blend-multiply filter blur-xl animate-float" style="animation-delay: 4s;"></div>
+        </div>
+        
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
+            <div class="grid md:grid-cols-2 gap-12 items-center">
+                <div>
+                    <div class="inline-block px-4 py-2 rounded-full bg-purple-500/20 text-purple-300 text-sm font-medium mb-6">
+                        🚀 Powered by Advanced AI
+                    </div>
+                    <h1 class="text-5xl md:text-7xl font-bold leading-tight mb-6">
+                        Stop Managing.<br>
+                        <span class="gradient-text">Start Living.</span>
+                    </h1>
+                    <p class="text-xl text-gray-400 mb-8 leading-relaxed">
+                        LifeOS AI is your personal AI life architect. It organizes your day, solves your daily problems, and brings balance to your work, health, and relationships.
+                    </p>
+                    <div class="flex flex-col sm:flex-row gap-4">
+                        <a href="app.html" class="bg-purple-600 hover:bg-purple-700 text-white px-8 py-4 rounded-full font-semibold text-lg transition text-center">
+                            Start Free — No Credit Card
+                        </a>
+                        <a href="#demo" class="glass hover:bg-white/10 text-white px-8 py-4 rounded-full font-semibold text-lg transition text-center flex items-center justify-center">
+                            <i data-lucide="play-circle" class="w-5 h-5 mr-2"></i>
+                            Watch Demo
+                        </a>
+                    </div>
+                    <div class="mt-8 flex items-center space-x-6 text-gray-400">
+                        <div class="flex items-center">
+                            <i data-lucide="users" class="w-5 h-5 mr-2"></i>
+                            <span>10K+ Users</span>
+                        </div>
+                        <div class="flex items-center">
+                            <i data-lucide="star" class="w-5 h-5 mr-2 text-yellow-400"></i>
+                            <span>4.9 Rating</span>
+                        </div>
+                    </div>
+                </div>
+                <div class="relative">
+                    <div class="glass rounded-2xl p-6 animate-float">
+                        <div class="flex items-center justify-between mb-4">
+                            <div class="flex items-center space-x-2">
+                                <div class="w-3 h-3 rounded-full bg-red-500"></div>
+                                <div class="w-3 h-3 rounded-full bg-yellow-500"></div>
+                                <div class="w-3 h-3 rounded-full bg-green-500"></div>
+                            </div>
+                            <span class="text-sm text-gray-400">LifeOS AI Dashboard</span>
+                        </div>
+                        <div class="space-y-3">
+                            <div class="bg-white/5 rounded-lg p-4">
+                                <div class="flex justify-between items-center">
+                                    <span class="text-sm font-medium">Daily Focus Score</span>
+                                    <span class="text-green-400 font-bold">87%</span>
+                                </div>
+                                <div class="w-full bg-gray-700 rounded-full h-2 mt-2">
+                                    <div class="bg-gradient-to-r from-purple-500 to-blue-500 h-2 rounded-full" style="width: 87%"></div>
+                                </div>
+                            </div>
+                            <div class="bg-white/5 rounded-lg p-4">
+                                <div class="flex justify-between items-center mb-2">
+                                    <span class="text-sm font-medium">AI Suggestions</span>
+                                    <span class="text-xs bg-purple-500/30 text-purple-300 px-2 py-1 rounded">New</span>
+                                </div>
+                                <p class="text-sm text-gray-400">"You have 3 hours free. I scheduled a workout and deep work session."</p>
+                            </div>
+                            <div class="grid grid-cols-3 gap-2">
+                                <div class="bg-purple-500/20 rounded-lg p-3 text-center">
+                                    <div class="text-2xl font-bold text-purple-400">12</div>
+                                    <div class="text-xs text-gray-400">Tasks Done</div>
+                                </div>
+                                <div class="bg-blue-500/20 rounded-lg p-3 text-center">
+                                    <div class="text-2xl font-bold text-blue-400">5</div>
+                                    <div class="text-xs text-gray-400">Habits</div>
+                                </div>
+                                <div class="bg-green-500/20 rounded-lg p-3 text-center">
+                                    <div class="text-2xl font-bold text-green-400">8.5</div>
+                                    <div class="text-xs text-gray-400">Sleep</div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Features Section -->
+    <section id="features" class="py-24 bg-gray-900">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="text-center mb-16">
+                <h2 class="text-4xl font-bold mb-4">One AI. Every Part of Your Life.</h2>
+                <p class="text-gray-400 text-lg max-w-2xl mx-auto">Unlike other apps that only do tasks or calendar, LifeOS AI understands your entire life context.</p>
+            </div>
+            <div class="grid md:grid-cols-3 gap-8">
+                <div class="glass rounded-2xl p-8 card-hover">
+                    <div class="w-14 h-14 bg-purple-500/20 rounded-xl flex items-center justify-center mb-6">
+                        <i data-lucide="brain" class="w-7 h-7 text-purple-400"></i>
+                    </div>
+                    <h3 class="text-xl font-bold mb-3">AI Problem Solver</h3>
+                    <p class="text-gray-400">Tell LifeOS your problem — "I never have time for the gym" — and it builds a real solution into your schedule.</p>
+                </div>
+                <div class="glass rounded-2xl p-8 card-hover">
+                    <div class="w-14 h-14 bg-blue-500/20 rounded-xl flex items-center justify-center mb-6">
+                        <i data-lucide="calendar" class="w-7 h-7 text-blue-400"></i>
+                    </div>
+                    <h3 class="text-xl font-bold mb-3">Smart Day Architect</h3>
+                    <p class="text-gray-400">Automatically builds your perfect day based on your energy, priorities, and existing calendar events.</p>
+                </div>
+                <div class="glass rounded-2xl p-8 card-hover">
+                    <div class="w-14 h-14 bg-green-500/20 rounded-xl flex items-center justify-center mb-6">
+                        <i data-lucide="shield" class="w-7 h-7 text-green-400"></i>
+                    </div>
+                    <h3 class="text-xl font-bold mb-3">Focus Guardian</h3>
+                    <p class="text-gray-400">Protects your deep work time. When emergencies happen, it automatically reschedules everything.</p>
+                </div>
+                <div class="glass rounded-2xl p-8 card-hover">
+                    <div class="w-14 h-14 bg-pink-500/20 rounded-xl flex items-center justify-center mb-6">
+                        <i data-lucide="heart" class="w-7 h-7 text-pink-400"></i>
+                    </div>
+                    <h3 class="text-xl font-bold mb-3">Life Balance Score</h3>
+                    <p class="text-gray-400">Tracks work, health, family, and growth. Get warnings before any area of your life suffers.</p>
+                </div>
+                <div class="glass rounded-2xl p-8 card-hover">
+                    <div class="w-14 h-14 bg-yellow-500/20 rounded-xl flex items-center justify-center mb-6">
+                        <i data-lucide="mic" class="w-7 h-7 text-yellow-400"></i>
+                    </div>
+                    <h3 class="text-xl font-bold mb-3">Voice to Action</h3>
+                    <p class="text-gray-400">Just speak your thoughts. LifeOS converts voice into organized tasks, reminders, and calendar events.</p>
+                </div>
+                <div class="glass rounded-2xl p-8 card-hover">
+                    <div class="w-14 h-14 bg-red-500/20 rounded-xl flex items-center justify-center mb-6">
+                        <i data-lucide="zap" class="w-7 h-7 text-red-400"></i>
+                    </div>
+                    <h3 class="text-xl font-bold mb-3">Anti-Procrastination</h3>
+                    <p class="text-gray-400">AI detects when you're avoiding important tasks and gently guides you back to what matters.</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- How It Works -->
+    <section id="how-it-works" class="py-24 bg-gray-800/50">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="text-center mb-16">
+                <h2 class="text-4xl font-bold mb-4">From Chaos to Clarity in 3 Steps</h2>
+            </div>
+            <div class="grid md:grid-cols-3 gap-8">
+                <div class="text-center">
+                    <div class="w-20 h-20 bg-purple-600 rounded-full flex items-center justify-center mx-auto mb-6 text-3xl font-bold">1</div>
+                    <h3 class="text-xl font-bold mb-3">Connect & Share</h3>
+                    <p class="text-gray-400">Link your calendar and tell LifeOS about your goals, problems, and daily struggles.</p>
+                </div>
+                <div class="text-center">
+                    <div class="w-20 h-20 bg-purple-600 rounded-full flex items-center justify-center mx-auto mb-6 text-3xl font-bold">2</div>
+                    <h3 class="text-xl font-bold mb-3">AI Analyzes & Builds</h3>
+                    <p class="text-gray-400">Our AI creates your personalized life system — schedule, habits, and solutions.</p>
+                </div>
+                <div class="text-center">
+                    <div class="w-20 h-20 bg-purple-600 rounded-full flex items-center justify-center mx-auto mb-6 text-3xl font-bold">3</div>
+                    <h3 class="text-xl font-bold mb-3">Live Better Daily</h3>
+                    <p class="text-gray-400">Follow your AI-generated daily plan. Adjust anytime with natural conversation.</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Pricing -->
+    <section id="pricing" class="py-24 bg-gray-900">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="text-center mb-16">
+                <h2 class="text-4xl font-bold mb-4">Simple Pricing</h2>
+                <p class="text-gray-400 text-lg">Start free. Upgrade when you're ready.</p>
+            </div>
+            <div class="grid md:grid-cols-3 gap-8 max-w-5xl mx-auto">
+                <div class="glass rounded-2xl p-8">
+                    <h3 class="text-xl font-bold mb-2">Free</h3>
+                    <div class="text-4xl font-bold mb-6">$0<span class="text-lg text-gray-400">/mo</span></div>
+                    <ul class="space-y-3 mb-8">
+                        <li class="flex items-center"><i data-lucide="check" class="w-5 h-5 text-green-400 mr-2"></i>Basic task management</li>
+                        <li class="flex items-center"><i data-lucide="check" class="w-5 h-5 text-green-400 mr-2"></i>3 AI conversations/day</li>
+                        <li class="flex items-center"><i data-lucide="check" class="w-5 h-5 text-green-400 mr-2"></i>Calendar sync</li>
+                    </ul>
+                    <a href="app.html" class="block text-center border border-purple-500 text-purple-400 hover:bg-purple-500 hover:text-white py-3 rounded-full transition">Get Started</a>
+                </div>
+                <div class="glass rounded-2xl p-8 border-2 border-purple-500 relative">
+                    <div class="absolute -top-4 left-1/2 transform -translate-x-1/2 bg-purple-600 text-white px-4 py-1 rounded-full text-sm font-medium">Most Popular</div>
+                    <h3 class="text-xl font-bold mb-2">Pro</h3>
+                    <div class="text-4xl font-bold mb-6">$9.99<span class="text-lg text-gray-400">/mo</span></div>
+                    <ul class="space-y-3 mb-8">
+                        <li class="flex items-center"><i data-lucide="check" class="w-5 h-5 text-green-400 mr-2"></i>Unlimited AI conversations</li>
+                        <li class="flex items-center"><i data-lucide="check" class="w-5 h-5 text-green-400 mr-2"></i>Smart day scheduling</li>
+                        <li class="flex items-center"><i data-lucide="check" class="w-5 h-5 text-green-400 mr-2"></i>Problem solver AI</li>
+                        <li class="flex items-center"><i data-lucide="check" class="w-5 h-5 text-green-400 mr-2"></i>Life balance tracking</li>
+                        <li class="flex items-center"><i data-lucide="check" class="w-5 h-5 text-green-400 mr-2"></i>Priority support</li>
+                    </ul>
+                    <a href="app.html" class="block text-center bg-purple-600 hover:bg-purple-700 text-white py-3 rounded-full transition">Start Pro Trial</a>
+                </div>
+                <div class="glass rounded-2xl p-8">
+                    <h3 class="text-xl font-bold mb-2">Life</h3>
+                    <div class="text-4xl font-bold mb-6">$19.99<span class="text-lg text-gray-400">/mo</span></div>
+                    <ul class="space-y-3 mb-8">
+                        <li class="flex items-center"><i data-lucide="check" class="w-5 h-5 text-green-400 mr-2"></i>Everything in Pro</li>
+                        <li class="flex items-center"><i data-lucide="check" class="w-5 h-5 text-green-400 mr-2"></i>Mobile app access</li>
+                        <li class="flex items-center"><i data-lucide="check" class="w-5 h-5 text-green-400 mr-2"></i>Voice commands</li>
+                        <li class="flex items-center"><i data-lucide="check" class="w-5 h-5 text-green-400 mr-2"></i>Family sharing (5)</li>
+                        <li class="flex items-center"><i data-lucide="check" class="w-5 h-5 text-green-400 mr-2"></i>Custom AI training</li>
+                    </ul>
+                    <a href="app.html" class="block text-center border border-purple-500 text-purple-400 hover:bg-purple-500 hover:text-white py-3 rounded-full transition">Go Life</a>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- CTA -->
+    <section class="py-24 hero-gradient">
+        <div class="max-w-4xl mx-auto px-4 text-center">
+            <h2 class="text-4xl md:text-5xl font-bold mb-6">Ready to Reclaim Your Life?</h2>
+            <p class="text-xl text-gray-400 mb-8">Join 10,000+ people who stopped managing and started living.</p>
+            <a href="app.html" class="inline-block bg-purple-600 hover:bg-purple-700 text-white px-10 py-4 rounded-full font-bold text-lg transition">
+                Start Your Free LifeOS — No Card Needed
+            </a>
+        </div>
+    </section>
+
+    <!-- Footer -->
+    <footer class="bg-gray-900 border-t border-gray-800 py-12">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex flex-col md:flex-row justify-between items-center">
+                <div class="flex items-center mb-4 md:mb-0">
+                    <i data-lucide="brain" class="w-6 h-6 text-purple-400 mr-2"></i>
+                    <span class="font-bold">LifeOS AI</span>
+                </div>
+                <div class="text-gray-400 text-sm">
+                    © 2026 LifeOS AI. Built with AI for humans.
+                </div>
+            </div>
+        </div>
+    </footer>
+
+    <script>
+        lucide.createIcons();
+    </script>
+</body>
+</html>
