@@ -1,52 +1,23 @@
 // Vercel Node.js serverless entrypoint.
-// We deliberately avoid requiring the app at module load time.
-// If anything in startup is broken (env/db/deps), we surface it as JSON
-// instead of a generic "FUNCTION_INVOCATION_FAILED", which makes debugging possible.
+// Keep this SYNCHRONOUS and simple. Vercel calls it with (req, res).
+// We load config, create schema (fire-and-forget best effort), then serve Express.
 
-let started = false;
-let startupError = null;
+require('../src/config');
+const path = require('path');
+const express = require('express');
+const db = require('../src/db');
 
-async function ensureStartup() {
-  if (started) return true;
-  if (startupError) return false;
+// Best-effort schema creation (tables for Postgres). If it fails, error is logged.
+db.initSchema().catch((e) => console.error('[lifeos] initSchema failed:', e));
 
-  try {
-    // Load config (LIFEOS_SETTINGS) and database, create schema, then load app.
-    require('../src/config');
-    const db = require('../src/db');
-    await db.initSchema();
-    const { app } = require('../src/app');
-    if (typeof app !== 'function') throw new Error('Express app is not a function');
-    ensureStartup.app = app;
-    started = true;
-    return true;
-  } catch (e) {
-    startupError = e;
-    // Always log so Vercel runtime logs contain the real stack.
-    console.error('[lifeos] startup failed:', e && e.stack ? e.stack : e);
-    return false;
-  }
-}
+const { app } = require('../src/app');
 
-async function handler(req, res) {
-  const ok = await ensureStartup();
-  if (!ok) {
-    const e = startupError || new Error('Unknown startup error');
-    res.status(500).json({
-      error: 'startup_error',
-      message: String(e.message || e),
-      stack: String(e.stack || '').slice(0, 2000),
-    });
-    return;
-  }
-  try {
-    ensureStartup.app(req, res);
-  } catch (e) {
-    console.error('[lifeos] request error:', e);
-    if (!res.headersSent) {
-      res.status(500).json({ error: 'request_error', message: String(e.message || e) });
-    }
-  }
-}
+// Serve static files from /public, then fall back to Express routes.
+app.use(express.static(path.join(__dirname, '..', 'public')));
 
-module.exports = handler;
+// If no route matched (non-API path), serve index.html / app.html / admin.html.
+app.get('/app', (req, res) => res.sendFile(path.join(__dirname, '..', 'public', 'app.html')));
+app.get('/admin', (req, res) => res.sendFile(path.join(__dirname, '..', 'public', 'admin.html')));
+app.get('/', (req, res) => res.sendFile(path.join(__dirname, '..', 'public', 'index.html')));
+
+module.exports = app;
