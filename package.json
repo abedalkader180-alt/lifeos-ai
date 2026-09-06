@@ -27,5 +27,8 @@
     "jsonwebtoken": "^9.0.3",
     "pg": "^8.23.0",
     "qrcode": "^1.5.4"
+  },
+  "engines": {
+    "node": "20.x"
   }
 }
