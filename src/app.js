@@ -107,21 +107,60 @@ app.get('/api/config/public', (req, res) => {
 });
 
 // ===== auth =====
+function makeRefCode() {
+  return 'LIFE' + Math.random().toString(36).slice(2, 8).toUpperCase();
+}
+
 app.post('/api/auth/register', async (req, res) => {
-  const { email, name, password, locale } = req.body || {};
+  const { email, name, password, locale, ref } = req.body || {};
   if (!email || !password || !name) return res.status(400).json({ error: 'email, name, password required' });
   const mail = email.toLowerCase().trim();
   if (!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(mail)) return res.status(400).json({ error: 'invalid email' });
   if (password.length < 6) return res.status(400).json({ error: 'password too short (min 6)' });
   const exists = await db.get('SELECT id FROM users WHERE email = ?', [mail]);
   if (exists) return res.status(409).json({ error: 'account already exists' });
+
+  // Optional referral: inviter code -> ref_by + referrals row.
+  let inviter = null;
+  if (ref && String(ref).trim()) {
+    inviter = await db.get('SELECT id, ref_code FROM users WHERE ref_code = ?', [String(ref).trim().toUpperCase()]);
+  }
+
   const hash = bcrypt.hashSync(password, 10);
+  const refCode = makeRefCode();
   const info = await db.run(
-    'INSERT INTO users (email, name, password_hash, locale, plan) VALUES (?, ?, ?, ?, ?) RETURNING id',
-    [mail, name.trim(), hash, locale === 'ar' ? 'ar' : 'en', 'free']
+    'INSERT INTO users (email, name, password_hash, locale, plan, ref_code, ref_by) VALUES (?, ?, ?, ?, ?, ?, ?) RETURNING id',
+    [mail, name.trim(), hash, locale === 'ar' ? 'ar' : 'en', 'free', refCode, inviter ? inviter.id : null]
   );
   const user = await db.get('SELECT * FROM users WHERE id = ?', [info.lastInsertRowid]);
+
+  if (inviter) {
+    await db.run(
+      'INSERT INTO referrals (inviter_user_id, invited_email, invited_user_id, status, reward) VALUES (?, ?, ?, ?, ?)',
+      [inviter.id, mail, user.id, 'pending', 'discount']
+    );
+  }
+
   res.json({ token: tokenFor(user), user: publicUser(user) });
+});
+
+// ===== waitlist (public) =====
+app.post('/api/waitlist', async (req, res) => {
+  const email = (req.body && req.body.email || '').trim().toLowerCase();
+  if (!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(email)) return res.status(400).json({ error: 'invalid email' });
+  const exists = await db.get('SELECT id FROM waitlist WHERE email = ?', [email]);
+  if (!exists) await db.run('INSERT INTO waitlist (email) VALUES (?)', [email]);
+  res.json({ ok: true, message: 'Added to waitlist.' });
+});
+
+// ===== referral (authenticated) =====
+app.get('/api/referral', auth, async (req, res) => {
+  const code = req.user.ref_code || makeRefCode();
+  if (!req.user.ref_code) {
+    await db.run('UPDATE users SET ref_code = ? WHERE id = ?', [code, req.user.id]);
+  }
+  const invites = await db.all('SELECT * FROM referrals WHERE inviter_user_id = ? ORDER BY id DESC', [req.user.id]);
+  res.json({ code, link: `/app?ref=${code}`, invites: invites.length });
 });
 
 app.post('/api/auth/login', async (req, res) => {
@@ -306,17 +345,23 @@ app.post('/api/admin/login', async (req, res) => {
 app.get('/api/admin/stats', ownerAuth, async (req, res) => {
   const users = await db.listUsers();
   const payments = await db.listPayments();
+  const waitlist = await db.listWaitlist();
+  const referrals = await db.listReferrals();
   const confirmed = payments.filter(p => p.status === 'confirmed');
   res.json({
     users: users.length,
     confirmed_payments: confirmed.length,
     revenue_usd: confirmed.reduce((s, p) => s + (p.amount_usd || 0), 0),
     pending_payments: payments.filter(p => p.status === 'pending' || p.status === 'submitted').length,
+    waitlist: waitlist.length,
+    referrals: referrals.length,
   });
 });
 
 app.get('/api/admin/payments', ownerAuth, async (req, res) => res.json(await db.listPayments()));
 app.get('/api/admin/users', ownerAuth, async (req, res) => res.json(await db.listUsers()));
+app.get('/api/admin/waitlist', ownerAuth, async (req, res) => res.json(await db.listWaitlist()));
+app.get('/api/admin/referrals', ownerAuth, async (req, res) => res.json(await db.listReferrals()));
 
 app.post('/api/admin/payments/:id/confirm', ownerAuth, async (req, res) => {
   const payment = await db.get('SELECT * FROM payments WHERE id = ?', [req.params.id]);

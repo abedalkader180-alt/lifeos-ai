@@ -77,6 +77,8 @@ const SCHEMA_SQLITE = `
     locale TEXT NOT NULL DEFAULT 'en',
     plan TEXT NOT NULL DEFAULT 'free',
     plan_until TEXT,
+    ref_code TEXT UNIQUE,
+    ref_by INTEGER,
     created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP
   );
   CREATE TABLE IF NOT EXISTS tasks (
@@ -123,6 +125,22 @@ const SCHEMA_SQLITE = `
     key TEXT PRIMARY KEY,
     value TEXT NOT NULL
   );
+  CREATE TABLE IF NOT EXISTS waitlist (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    email TEXT UNIQUE NOT NULL,
+    created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP
+  );
+  CREATE TABLE IF NOT EXISTS referrals (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    inviter_user_id INTEGER,
+    invited_email TEXT,
+    invited_user_id INTEGER,
+    status TEXT NOT NULL DEFAULT 'pending',
+    reward TEXT NOT NULL DEFAULT 'discount',
+    created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (inviter_user_id) REFERENCES users(id) ON DELETE SET NULL,
+    FOREIGN KEY (invited_user_id) REFERENCES users(id) ON DELETE SET NULL
+  );
 `;
 
 const SCHEMA_PG = `
@@ -134,6 +152,8 @@ const SCHEMA_PG = `
     locale TEXT NOT NULL DEFAULT 'en',
     plan TEXT NOT NULL DEFAULT 'free',
     plan_until TEXT,
+    ref_code TEXT UNIQUE,
+    ref_by INTEGER,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
   );
   CREATE TABLE IF NOT EXISTS tasks (
@@ -176,13 +196,49 @@ const SCHEMA_PG = `
     key TEXT PRIMARY KEY,
     value TEXT NOT NULL
   );
+  CREATE TABLE IF NOT EXISTS waitlist (
+    id SERIAL PRIMARY KEY,
+    email TEXT UNIQUE NOT NULL,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+  );
+  CREATE TABLE IF NOT EXISTS referrals (
+    id SERIAL PRIMARY KEY,
+    inviter_user_id INTEGER REFERENCES users(id) ON DELETE SET NULL,
+    invited_email TEXT,
+    invited_user_id INTEGER REFERENCES users(id) ON DELETE SET NULL,
+    status TEXT NOT NULL DEFAULT 'pending',
+    reward TEXT NOT NULL DEFAULT 'discount',
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+  );
 `;
+
+async function ensureColumn(table, column, ddl) {
+  if (pool) {
+    // pg: add if not exists
+    const col = await get(`SELECT column_name FROM information_schema.columns WHERE table_name = ? AND column_name = ?`, [table, column]);
+    if (!col) await pool.query(`ALTER TABLE ${table} ADD COLUMN ${ddl}`);
+  } else {
+    const cols = sqlite.prepare(`PRAGMA table_info(${table})`).all();
+    if (!cols.find(c => c.name === column)) {
+      sqlite.exec(`ALTER TABLE ${table} ADD COLUMN ${ddl}`);
+    }
+  }
+}
 
 async function initSchema() {
   if (pool) {
     await pool.query(SCHEMA_PG);
   } else {
     sqlite.exec(SCHEMA_SQLITE);
+  }
+  // Migrate existing DBs that were created before referral fields existed.
+  await ensureColumn('users', 'ref_code', 'ref_code TEXT');
+  await ensureColumn('users', 'ref_by', 'ref_by INTEGER');
+  // Unique index is safe on both engines and works even if column was added later.
+  if (pool) {
+    await pool.query('CREATE UNIQUE INDEX IF NOT EXISTS idx_users_ref_code ON users(ref_code)');
+  } else {
+    sqlite.exec('CREATE UNIQUE INDEX IF NOT EXISTS idx_users_ref_code ON users(ref_code)');
   }
 
   const ownerEmail = process.env.OWNER_EMAIL;
@@ -222,6 +278,14 @@ async function listPayments() {
   return all('SELECT * FROM payments ORDER BY id DESC');
 }
 
+async function listWaitlist() {
+  return all('SELECT * FROM waitlist ORDER BY id DESC');
+}
+
+async function listReferrals() {
+  return all('SELECT * FROM referrals ORDER BY id DESC');
+}
+
 module.exports = {
   IS_PG,
   PG_URL,
@@ -233,4 +297,6 @@ module.exports = {
   setSetting,
   listUsers,
   listPayments,
+  listWaitlist,
+  listReferrals,
 };

@@ -169,6 +169,18 @@
     </div>
   </section>
 
+  <section class="py-16 max-w-3xl mx-auto px-5">
+    <div class="glass rounded-2xl p-8 text-center">
+      <h2 class="text-2xl md:text-3xl font-bold mb-3" data-i18n="wl_h">Get early access + launch offer</h2>
+      <p class="text-gray-400 mb-6" data-i18n="wl_p">Join the waitlist and get a discount when LifeOS AI launches.</p>
+      <div class="flex flex-col sm:flex-row gap-3 max-w-md mx-auto">
+        <input id="wlEmail" type="email" placeholder="you@email.com" class="flex-1 bg-white/5 border border-white/10 rounded-full px-5 py-3 focus:outline-none focus:border-purple-500"/>
+        <button onclick="joinWaitlist()" class="btn btn-primary" data-i18n="wl_btn">Join waitlist</button>
+      </div>
+      <p id="wlMsg" class="text-sm mt-3 min-h-5"></p>
+    </div>
+  </section>
+
   <footer class="border-t border-white/10 py-10 text-center text-gray-500 text-sm">
     <p>© 2026 LifeOS AI · <span data-i18n="foot">Honest. Private. Built to help you live better.</span></p>
   </footer>
@@ -198,6 +210,7 @@ const I18N = {
     p_life:"Life", p_life_btn:"Go Life", pl1:"Everything in Pro", pl2:"Priority support", pl3:"Advanced AI planning",
     price_note:"Payments are made with USDT on the TRON (TRC20) network. We verify each transaction manually. No credit card needed.",
     faq_h:"FAQ", q1:"How do I pay?", a1:"From the app, choose Pro or Life, use the TRC20 address from your Trust Wallet, send the exact USDT amount, then paste your transaction hash for review. Your owner confirms it and your plan updates.",
+    wl_h:"Get early access + launch offer", wl_p:"Join the waitlist and get a discount when LifeOS AI launches.", wl_btn:"Join waitlist", wl_ok:"You're on the list! 🎉", wl_err:"Please enter a valid email.",
     q2:"Is my data private?", a2:"Your account data is stored privately. We never sell your data. You can request deletion at any time.",
     q3:"Does it work in Arabic and English?", a3:"Yes. Switch languages at any time. The AI responds in the language you choose.",
     q4:"Can AI guarantee my income or success?", a4:"No. LifeOS AI helps you organize your time and build better routines. It is honest and never promises income, sales, or outcomes that depend on you.",
@@ -225,6 +238,7 @@ const I18N = {
     p_life:"حياة", p_life_btn:"اختر حياة", pl1:"كل ميزات الاحترافي", pl2:"دعم أولوية", pl3:"تخطيط ذكاء متقدم",
     price_note:"الدفع يتم بـ USDT على شبكة TRON (TRC20). نتحقق من كل عملية يدوياً. لا حاجة لبطاقة ائتمان.",
     faq_h:"الأسئلة", q1:"كيف أدفع؟", a1:"من داخل التطبيق اختر احترافي أو حياة، استخدم عنوان TRC20 من محفظة Trust Wallet، أرسل مبلغ USDT المحدد، ثم الصق Hash المعاملة للمراجعة. يؤكدها المالك وتُفعّل خطتك.",
+    wl_h:"احصل على وصول مبكر + عرض الإطلاق", wl_p:"انضم لقائمة الانتظار واحصل على خصم عند إطلاق LifeOS AI.", wl_btn:"انضم للقائمة", wl_ok:"انضممت للقائمة! 🎉", wl_err:"أدخل إيميلاً صحيحاً.",
     q2:"هل بياناتي خاصة؟", a2:"تُحفظ بيانات حسابك بشكل خاص. لا نبيع بياناتك أبداً. يمكنك طلب الحذف في أي وقت.",
     q3:"هل يعمل بالعربية والإنجليزية؟", a3:"نعم. بدّل اللغة في أي وقت، ويستجيب الذكاء باللغة التي تختارها.",
     q4:"هل يستطيع الذكاء ضمان دخلي أو نجاحي؟", a4:"لا. يساعدك LifeOS AI على تنظيم وقتك وبناء روتين أفضل. صادق ولا يعد أبداً بدخل أو مبيعات أو نتائج تعتمد عليك.",
@@ -245,6 +259,15 @@ function applyLang() {
   lucide.createIcons();
 }
 function toggleLang() { lang = lang === 'ar' ? 'en' : 'ar'; localStorage.setItem('lifeos_lang', lang); applyLang(); }
+async function joinWaitlist() {
+  const email = document.getElementById('wlEmail').value.trim();
+  const msg = document.getElementById('wlMsg');
+  if (!email || !email.includes('@')) { msg.textContent = I18N[lang].wl_err; return; }
+  try {
+    const r = await fetch('/api/waitlist', { method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({ email }) });
+    msg.textContent = I18N[lang].wl_ok;
+  } catch(e) { msg.textContent = I18N[lang].wl_err; }
+}
 applyLang();
 </script>
 </body>

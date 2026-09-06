@@ -62,6 +62,7 @@
           <a onclick="go('tasks')" class="side flex items-center gap-3 px-3 py-2.5 rounded-lg cursor-pointer text-sm"><i data-lucide="check-square" class="w-5 h-5"></i><span data-k="tasks">Tasks</span></a>
           <a onclick="go('habits')" class="side flex items-center gap-3 px-3 py-2.5 rounded-lg cursor-pointer text-sm"><i data-lucide="trending-up" class="w-5 h-5"></i><span data-k="habits">Habits</span></a>
           <a onclick="go('pricing')" class="side flex items-center gap-3 px-3 py-2.5 rounded-lg cursor-pointer text-sm"><i data-lucide="wallet" class="w-5 h-5"></i><span data-k="upgrade">Upgrade</span></a>
+          <a onclick="go('refer')" class="side flex items-center gap-3 px-3 py-2.5 rounded-lg cursor-pointer text-sm"><i data-lucide="share-2" class="w-5 h-5"></i><span data-k="refer">Refer & earn</span></a>
         </nav>
         <div class="p-4 border-t border-white/10">
           <div class="glass rounded-lg p-3 text-sm">
@@ -123,6 +124,19 @@
           <div id="habitList" class="grid md:grid-cols-3 gap-4"></div>
         </div>
 
+        <!-- Referral -->
+        <div id="s-refer" class="hidden">
+          <div class="glass rounded-2xl p-6 max-w-xl">
+            <h3 class="text-xl font-bold mb-3 flex items-center gap-2"><i data-lucide="gift" class="w-6 h-6 text-purple-400"></i><span data-k="refer_title">Invite friends, earn rewards</span></h3>
+            <p class="text-gray-400 text-sm mb-4" data-k="refer_p">Share your link. When a friend joins and upgrades, you both get a bonus.</p>
+            <div class="flex items-center gap-2">
+              <input id="refLink" readonly class="flex-1 bg-white/5 border border-white/10 rounded-lg px-4 py-2.5 text-sm"/>
+              <button onclick="copyRef()" class="bg-purple-600 hover:bg-purple-700 px-4 py-2.5 rounded-lg text-sm font-semibold" data-k="copy">Copy</button>
+            </div>
+            <div class="mt-4 text-sm text-gray-400" id="refCount"></div>
+          </div>
+        </div>
+
         <!-- Pricing -->
         <div id="s-pricing" class="hidden">
           <p class="text-gray-400 mb-6" data-k="price_intro">Upgrade your plan by sending USDT (TRC20) from your Trust Wallet. We verify each payment manually.</p>
@@ -181,20 +195,22 @@ const I18 = {
     d_ai_hint:"Ask AI to build your day", d_ai_p:"Go to the AI Assistant and tell it your goals or problems. It will build a practical plan for you.", d_ai_btn:"Open AI Assistant",
     pp1:"Unlimited AI chats", pp2:"Smart scheduling", pp3:"Problem solver AI", ll1:"Everything in Pro", ll2:"Priority support", ll3:"Advanced AI planning",
     price_intro:"Upgrade your plan by sending USDT (TRC20) from your Trust Wallet. We verify each payment manually.",
+    refer:"Refer & earn", refer_title:"Invite friends, earn rewards", refer_p:"Share your link. When a friend joins and upgrades, you both get a bonus.", copy:"Copy", ref_count:(n)=>`You invited ${n} ${n===1?'person':'people'} so far.`,
     send_to:"Send exact amount to:", tx_label:"Transaction hash (TX)", submit_pay:"I paid — submit for review",
-    free_chat_left:"chats left today", done:"Done", target:"target", t_free:"Free", greeting:"Welcome", upd:"Upgrade to Pro", title_dash:"Dashboard", title_chat:"AI Assistant", title_tasks:"Tasks", title_habits:"Habits", title_pricing:"Upgrade" },
+    free_chat_left:"chats left today", done:"Done", target:"target", t_free:"Free", greeting:"Welcome", upd:"Upgrade to Pro", title_dash:"Dashboard", title_chat:"AI Assistant", title_tasks:"Tasks", title_habits:"Habits", title_pricing:"Upgrade", title_refer:"Refer & earn", copied:"Copied!" },
   ar:{ dash:"الرئيسية", chat:"المساعد الذكي", tasks:"المهام", habits:"العادات", upgrade:"الاشتراك", add:"إضافة", buy_pro:"اشترك بـ USDT", buy_life:"اختر حياة",
     t_tasks:"مهام اليوم", t_habits:"العادات المنجزة", t_plan:"خطتك", t_ai:"محادثات الذكاء المتبقية",
     d_ai_hint:"اطلب من الذكاء بناء يومك", d_ai_p:"اذهب إلى المساعد الذكي واحكي له أهدافك ومشاكلك، وسيبني لك خطة عملية.", d_ai_btn:"افتح المساعد الذكي",
     pp1:"محادثات ذكاء غير محدودة", pp2:"جدولة ذكية", pp3:"ذكاء حل المشاكل", ll1:"كل ميزات الاحترافي", ll2:"دعم أولوية", ll3:"تخطيط ذكاء متقدم",
     price_intro:"طوّر خطتك بإرسال USDT (TRC20) من محفظة Trust Wallet. نتحقق من كل دفعة يدوياً.",
+    refer:"ادعُ واربح", refer_title:"ادعُ أصدقاءك واربح مكافآت", refer_p:"شارك رابطك. عندما ينضم صديق ويشترك، تحصلان معاً على مكافأة.", copy:"نسخ", ref_count:(n)=>`دعوت ${n} ${n===1?'شخص':'أشخاص'} حتى الآن.`,
     send_to:"أرسل المبلغ بالضبط إلى:", tx_label:"Hash المعاملة (TX)", submit_pay:"دفعت — أرسل للمراجعة",
-    free_chat_left:"محادثات متبقية اليوم", done:"تم", target:"الهدف", t_free:"مجاني", greeting:"أهلاً", upd:"طوّر إلى برو", title_dash:"الرئيسية", title_chat:"المساعد الذكي", title_tasks:"المهام", title_habits:"العادات", title_pricing:"الاشتراك" }
+    free_chat_left:"محادثات متبقية اليوم", done:"تم", target:"الهدف", t_free:"مجاني", greeting:"أهلاً", upd:"طوّر إلى برو", title_dash:"الرئيسية", title_chat:"المساعد الذكي", title_tasks:"المهام", title_habits:"العادات", title_pricing:"الاشتراك", title_refer:"ادعُ واربح", copied:"تم النسخ!" }
 };
 let lang = localStorage.getItem('lifeos_lang') || 'en';
 let token = localStorage.getItem('lifeos_token') || '';
 let user = null, tasks = [], habits = [];
-function t(k){ return (I18[lang]||I18.en)[k] || k; }
+function t(k){ const v=(I18[lang]||I18.en)[k]; return typeof v==='function' ? v(...Array.prototype.slice.call(arguments,1)) : (v||k); }
 function applyLang(){ document.documentElement.lang=lang; document.documentElement.dir=lang==='ar'?'rtl':'ltr'; document.querySelectorAll('[data-k]').forEach(e=>{ e.textContent=t(e.getAttribute('data-k')); }); document.getElementById('langBtn').textContent = lang==='ar'?'English':'العربية'; document.getElementById('langBtn2').textContent = lang==='ar'?'English':'العربية'; lucide.createIcons(); }
 function toggleLang(){ lang=lang==='ar'?'en':'ar'; localStorage.setItem('lifeos_lang',lang); applyLang(); refreshUI(); }
 
@@ -211,7 +227,7 @@ function val(id){ return document.getElementById(id).value.trim(); }
 async function api(path, body, method='POST'){ const res=await fetch(path,{method,headers:{'Content-Type':'application/json',...(token?{Authorization:'Bearer '+token}:{})},body:body?JSON.stringify(body):undefined}); const data=await res.json().catch(()=>({})); if(!res.ok){ if(data.error==='free_daily_limit') throw new Error(lang==='ar'?'وصلت للحد المجاني اليوم':'You reached the free daily AI limit.'); throw new Error(data.error||'Error'); } return data; }
 
 // UI
-function go(name){ ['dashboard','chat','tasks','habits','pricing'].forEach(n=>{ document.getElementById('s-'+n).classList.toggle('hidden', n!==name); }); document.getElementById('pageTitle').textContent = t('title_'+name); lucide.createIcons(); }
+function go(name){ ['dashboard','chat','tasks','habits','pricing','refer'].forEach(n=>{ document.getElementById('s-'+n).classList.toggle('hidden', n!==name); }); document.getElementById('pageTitle').textContent = t('title_'+name); if(name==='refer') loadReferral(); lucide.createIcons(); }
 async function refreshUI(){
   if(!token) return;
   if(!user){ const r=await api('/api/me',null,'GET'); user=r.user; }
@@ -256,6 +272,19 @@ async function delHabit(id){ await api('/api/habits/'+id,null,'DELETE'); habits=
 // chat
 function makeMsg(txt,who){ const c=document.getElementById('chatBox'); const d=document.createElement('div'); d.className='flex fade '+(who==='user'?'justify-end':''); d.innerHTML=`<div class="max-w-[80%] ${who==='user'?'msg-u':'msg-a'} rounded-2xl px-4 py-2.5 whitespace-pre-line">${txt}</div>`; c.appendChild(d); c.scrollTop=c.scrollHeight; return d; }
 async function sendChat(){ const inp=document.getElementById('chatInput'); const m=inp.value.trim(); if(!m)return; makeMsg(escape(m),'user'); inp.value=''; document.getElementById('typing').classList.remove('hidden'); try{ const r=await api('/api/chat',{message:m}); const used=JSON.parse(localStorage.getItem('lifeos_chat_used_'+new Date().toDateString())||'0'); localStorage.setItem('lifeos_chat_used_'+new Date().toDateString(), JSON.stringify(used+1)); document.getElementById('typing').classList.add('hidden'); makeMsg(r.reply,'ai'); refreshUI(); }catch(e){ document.getElementById('typing').classList.add('hidden'); makeMsg('⚠ '+e.message,'ai'); } }
+
+// referral
+async function loadReferral(){
+  const r=await api('/api/referral',null,'GET');
+  const url=(location.origin||'')+r.link;
+  document.getElementById('refLink').value=url;
+  document.getElementById('refCount').textContent=t('ref_count', r.invites);
+}
+function copyRef(){
+  const el=document.getElementById('refLink');
+  navigator.clipboard.writeText(el.value);
+  const old=el.value; el.value = t('copied','Copied!'); setTimeout(()=>el.value=old,1200);
+}
 
 // checkout
 let currentPayment=null;
