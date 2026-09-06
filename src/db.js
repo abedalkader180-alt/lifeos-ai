@@ -9,7 +9,10 @@ const bcrypt = require('bcryptjs');
 
 const PG_URL = process.env.DATABASE_URL || process.env.POSTGRES_URL || process.env.POSTGRESQL_URL || '';
 // FORCE_SQLITE=true is used for local preview when the cloud DB is not reachable from this sandbox.
-const IS_PG = !(process.env.FORCE_SQLITE === 'true') && !!PG_URL;
+// On Vercel (VERCEL env) we must use Postgres; local SQLite is NOT supported there.
+const IS_PG = (process.env.VERCEL === '1')
+  ? !!PG_URL
+  : !(process.env.FORCE_SQLITE === 'true') && !!PG_URL;
 
 let pool = null;
 let sqlite = null;

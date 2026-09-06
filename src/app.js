@@ -119,6 +119,15 @@ app.get('/api/health', (req, res) => res.json({
   time: new Date().toISOString(),
 }));
 
+app.get('/api/debug', (req, res) => {
+  res.json({
+    vercel: process.env.VERCEL || '0',
+    has_db: !!(process.env.DATABASE_URL || process.env.POSTGRES_URL),
+    db_is_pg: db.IS_PG,
+    db_url_redacted: process.env.DATABASE_URL ? (process.env.DATABASE_URL.split('@')[1] || 'set') : 'not set',
+  });
+});
+
 // ===== public config =====
 app.get('/api/config/public', (req, res) => {
   res.json({
