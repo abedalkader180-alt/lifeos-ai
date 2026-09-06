@@ -33,8 +33,12 @@ if (IS_PG) {
   DB_ERROR = 'DATABASE_URL is not set on Vercel. Add LIFEOS_SETTINGS or individual env vars, then redeploy.';
   console.error('[db] ' + DB_ERROR);
 } else {
-  // Local dev/preview: use the Node built-in sqlite (Node >= 22).
-  const { DatabaseSync } = require('node:sqlite');
+  // Local dev/preview only. Load the built-in sqlite lazily/indirectly so
+  // serverless bundlers (Vercel NCC/NFT, Node 20) never try to resolve
+  // `node:sqlite` at bundle time (it does not exist on Node 20 / Vercel).
+  const req = require;
+  const sqliteBare = ['node', 'sqlite'].join(':');
+  const { DatabaseSync } = req(sqliteBare);
   const DATA_DIR = path.join(__dirname, '..', 'data');
   if (!fs.existsSync(DATA_DIR)) fs.mkdirSync(DATA_DIR, { recursive: true });
   SQLITE_FILE = path.join(DATA_DIR, 'lifeos.db');
