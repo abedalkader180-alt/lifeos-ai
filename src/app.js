@@ -124,6 +124,7 @@ app.get('/api/debug', (req, res) => {
     vercel: process.env.VERCEL || '0',
     has_db: !!(process.env.DATABASE_URL || process.env.POSTGRES_URL),
     db_is_pg: db.IS_PG,
+    db_error: db.DB_ERROR || null,
     db_url_redacted: process.env.DATABASE_URL ? (process.env.DATABASE_URL.split('@')[1] || 'set') : 'not set',
   });
 });

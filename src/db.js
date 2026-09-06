@@ -17,6 +17,7 @@ const IS_PG = (process.env.VERCEL === '1')
 let pool = null;
 let sqlite = null;
 let SQLITE_FILE = '';
+let DB_ERROR = null;
 
 if (IS_PG) {
   const { Pool } = require('pg');
@@ -26,7 +27,13 @@ if (IS_PG) {
     max: 10,
   });
   console.log('[db] Using PostgreSQL database');
+} else if (process.env.VERCEL === '1') {
+  // On Vercel we MUST NOT import node:sqlite (not available on Node 20).
+  // If DATABASE_URL is missing, keep the app alive so /api/debug can diagnose.
+  DB_ERROR = 'DATABASE_URL is not set on Vercel. Add LIFEOS_SETTINGS or individual env vars, then redeploy.';
+  console.error('[db] ' + DB_ERROR);
 } else {
+  // Local dev/preview: use the Node built-in sqlite (Node >= 22).
   const { DatabaseSync } = require('node:sqlite');
   const DATA_DIR = path.join(__dirname, '..', 'data');
   if (!fs.existsSync(DATA_DIR)) fs.mkdirSync(DATA_DIR, { recursive: true });
@@ -42,11 +49,15 @@ function pgSql(sql) {
   return sql.replace(/\?/g, () => `$${++i}`);
 }
 
+function needDb() {
+  if (DB_ERROR) throw new Error(DB_ERROR);
+}
 async function all(sql, params = []) {
   if (pool) {
     const r = await pool.query(pgSql(sql), params);
     return r.rows;
   }
+  needDb();
   return sqlite.prepare(sql).all(...params);
 }
 
@@ -55,6 +66,7 @@ async function get(sql, params = []) {
     const r = await pool.query(pgSql(sql), params);
     return r.rows[0] || null;
   }
+  needDb();
   return sqlite.prepare(sql).get(...params);
 }
 
@@ -66,6 +78,7 @@ async function run(sql, params = []) {
       lastInsertRowid: (r.rows && r.rows[0] && r.rows[0].id) || null,
     };
   }
+  needDb();
   const info = sqlite.prepare(sql).run(...params);
   return { changes: info.changes, lastInsertRowid: info.lastInsertRowid };
 }
@@ -259,7 +272,7 @@ async function ensureColumn(table, column, ddl) {
     // pg: add if not exists
     const col = await get(`SELECT column_name FROM information_schema.columns WHERE table_name = ? AND column_name = ?`, [table, column]);
     if (!col) await pool.query(`ALTER TABLE ${table} ADD COLUMN ${ddl}`);
-  } else {
+  } else if (sqlite) {
     const cols = sqlite.prepare(`PRAGMA table_info(${table})`).all();
     if (!cols.find(c => c.name === column)) {
       sqlite.exec(`ALTER TABLE ${table} ADD COLUMN ${ddl}`);
@@ -268,9 +281,13 @@ async function ensureColumn(table, column, ddl) {
 }
 
 async function initSchema() {
+  if (DB_ERROR) {
+    console.error('[db] initSchema skipped: ' + DB_ERROR);
+    return;
+  }
   if (pool) {
     await pool.query(SCHEMA_PG);
-  } else {
+  } else if (sqlite) {
     sqlite.exec(SCHEMA_SQLITE);
   }
   // Migrate existing DBs that were created before referral fields existed.
@@ -282,13 +299,13 @@ async function initSchema() {
   // Unique index is safe on both engines and works even if column was added later.
   if (pool) {
     await pool.query('CREATE UNIQUE INDEX IF NOT EXISTS idx_users_ref_code ON users(ref_code)');
-  } else {
+  } else if (sqlite) {
     sqlite.exec('CREATE UNIQUE INDEX IF NOT EXISTS idx_users_ref_code ON users(ref_code)');
   }
 
   const ownerEmail = process.env.OWNER_EMAIL;
   const ownerPassword = process.env.OWNER_PASSWORD;
-  if (ownerEmail && ownerPassword) {
+  if (!DB_ERROR && ownerEmail && ownerPassword) {
     const exists = await get('SELECT id FROM users WHERE email = ?', [ownerEmail.toLowerCase()]);
     if (!exists) {
       const hash = bcrypt.hashSync(ownerPassword, 10);
@@ -352,6 +369,7 @@ async function unreadNotifications(userId) {
 module.exports = {
   IS_PG,
   PG_URL,
+  DB_ERROR,
   all,
   get,
   run,
