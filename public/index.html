@@ -1,0 +1,251 @@
+<!DOCTYPE html>
+<html lang="en" dir="ltr">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>LifeOS AI — AI Life Organizer</title>
+<meta name="description" content="LifeOS AI organizes your daily and weekly routine, solves productivity problems, and helps you balance work, health, and life."/>
+<script src="https://cdn.tailwindcss.com"></script>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Cairo:wght@400;600;700;800&display=swap" rel="stylesheet"/>
+<script src="https://unpkg.com/lucide@latest"></script>
+<style>
+  :root { --p: #8b5cf6; --b: #3b82f6; }
+  * { font-family: 'Inter', sans-serif; }
+  html[dir="rtl"] * { font-family: 'Cairo', sans-serif; }
+  body { background: #0b0b14; color: #fff; }
+  .grad { background: linear-gradient(135deg,#8b5cf6,#3b82f6); -webkit-background-clip:text; background-clip:text; color:transparent; }
+  .glass { background: rgba(255,255,255,.05); backdrop-filter: blur(12px); border:1px solid rgba(255,255,255,.09); }
+  .btn { display:inline-flex; align-items:center; justify-content:center; gap:.5rem; padding:.85rem 1.6rem; border-radius:999px; font-weight:600; transition:.2s; }
+  .btn-primary { background:#7c3aed; color:#fff; }
+  .btn-primary:hover { background:#6d28d9; }
+  .btn-ghost { background:rgba(255,255,255,.05); border:1px solid rgba(255,255,255,.14); }
+  .btn-ghost:hover { background:rgba(255,255,255,.1); }
+  .card:hover { transform: translateY(-5px); box-shadow:0 20px 45px rgba(124,58,237,.18); }
+  .card { transition:.25s; }
+  .pop { border:2px solid #8b5cf6; }
+  .blob { position:absolute; filter:blur(70px); opacity:.25; border-radius:999px; }
+  .step { width:3.5rem; height:3.5rem; border-radius:999px; background:#7c3aed; display:flex; align-items:center; justify-content:center; font-weight:800; margin:0 auto .9rem; }
+</style>
+</head>
+<body class="overflow-x-hidden">
+
+<div class="relative">
+  <div class="blob w-96 h-96 bg-purple-600 top-10 left-10"></div>
+  <div class="blob w-96 h-96 bg-blue-600 top-40 right-10"></div>
+
+  <nav class="fixed top-0 w-full z-50 glass">
+    <div class="max-w-7xl mx-auto px-5 flex items-center justify-between h-16">
+      <div class="flex items-center gap-2">
+        <i data-lucide="brain" class="w-7 h-7 text-purple-400"></i>
+        <span class="text-xl font-bold">LifeOS<span class="text-purple-400">AI</span></span>
+      </div>
+      <div class="hidden md:flex gap-8 text-sm text-gray-300">
+        <a href="#features" data-i18n="nav_features">Features</a>
+        <a href="#how" data-i18n="nav_how">How it works</a>
+        <a href="#pricing" data-i18n="nav_pricing">Pricing</a>
+        <a href="#faq" data-i18n="nav_faq">FAQ</a>
+      </div>
+      <div class="flex items-center gap-3">
+        <button onclick="toggleLang()" id="langBtn" class="btn btn-ghost !py-2 !px-4 text-sm">العربية</button>
+        <a href="/app" class="btn btn-primary !py-2 !px-5 text-sm" data-i18n="nav_start">Get Started</a>
+      </div>
+    </div>
+  </nav>
+
+  <section class="max-w-7xl mx-auto px-5 pt-32 pb-24 grid md:grid-cols-2 gap-12 items-center">
+    <div>
+      <span class="inline-block text-sm px-4 py-1.5 rounded-full bg-purple-500/15 text-purple-300 mb-5" data-i18n="hero_badge">AI life architect</span>
+      <h1 class="text-4xl md:text-6xl font-extrabold leading-tight mb-5">
+        <span data-i18n="hero_t1">Organize your life.</span><br/>
+        <span class="grad" data-i18n="hero_t2">Let AI do the work.</span>
+      </h1>
+      <p class="text-lg text-gray-400 mb-7 max-w-xl" data-i18n="hero_p">LifeOS AI builds your daily and weekly routine, solves productivity problems, and keeps your work, health, family and growth in balance — in Arabic and English.</p>
+      <div class="flex flex-col sm:flex-row gap-4">
+        <a href="/app" class="btn btn-primary text-lg" data-i18n="hero_cta">Start free</a>
+        <a href="#pricing" class="btn btn-ghost text-lg"><i data-lucide="wallet" class="w-5 h-5"></i><span data-i18n="hero_cta2">Upgrade with USDT</span></a>
+      </div>
+      <div class="mt-8 flex gap-8 text-sm text-gray-400">
+        <div class="flex items-center gap-2"><i data-lucide="shield" class="w-5 h-5 text-green-400"></i><span data-i18n="hero_n1">Private</span></div>
+        <div class="flex items-center gap-2"><i data-lucide="lock" class="w-5 h-5 text-green-400"></i><span data-i18n="hero_n2">Your data stays yours</span></div>
+        <div class="flex items-center gap-2"><i data-lucide="globe" class="w-5 h-5 text-blue-400"></i><span data-i18n="hero_n3">AR / EN</span></div>
+      </div>
+    </div>
+
+    <div class="relative">
+      <div class="glass rounded-3xl p-6 animate-bounce-slow">
+        <div class="flex items-center gap-2 mb-5">
+          <span class="w-3 h-3 rounded-full bg-red-500"></span><span class="w-3 h-3 rounded-full bg-yellow-500"></span><span class="w-3 h-3 rounded-full bg-green-500"></span>
+          <span class="text-sm text-gray-400 ms-2" data-i18n="card_title">Today</span>
+        </div>
+        <div class="space-y-3">
+          <div class="bg-white/5 rounded-xl p-4"><div class="text-sm text-gray-400" data-i18n="card_focus">Focus score</div><div class="text-3xl font-bold text-purple-400">87%</div></div>
+          <div class="bg-white/5 rounded-xl p-4"><div class="text-sm text-gray-400" data-i18n="card_tasks">Tasks</div><div class="text-3xl font-bold text-blue-400">5/8</div></div>
+          <div class="bg-white/5 rounded-xl p-4"><div class="text-sm text-gray-400" data-i18n="card_balance">Life balance</div><div class="text-3xl font-bold text-green-400">B+</div></div>
+          <div class="bg-white/5 rounded-xl p-4"><div class="text-sm text-gray-400" data-i18n="card_streak">Streak</div><div class="text-3xl font-bold text-orange-400">12</div></div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section id="features" class="py-20 max-w-7xl mx-auto px-5">
+    <div class="text-center mb-14">
+      <h2 class="text-3xl md:text-4xl font-bold mb-3" data-i18n="feat_h">One AI. Every part of your life.</h2>
+      <p class="text-gray-400 max-w-2xl mx-auto" data-i18n="feat_p">Tasks, habits, calendar, and goals — plus an AI that listens and builds a plan for you.</p>
+    </div>
+    <div class="grid md:grid-cols-3 gap-6">
+      <div class="glass card rounded-2xl p-7"><i data-lucide="brain" class="w-8 h-8 text-purple-400 mb-4"></i><h3 class="text-xl font-bold mb-2" data-i18n="f1_t">AI problem solver</h3><p class="text-gray-400" data-i18n="f1_p">Tell it "I keep skipping the gym" and it turns that into a concrete schedule.</p></div>
+      <div class="glass card rounded-2xl p-7"><i data-lucide="calendar" class="w-8 h-8 text-blue-400 mb-4"></i><h3 class="text-xl font-bold mb-2" data-i18n="f2_t">Smart day builder</h3><p class="text-gray-400" data-i18n="f2_p">Builds your best daily and weekly routine around your energy and goals.</p></div>
+      <div class="glass card rounded-2xl p-7"><i data-lucide="heart" class="w-8 h-8 text-pink-400 mb-4"></i><h3 class="text-xl font-bold mb-2" data-i18n="f3_t">Life balance</h3><p class="text-gray-400" data-i18n="f3_p">Tracks work, health, relationships and growth so nothing is neglected.</p></div>
+      <div class="glass card rounded-2xl p-7"><i data-lucide="check" class="w-8 h-8 text-green-400 mb-4"></i><h3 class="text-xl font-bold mb-2" data-i18n="f4_t">Tasks & habits</h3><p class="text-gray-400" data-i18n="f4_p">Manage everything in one place with priorities and weekly streaks.</p></div>
+      <div class="glass card rounded-2xl p-7"><i data-lucide="mic" class="w-8 h-8 text-yellow-400 mb-4"></i><h3 class="text-xl font-bold mb-2" data-i18n="f5_t">Voice to action</h3><p class="text-gray-400" data-i18n="f5_p">Speak your thoughts and let the assistant turn them into tasks and reminders.</p></div>
+      <div class="glass card rounded-2xl p-7"><i data-lucide="wallet" class="w-8 h-8 text-purple-400 mb-4"></i><h3 class="text-xl font-bold mb-2" data-i18n="f6_t">Pay with crypto</h3><p class="text-gray-400" data-i18n="f6_p">Upgrade your plan by sending USDT (TRC20) from your Trust Wallet. Simple and fast.</p></div>
+    </div>
+  </section>
+
+  <section id="how" class="py-20 bg-white/[.02]">
+    <div class="max-w-7xl mx-auto px-5 text-center">
+      <h2 class="text-3xl md:text-4xl font-bold mb-14" data-i18n="how_h">From chaos to clarity</h2>
+      <div class="grid md:grid-cols-3 gap-10">
+        <div><div class="step">1</div><h3 class="text-xl font-bold mb-2" data-i18n="how1_t">Sign up</h3><p class="text-gray-400" data-i18n="how1_p">Create your account and pick Arabic or English.</p></div>
+        <div><div class="step">2</div><h3 class="text-xl font-bold mb-2" data-i18n="how2_t">Talk to AI</h3><p class="text-gray-400" data-i18n="how2_p">Tell it your goals and problems. It builds your routine.</p></div>
+        <div><div class="step">3</div><h3 class="text-xl font-bold mb-2" data-i18n="how3_t">Live it daily</h3><p class="text-gray-400" data-i18n="how3_p">Follow the plan, check tasks, build habits, adjust anytime.</p></div>
+      </div>
+    </div>
+  </section>
+
+  <section id="pricing" class="py-20 max-w-7xl mx-auto px-5">
+    <div class="text-center mb-14">
+      <h2 class="text-3xl md:text-4xl font-bold mb-3" data-i18n="price_h">Simple pricing</h2>
+      <p class="text-gray-400" data-i18n="price_p">Start free. Upgrade with USDT when you're ready.</p>
+    </div>
+    <div class="grid md:grid-cols-3 gap-6 max-w-5xl mx-auto">
+      <div class="glass rounded-2xl p-8">
+        <h3 class="text-xl font-bold mb-2" data-i18n="p_free">Free</h3>
+        <div class="text-4xl font-bold mb-6">$0<span class="text-lg text-gray-400">/mo</span></div>
+        <ul class="space-y-2 mb-8 text-gray-300">
+          <li class="flex items-center gap-2"><i data-lucide="check" class="w-5 h-5 text-green-400"></i><span data-i18n="pf1">Tasks & habits</span></li>
+          <li class="flex items-center gap-2"><i data-lucide="check" class="w-5 h-5 text-green-400"></i><span data-i18n="pf2">3 AI chats per day</span></li>
+          <li class="flex items-center gap-2"><i data-lucide="check" class="w-5 h-5 text-green-400"></i><span data-i18n="pf3">Arabic / English</span></li>
+        </ul>
+        <a href="/app" class="btn btn-ghost w-full" data-i18n="p_free_btn">Start Free</a>
+      </div>
+
+      <div class="glass pop rounded-2xl p-8 relative">
+        <span class="absolute -top-3 left-1/2 -translate-x-1/2 bg-purple-600 text-xs px-4 py-1 rounded-full font-semibold" data-i18n="p_pop">Most popular</span>
+        <h3 class="text-xl font-bold mb-2" data-i18n="p_pro">Pro</h3>
+        <div class="text-4xl font-bold mb-6">$9.99<span class="text-lg text-gray-400">/mo</span></div>
+        <ul class="space-y-2 mb-8 text-gray-300">
+          <li class="flex items-center gap-2"><i data-lucide="check" class="w-5 h-5 text-green-400"></i><span data-i18n="pp1">Unlimited AI chats</span></li>
+          <li class="flex items-center gap-2"><i data-lucide="check" class="w-5 h-5 text-green-400"></i><span data-i18n="pp2">Smart scheduling</span></li>
+          <li class="flex items-center gap-2"><i data-lucide="check" class="w-5 h-5 text-green-400"></i><span data-i18n="pp3">Problem solver AI</span></li>
+          <li class="flex items-center gap-2"><i data-lucide="check" class="w-5 h-5 text-green-400"></i><span data-i18n="pp4">Life balance tracking</span></li>
+        </ul>
+        <a href="/app" class="btn btn-primary w-full" data-i18n="p_pro_btn">Upgrade with USDT</a>
+      </div>
+
+      <div class="glass rounded-2xl p-8">
+        <h3 class="text-xl font-bold mb-2" data-i18n="p_life">Life</h3>
+        <div class="text-4xl font-bold mb-6">$19.99<span class="text-lg text-gray-400">/mo</span></div>
+        <ul class="space-y-2 mb-8 text-gray-300">
+          <li class="flex items-center gap-2"><i data-lucide="check" class="w-5 h-5 text-green-400"></i><span data-i18n="pl1">Everything in Pro</span></li>
+          <li class="flex items-center gap-2"><i data-lucide="check" class="w-5 h-5 text-green-400"></i><span data-i18n="pl2">Priority support</span></li>
+          <li class="flex items-center gap-2"><i data-lucide="check" class="w-5 h-5 text-green-400"></i><span data-i18n="pl3">Advanced AI planning</span></li>
+        </ul>
+        <a href="/app" class="btn btn-ghost w-full" data-i18n="p_life_btn">Go Life</a>
+      </div>
+    </div>
+    <p class="text-center text-gray-500 text-sm mt-8" data-i18n="price_note">Payments are made with USDT on the TRON (TRC20) network. We verify each transaction manually. No credit card needed.</p>
+  </section>
+
+  <section id="faq" class="py-20 bg-white/[.02]">
+    <div class="max-w-3xl mx-auto px-5">
+      <h2 class="text-3xl font-bold text-center mb-10" data-i18n="faq_h">FAQ</h2>
+      <div class="space-y-3">
+        <details class="glass rounded-xl p-5"><summary class="font-semibold cursor-pointer" data-i18n="q1">How do I pay?</summary><p class="text-gray-400 mt-3" data-i18n="a1">From the app, choose Pro or Life, use the TRC20 address from your Trust Wallet, send the exact USDT amount, then paste your transaction hash for review. Your owner confirms it and your plan updates.</p></details>
+        <details class="glass rounded-xl p-5"><summary class="font-semibold cursor-pointer" data-i18n="q2">Is my data private?</summary><p class="text-gray-400 mt-3" data-i18n="a2">Your account data is stored privately. We never sell your data. You can request deletion at any time.</p></details>
+        <details class="glass rounded-xl p-5"><summary class="font-semibold cursor-pointer" data-i18n="q3">Does it work in Arabic and English?</summary><p class="text-gray-400 mt-3" data-i18n="a3">Yes. Switch languages at any time. The AI responds in the language you choose.</p></details>
+        <details class="glass rounded-xl p-5"><summary class="font-semibold cursor-pointer" data-i18n="q4">Can AI guarantee my income or success?</summary><p class="text-gray-400 mt-3" data-i18n="a4">No. LifeOS AI helps you organize your time and build better routines. It is honest and never promises income, sales, or outcomes that depend on you.</p></details>
+      </div>
+    </div>
+  </section>
+
+  <footer class="border-t border-white/10 py-10 text-center text-gray-500 text-sm">
+    <p>© 2026 LifeOS AI · <span data-i18n="foot">Honest. Private. Built to help you live better.</span></p>
+  </footer>
+</div>
+
+<script>
+const I18N = {
+  en: {
+    nav_features:"Features", nav_how:"How it works", nav_pricing:"Pricing", nav_faq:"FAQ", nav_start:"Get Started",
+    hero_badge:"AI life architect", hero_t1:"Organize your life.", hero_t2:"Let AI do the work.",
+    hero_p:"LifeOS AI builds your daily and weekly routine, solves productivity problems, and keeps your work, health, family and growth in balance — in Arabic and English.",
+    hero_cta:"Start free", hero_cta2:"Upgrade with USDT", hero_n1:"Private", hero_n2:"Your data stays yours", hero_n3:"AR / EN",
+    card_title:"Today", card_focus:"Focus score", card_tasks:"Tasks", card_balance:"Life balance", card_streak:"Streak",
+    feat_h:"One AI. Every part of your life.", feat_p:"Tasks, habits, calendar, and goals — plus an AI that listens and builds a plan for you.",
+    f1_t:"AI problem solver", f1_p:'Tell it "I keep skipping the gym" and it turns that into a concrete schedule.',
+    f2_t:"Smart day builder", f2_p:"Builds your best daily and weekly routine around your energy and goals.",
+    f3_t:"Life balance", f3_p:"Tracks work, health, relationships and growth so nothing is neglected.",
+    f4_t:"Tasks & habits", f4_p:"Manage everything in one place with priorities and weekly streaks.",
+    f5_t:"Voice to action", f5_p:"Speak your thoughts and let the assistant turn them into tasks and reminders.",
+    f6_t:"Pay with crypto", f6_p:"Upgrade your plan by sending USDT (TRC20) from your Trust Wallet. Simple and fast.",
+    how_h:"From chaos to clarity", how1_t:"Sign up", how1_p:"Create your account and pick Arabic or English.",
+    how2_t:"Talk to AI", how2_p:"Tell it your goals and problems. It builds your routine.",
+    how3_t:"Live it daily", how3_p:"Follow the plan, check tasks, build habits, adjust anytime.",
+    price_h:"Simple pricing", price_p:"Start free. Upgrade with USDT when you're ready.", p_free:"Free", p_free_btn:"Start Free",
+    pf1:"Tasks & habits", pf2:"3 AI chats per day", pf3:"Arabic / English",
+    p_pop:"Most popular", p_pro:"Pro", p_pro_btn:"Upgrade with USDT", pp1:"Unlimited AI chats", pp2:"Smart scheduling", pp3:"Problem solver AI", pp4:"Life balance tracking",
+    p_life:"Life", p_life_btn:"Go Life", pl1:"Everything in Pro", pl2:"Priority support", pl3:"Advanced AI planning",
+    price_note:"Payments are made with USDT on the TRON (TRC20) network. We verify each transaction manually. No credit card needed.",
+    faq_h:"FAQ", q1:"How do I pay?", a1:"From the app, choose Pro or Life, use the TRC20 address from your Trust Wallet, send the exact USDT amount, then paste your transaction hash for review. Your owner confirms it and your plan updates.",
+    q2:"Is my data private?", a2:"Your account data is stored privately. We never sell your data. You can request deletion at any time.",
+    q3:"Does it work in Arabic and English?", a3:"Yes. Switch languages at any time. The AI responds in the language you choose.",
+    q4:"Can AI guarantee my income or success?", a4:"No. LifeOS AI helps you organize your time and build better routines. It is honest and never promises income, sales, or outcomes that depend on you.",
+    foot:"Honest. Private. Built to help you live better."
+  },
+  ar: {
+    nav_features:"المميزات", nav_how:"كيف تعمل", nav_pricing:"الأسعار", nav_faq:"الأسئلة", nav_start:"ابدأ الآن",
+    hero_badge:"أرشيتكت حياة ذكي", hero_t1:"نظّم حياتك.", hero_t2:"خلّي الذكاء يعمل.",
+    hero_p:"LifeOS AI يبني روتينك اليومي والأسبوعي، يحل مشاكل الإنتاجية، ويوازن بين العمل والصحة والعائلة والنمو — بالعربية والإنجليزية.",
+    hero_cta:"ابدأ مجاناً", hero_cta2:"اشترك بـ USDT", hero_n1:"خصوصية", hero_n2:"بياناتك ملكك", hero_n3:"عربي / EN",
+    card_title:"اليوم", card_focus:"درجة التركيز", card_tasks:"المهام", card_balance:"توازن الحياة", card_streak:"الاستمرارية",
+    feat_h:"ذكاء واحد. كل جوانب حياتك.", feat_p:"مهام وعادات وتقويم وأهداف — مع ذكاء يسمعك ويبني لك خطة.",
+    f1_t:"حل المشاكل بالذكاء", f1_p:'قل له "أنا دايماً بتخطي الجيم" فيحوّلها لجدول عملي.',
+    f2_t:"باني اليوم الذكي", f2_p:"يبني أفضل روتين يومي وأسبوعي حسب طاقتك وأهدافك.",
+    f3_t:"توازن الحياة", f3_p:"يتتبع العمل والصحة والعلاقات والنمو حتى لا تهمل شيئاً.",
+    f4_t:"مهام وعادات", f4_p:"أنجز كل شيء من مكان واحد مع أولويات وسلاسل أسبوعية.",
+    f5_t:"بالكلام إلى فعل", f5_p:"تكلم بفكرتك وحوّلها المساعد إلى مهام وتذكيرات.",
+    f6_t:"ادفع بالكريبتو", f6_p:"طور خطتك بإرسال USDT (TRC20) من محفظة Trust Wallet. بسيط وسريع.",
+    how_h:"من الفوضى إلى الوضوح", how1_t:"سجّل", how1_p:"أنشئ حسابك واختر العربية أو الإنجليزية.",
+    how2_t:"احكي مع الذكاء", how2_p:"احكي له أهدافك ومشاكلك، فيبني روتينك.",
+    how3_t:"عشه يومياً", how3_p:"اتبع الخطة، أنجز المهام، ابنِ العادات، وعدّل في أي وقت.",
+    price_h:"أسعار بسيطة", price_p:"ابدأ مجاناً. طوّر لاحقاً بـ USDT.", p_free:"مجاني", p_free_btn:"ابدأ مجاناً",
+    pf1:"مهام وعادات", pf2:"٣ محادثات ذكاء يومياً", pf3:"عربي / إنجليزي",
+    p_pop:"الأكثر شعبية", p_pro:"احترافي", p_pro_btn:"اشترك بـ USDT", pp1:"محادثات ذكاء غير محدودة", pp2:"جدولة ذكية", pp3:"ذكاء حل المشاكل", pp4:"تتبع توازن الحياة",
+    p_life:"حياة", p_life_btn:"اختر حياة", pl1:"كل ميزات الاحترافي", pl2:"دعم أولوية", pl3:"تخطيط ذكاء متقدم",
+    price_note:"الدفع يتم بـ USDT على شبكة TRON (TRC20). نتحقق من كل عملية يدوياً. لا حاجة لبطاقة ائتمان.",
+    faq_h:"الأسئلة", q1:"كيف أدفع؟", a1:"من داخل التطبيق اختر احترافي أو حياة، استخدم عنوان TRC20 من محفظة Trust Wallet، أرسل مبلغ USDT المحدد، ثم الصق Hash المعاملة للمراجعة. يؤكدها المالك وتُفعّل خطتك.",
+    q2:"هل بياناتي خاصة؟", a2:"تُحفظ بيانات حسابك بشكل خاص. لا نبيع بياناتك أبداً. يمكنك طلب الحذف في أي وقت.",
+    q3:"هل يعمل بالعربية والإنجليزية؟", a3:"نعم. بدّل اللغة في أي وقت، ويستجيب الذكاء باللغة التي تختارها.",
+    q4:"هل يستطيع الذكاء ضمان دخلي أو نجاحي؟", a4:"لا. يساعدك LifeOS AI على تنظيم وقتك وبناء روتين أفضل. صادق ولا يعد أبداً بدخل أو مبيعات أو نتائج تعتمد عليك.",
+    foot:"صادق. خاص. مصمم لمساعدتك على عيش حياة أفضل."
+  }
+};
+
+let lang = localStorage.getItem('lifeos_lang') || 'en';
+function applyLang() {
+  document.documentElement.lang = lang;
+  document.documentElement.dir = lang === 'ar' ? 'rtl' : 'ltr';
+  const dict = I18N[lang];
+  document.querySelectorAll('[data-i18n]').forEach(el => {
+    const k = el.getAttribute('data-i18n');
+    if (dict[k]) el.textContent = dict[k];
+  });
+  document.getElementById('langBtn').textContent = lang === 'ar' ? 'English' : 'العربية';
+  lucide.createIcons();
+}
+function toggleLang() { lang = lang === 'ar' ? 'en' : 'ar'; localStorage.setItem('lifeos_lang', lang); applyLang(); }
+applyLang();
+</script>
+</body>
+</html>

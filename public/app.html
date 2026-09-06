@@ -1,0 +1,273 @@
+<!DOCTYPE html>
+<html lang="en" dir="ltr">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>LifeOS AI — App</title>
+<script src="https://cdn.tailwindcss.com"></script>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Cairo:wght@400;600;700;800&display=swap" rel="stylesheet"/>
+<script src="https://unpkg.com/lucide@latest"></script>
+<style>
+  *{font-family:'Inter',sans-serif}
+  html[dir="rtl"] *{font-family:'Cairo',sans-serif}
+  body{background:#0b0b14;color:#fff}
+  .glass{background:rgba(30,30,50,.6);backdrop-filter:blur(12px);border:1px solid rgba(255,255,255,.08)}
+  .side:hover{background:rgba(124,58,237,.18)}
+  .msg-u{background:linear-gradient(135deg,#7c3aed,#3b82f6)}
+  .msg-a{background:rgba(255,255,255,.06)}
+  .fade{animation:fadeIn .25s ease}
+  @keyframes fadeIn{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:none}}
+  .dot{animation:bounce 1.2s infinite}
+  .dot:nth-child(2){animation-delay:.2s}.dot:nth-child(3){animation-delay:.4s}
+  @keyframes bounce{0%,60%,100%{transform:translateY(0)}30%{transform:translateY(-8px)}}
+</style>
+</head>
+<body class="h-screen overflow-hidden">
+<div class="hidden flex h-full">
+
+  <!-- Auth -->
+  <div id="auth" class="fixed inset-0 z-50 flex items-center justify-center bg-[#0b0b14] p-4">
+    <div class="glass rounded-2xl p-8 w-full max-w-md">
+      <div class="text-center mb-6">
+        <i data-lucide="brain" class="w-12 h-12 text-purple-400 mx-auto mb-2"></i>
+        <h1 class="text-2xl font-bold">LifeOS <span class="text-purple-400">AI</span></h1>
+        <p id="authSub" class="text-gray-400 mt-1">Your AI life architect</p>
+      </div>
+      <div id="loginForm">
+        <input id="email" placeholder="Email" class="w-full bg-white/5 border border-white/10 rounded-lg px-4 py-3 mb-3 focus:outline-none focus:border-purple-500"/>
+        <input id="password" type="password" placeholder="Password" class="w-full bg-white/5 border border-white/10 rounded-lg px-4 py-3 mb-4 focus:outline-none focus:border-purple-500"/>
+        <button onclick="doLogin()" class="w-full bg-purple-600 hover:bg-purple-700 py-3 rounded-lg font-semibold">Log in</button>
+        <p class="text-center text-gray-400 mt-4 text-sm">No account? <button onclick="showRegister()" class="text-purple-400 underline">Create one</button></p>
+      </div>
+      <div id="regForm" class="hidden">
+        <input id="rName" placeholder="Name" class="w-full bg-white/5 border border-white/10 rounded-lg px-4 py-3 mb-3 focus:outline-none focus:border-purple-500"/>
+        <input id="rEmail" placeholder="Email" class="w-full bg-white/5 border border-white/10 rounded-lg px-4 py-3 mb-3 focus:outline-none focus:border-purple-500"/>
+        <input id="rPassword" type="password" placeholder="Password (min 6)" class="w-full bg-white/5 border border-white/10 rounded-lg px-4 py-3 mb-4 focus:outline-none focus:border-purple-500"/>
+        <button onclick="doRegister()" class="w-full bg-purple-600 hover:bg-purple-700 py-3 rounded-lg font-semibold">Create account</button>
+        <p class="text-center text-gray-400 mt-4 text-sm">Have account? <button onclick="showLogin()" class="text-purple-400 underline">Log in</button></p>
+      </div>
+      <p id="authErr" class="text-red-400 text-center text-sm mt-3 min-h-4"></p>
+      <button onclick="toggleLang()" id="langBtn" class="mt-2 w-full text-gray-400 text-sm hover:text-white">العربية</button>
+    </div>
+  </div>
+
+  <!-- Main -->
+  <div id="main" class="hidden h-full">
+    <div class="flex h-full">
+      <aside class="w-60 shrink-0 glass border-r border-white/10 flex flex-col">
+        <div class="p-5 flex items-center gap-2"><i data-lucide="brain" class="w-7 h-7 text-purple-400"></i><span class="font-bold text-lg">LifeOS<span class="text-purple-400">AI</span></span></div>
+        <nav class="flex-1 px-3 space-y-1">
+          <a onclick="go('dashboard')" class="side flex items-center gap-3 px-3 py-2.5 rounded-lg cursor-pointer text-sm"><i data-lucide="layout-dashboard" class="w-5 h-5"></i><span data-k="dash">Dashboard</span></a>
+          <a onclick="go('chat')" class="side flex items-center gap-3 px-3 py-2.5 rounded-lg cursor-pointer text-sm"><i data-lucide="message-square" class="w-5 h-5"></i><span data-k="chat">AI Assistant</span></a>
+          <a onclick="go('tasks')" class="side flex items-center gap-3 px-3 py-2.5 rounded-lg cursor-pointer text-sm"><i data-lucide="check-square" class="w-5 h-5"></i><span data-k="tasks">Tasks</span></a>
+          <a onclick="go('habits')" class="side flex items-center gap-3 px-3 py-2.5 rounded-lg cursor-pointer text-sm"><i data-lucide="trending-up" class="w-5 h-5"></i><span data-k="habits">Habits</span></a>
+          <a onclick="go('pricing')" class="side flex items-center gap-3 px-3 py-2.5 rounded-lg cursor-pointer text-sm"><i data-lucide="wallet" class="w-5 h-5"></i><span data-k="upgrade">Upgrade</span></a>
+        </nav>
+        <div class="p-4 border-t border-white/10">
+          <div class="glass rounded-lg p-3 text-sm">
+            <div class="text-gray-400">Plan: <span id="planLabel" class="text-purple-400 font-semibold">Free</span></div>
+            <div class="text-xs text-gray-500 mt-1" id="planNote">3 AI chats/day</div>
+          </div>
+          <div class="mt-2 flex items-center justify-between">
+            <button onclick="toggleLang()" id="langBtn2" class="text-gray-400 text-xs hover:text-white">العربية</button>
+            <button onclick="logout()" class="text-red-400 text-xs hover:text-red-300">Logout</button>
+          </div>
+        </div>
+      </aside>
+
+      <main class="flex-1 overflow-y-auto p-8">
+        <h1 id="pageTitle" class="text-3xl font-bold mb-6">Dashboard</h1>
+
+        <!-- Dashboard -->
+        <div id="s-dashboard">
+          <div class="grid md:grid-cols-4 gap-4 mb-6">
+            <div class="glass rounded-xl p-5"><div class="text-gray-400 text-sm" data-k="t_tasks">Tasks today</div><div id="dTasks" class="text-3xl font-bold text-blue-400 mt-1">0/0</div></div>
+            <div class="glass rounded-xl p-5"><div class="text-gray-400 text-sm" data-k="t_habits">Habits done</div><div id="dHabits" class="text-3xl font-bold text-green-400 mt-1">0/0</div></div>
+            <div class="glass rounded-xl p-5"><div class="text-gray-400 text-sm" data-k="t_plan">Your plan</div><div id="dPlan" class="text-3xl font-bold text-purple-400 mt-1">Free</div></div>
+            <div class="glass rounded-xl p-5"><div class="text-gray-400 text-sm" data-k="t_ai">AI chats left</div><div id="dAi" class="text-3xl font-bold text-orange-400 mt-1">3</div></div>
+          </div>
+          <div class="glass rounded-xl p-6">
+            <h3 class="font-bold mb-3 flex items-center gap-2"><i data-lucide="sparkles" class="w-5 h-5 text-purple-400"></i><span data-k="d_ai_hint">Ask AI to build your day</span></h3>
+            <p class="text-gray-400 text-sm" data-k="d_ai_p">Go to the AI Assistant and tell it your goals or problems. It will build a practical plan for you.</p>
+            <button onclick="go('chat')" class="btn mt-4 bg-purple-600 hover:bg-purple-700 px-5 py-2.5 rounded-full text-sm font-semibold" data-k="d_ai_btn">Open AI Assistant</button>
+          </div>
+        </div>
+
+        <!-- Chat -->
+        <div id="s-chat" class="hidden">
+          <div class="glass rounded-xl flex flex-col h-[68vh] p-4">
+            <div id="chatBox" class="flex-1 overflow-y-auto space-y-4 mb-3"></div>
+            <div id="typing" class="hidden flex items-center gap-1 mb-2"><span class="w-2 h-2 bg-purple-400 rounded-full dot"></span><span class="w-2 h-2 bg-purple-400 rounded-full dot"></span><span class="w-2 h-2 bg-purple-400 rounded-full dot"></span></div>
+            <div class="flex gap-2">
+              <input id="chatInput" placeholder="Tell me your goal or problem..." class="flex-1 bg-white/5 border border-white/10 rounded-full px-5 py-3 focus:outline-none focus:border-purple-500" onkeydown="if(event.key==='Enter')sendChat()"/>
+              <button onclick="sendChat()" class="bg-purple-600 hover:bg-purple-700 px-5 rounded-full"><i data-lucide="send" class="w-5 h-5"></i></button>
+            </div>
+          </div>
+        </div>
+
+        <!-- Tasks -->
+        <div id="s-tasks" class="hidden">
+          <div class="flex items-center justify-between mb-4">
+            <input id="taskInput" placeholder="New task..." class="flex-1 bg-white/5 border border-white/10 rounded-lg px-4 py-2.5 focus:outline-none focus:border-purple-500 mr-3"/>
+            <button onclick="addTask()" class="bg-purple-600 hover:bg-purple-700 px-5 py-2.5 rounded-lg text-sm font-semibold"><span data-k="add">Add</span></button>
+          </div>
+          <div id="taskList" class="space-y-2"></div>
+        </div>
+
+        <!-- Habits -->
+        <div id="s-habits" class="hidden">
+          <div class="flex items-center justify-between mb-4">
+            <input id="habitInput" placeholder="New habit..." class="flex-1 bg-white/5 border border-white/10 rounded-lg px-4 py-2.5 focus:outline-none focus:border-purple-500 mr-3"/>
+            <button onclick="addHabit()" class="bg-purple-600 hover:bg-purple-700 px-5 py-2.5 rounded-lg text-sm font-semibold"><span data-k="add">Add</span></button>
+          </div>
+          <div id="habitList" class="grid md:grid-cols-3 gap-4"></div>
+        </div>
+
+        <!-- Pricing -->
+        <div id="s-pricing" class="hidden">
+          <p class="text-gray-400 mb-6" data-k="price_intro">Upgrade your plan by sending USDT (TRC20) from your Trust Wallet. We verify each payment manually.</p>
+          <div class="grid md:grid-cols-2 gap-6 max-w-3xl">
+            <div class="glass rounded-2xl p-7 border border-purple-500">
+              <h3 class="text-xl font-bold">Pro</h3><div class="text-3xl font-bold mt-1">$9.99<span class="text-gray-400 text-base">/mo</span></div>
+              <ul class="text-gray-300 text-sm space-y-1 my-4">
+                <li>• <span data-k="pp1">Unlimited AI chats</span></li><li>• <span data-k="pp2">Smart scheduling</span></li><li>• <span data-k="pp3">Problem solver AI</span></li>
+              </ul>
+              <button onclick="openCheckout('pro')" class="btn w-full bg-purple-600 hover:bg-purple-700 py-2.5 rounded-full font-semibold" data-k="buy_pro">Upgrade with USDT</button>
+            </div>
+            <div class="glass rounded-2xl p-7">
+              <h3 class="text-xl font-bold">Life</h3><div class="text-3xl font-bold mt-1">$19.99<span class="text-gray-400 text-base">/mo</span></div>
+              <ul class="text-gray-300 text-sm space-y-1 my-4">
+                <li>• <span data-k="ll1">Everything in Pro</span></li><li>• <span data-k="ll2">Priority support</span></li><li>• <span data-k="ll3">Advanced AI planning</span></li>
+              </ul>
+              <button onclick="openCheckout('life')" class="btn w-full bg-purple-600 hover:bg-purple-700 py-2.5 rounded-full font-semibold" data-k="buy_life">Go Life</button>
+            </div>
+          </div>
+        </div>
+      </main>
+    </div>
+  </div>
+</div>
+
+<!-- checkout modal -->
+<div id="checkout" class="hidden fixed inset-0 z-[60] bg-black/70 flex items-center justify-center p-4">
+  <div class="bg-[#141422] rounded-2xl p-6 w-full max-w-md max-h-[90vh] overflow-y-auto">
+    <div class="flex items-center justify-between mb-4"><h3 id="coTitle" class="text-xl font-bold">Checkout</h3><button onclick="closeCheckout()" class="text-gray-400 hover:text-white text-2xl">&times;</button></div>
+    <div class="bg-white/5 rounded-xl p-4 mb-4">
+      <div class="flex justify-between text-sm text-gray-300"><span>Asset:</span><span class="font-semibold">USDT (TRC20)</span></div>
+      <div class="flex justify-between text-sm text-gray-300 mt-1"><span>Amount:</span><span class="font-semibold" id="coAmount">—</span></div>
+      <div class="flex justify-between text-sm text-gray-300 mt-1"><span>Network:</span><span class="font-semibold">TRON TRC20</span></div>
+    </div>
+    <div class="flex gap-4">
+      <div class="bg-white rounded-xl p-2 w-32 h-32 shrink-0"><img id="coQR" alt="QR" class="w-full h-full"/></div>
+      <div class="flex-1">
+        <div class="text-xs text-gray-400 mb-1" data-k="send_to">Send exact amount to:</div>
+        <textarea id="coAddress" readonly class="w-full h-20 bg-white/5 border border-white/10 rounded-lg p-2 text-xs break-all"></textarea>
+        <button onclick="copyAddr()" class="text-xs text-purple-400 hover:text-purple-300">Copy address</button>
+      </div>
+    </div>
+    <div class="mt-4">
+      <label class="text-xs text-gray-400" data-k="tx_label">Transaction hash (TX)</label>
+      <input id="coTx" placeholder="e.g. a1b2c3..." class="w-full bg-white/5 border border-white/10 rounded-lg px-3 py-2.5 text-sm mt-1 focus:outline-none focus:border-purple-500"/>
+      <button onclick="submitPayment()" class="btn w-full bg-green-600 hover:bg-green-700 mt-3 py-2.5 rounded-lg font-semibold" data-k="submit_pay">I paid — submit for review</button>
+      <p id="coStatus" class="text-center text-sm mt-2 text-gray-400"></p>
+    </div>
+  </div>
+</div>
+
+<script>
+const I18 = {
+  en:{ dash:"Dashboard", chat:"AI Assistant", tasks:"Tasks", habits:"Habits", upgrade:"Upgrade", add:"Add", buy_pro:"Upgrade with USDT", buy_life:"Go Life",
+    t_tasks:"Tasks today", t_habits:"Habits done", t_plan:"Your plan", t_ai:"AI chats left",
+    d_ai_hint:"Ask AI to build your day", d_ai_p:"Go to the AI Assistant and tell it your goals or problems. It will build a practical plan for you.", d_ai_btn:"Open AI Assistant",
+    pp1:"Unlimited AI chats", pp2:"Smart scheduling", pp3:"Problem solver AI", ll1:"Everything in Pro", ll2:"Priority support", ll3:"Advanced AI planning",
+    price_intro:"Upgrade your plan by sending USDT (TRC20) from your Trust Wallet. We verify each payment manually.",
+    send_to:"Send exact amount to:", tx_label:"Transaction hash (TX)", submit_pay:"I paid — submit for review",
+    free_chat_left:"chats left today", done:"Done", target:"target", t_free:"Free", greeting:"Welcome", upd:"Upgrade to Pro", title_dash:"Dashboard", title_chat:"AI Assistant", title_tasks:"Tasks", title_habits:"Habits", title_pricing:"Upgrade" },
+  ar:{ dash:"الرئيسية", chat:"المساعد الذكي", tasks:"المهام", habits:"العادات", upgrade:"الاشتراك", add:"إضافة", buy_pro:"اشترك بـ USDT", buy_life:"اختر حياة",
+    t_tasks:"مهام اليوم", t_habits:"العادات المنجزة", t_plan:"خطتك", t_ai:"محادثات الذكاء المتبقية",
+    d_ai_hint:"اطلب من الذكاء بناء يومك", d_ai_p:"اذهب إلى المساعد الذكي واحكي له أهدافك ومشاكلك، وسيبني لك خطة عملية.", d_ai_btn:"افتح المساعد الذكي",
+    pp1:"محادثات ذكاء غير محدودة", pp2:"جدولة ذكية", pp3:"ذكاء حل المشاكل", ll1:"كل ميزات الاحترافي", ll2:"دعم أولوية", ll3:"تخطيط ذكاء متقدم",
+    price_intro:"طوّر خطتك بإرسال USDT (TRC20) من محفظة Trust Wallet. نتحقق من كل دفعة يدوياً.",
+    send_to:"أرسل المبلغ بالضبط إلى:", tx_label:"Hash المعاملة (TX)", submit_pay:"دفعت — أرسل للمراجعة",
+    free_chat_left:"محادثات متبقية اليوم", done:"تم", target:"الهدف", t_free:"مجاني", greeting:"أهلاً", upd:"طوّر إلى برو", title_dash:"الرئيسية", title_chat:"المساعد الذكي", title_tasks:"المهام", title_habits:"العادات", title_pricing:"الاشتراك" }
+};
+let lang = localStorage.getItem('lifeos_lang') || 'en';
+let token = localStorage.getItem('lifeos_token') || '';
+let user = null, tasks = [], habits = [];
+function t(k){ return (I18[lang]||I18.en)[k] || k; }
+function applyLang(){ document.documentElement.lang=lang; document.documentElement.dir=lang==='ar'?'rtl':'ltr'; document.querySelectorAll('[data-k]').forEach(e=>{ e.textContent=t(e.getAttribute('data-k')); }); document.getElementById('langBtn').textContent = lang==='ar'?'English':'العربية'; document.getElementById('langBtn2').textContent = lang==='ar'?'English':'العربية'; lucide.createIcons(); }
+function toggleLang(){ lang=lang==='ar'?'en':'ar'; localStorage.setItem('lifeos_lang',lang); applyLang(); refreshUI(); }
+
+// auth
+function showRegister(){ document.getElementById('loginForm').classList.add('hidden'); document.getElementById('regForm').classList.remove('hidden'); authErr(''); }
+function showLogin(){ document.getElementById('regForm').classList.add('hidden'); document.getElementById('loginForm').classList.remove('hidden'); authErr(''); }
+function authErr(m){ document.getElementById('authErr').textContent = m || ''; }
+async function doLogin(){ const email=val('email'),password=val('password'); if(!email||!password)return authErr(lang==='ar'?'أدخل الإيميل وكلمة المرور':'Enter email and password'); authErr(''); try{ const r=await api('/api/auth/login',{email,password}); setAuth(r); }catch(e){ authErr(e.message); } }
+async function doRegister(){ const name=val('rName'),email=val('rEmail'),password=val('rPassword'); if(!name||!email||!password)return authErr(lang==='ar'?'أكمل البيانات':'Fill all fields'); authErr(''); try{ const r=await api('/api/auth/register',{name,email,password,locale:lang}); setAuth(r); }catch(e){ authErr(e.message); } }
+function setAuth(r){ token=r.token; user=r.user; applyLang(); localStorage.setItem('lifeos_token',token); localStorage.setItem('lifeos_user',JSON.stringify(user)); document.getElementById('auth').classList.add('hidden'); document.getElementById('main').classList.remove('hidden'); refreshUI(); }
+function logout(){ token=''; user=null; localStorage.removeItem('lifeos_token'); localStorage.removeItem('lifeos_user'); location.reload(); }
+
+function val(id){ return document.getElementById(id).value.trim(); }
+async function api(path, body, method='POST'){ const res=await fetch(path,{method,headers:{'Content-Type':'application/json',...(token?{Authorization:'Bearer '+token}:{})},body:body?JSON.stringify(body):undefined}); const data=await res.json().catch(()=>({})); if(!res.ok){ if(data.error==='free_daily_limit') throw new Error(lang==='ar'?'وصلت للحد المجاني اليوم':'You reached the free daily AI limit.'); throw new Error(data.error||'Error'); } return data; }
+
+// UI
+function go(name){ ['dashboard','chat','tasks','habits','pricing'].forEach(n=>{ document.getElementById('s-'+n).classList.toggle('hidden', n!==name); }); document.getElementById('pageTitle').textContent = t('title_'+name); lucide.createIcons(); }
+async function refreshUI(){
+  if(!token) return;
+  if(!user){ const r=await api('/api/me',null,'GET'); user=r.user; }
+  applyLang();
+  const [ta,ha,conf]=await Promise.all([api('/api/tasks',null,'GET'),api('/api/habits',null,'GET'),api('/api/config/public',null,'GET')]);
+  tasks=ta; habits=ha;
+  document.getElementById('dTasks').textContent = tasks.filter(x=>x.done).length+'/'+tasks.length;
+  document.getElementById('dHabits').textContent = habits.reduce((s,h)=>s+Math.min(h.completed_today,h.target),0)+'/'+habits.reduce((s,h)=>s+h.target,0);
+  document.getElementById('dPlan').textContent = user.plan==='free'?'Free':user.plan;
+  document.getElementById('planLabel').textContent = user.plan==='free'?'Free':user.plan;
+  document.getElementById('planNote').textContent = user.plan==='free'? t('free_chat_left')+' · 3' : (user.plan==='life'?'Life':'Pro');
+  renderTasks(); renderHabits();
+  const used = JSON.parse(localStorage.getItem('lifeos_chat_used_'+new Date().toDateString())||'0');
+  document.getElementById('dAi').textContent = user.plan==='free'? Math.max(0,3-used) : '∞';
+  if(!document.querySelector('#chatBox .msg-a')){ const ai=makeMsg('<b>A</b>'); }
+}
+function renderTasks(){ const el=document.getElementById('taskList'); el.innerHTML=tasks.map(x=>`
+  <div class="flex items-center gap-3 glass rounded-lg px-4 py-3">
+    <input type="checkbox" ${x.done?'checked':''} onchange="toggleTask(${x.id})" class="w-5 h-5 rounded"/>
+    <div class="flex-1 ${x.done?'line-through opacity-50':''}">${escape(x.text)}</div>
+    <span class="text-xs px-2 py-1 rounded ${x.priority==='high'?'bg-red-500/20 text-red-400':x.priority==='medium'?'bg-yellow-500/20 text-yellow-400':'bg-green-500/20 text-green-400'}">${x.priority}</span>
+    <button onclick="delTask(${x.id})" class="text-red-400 hover:text-red-300 text-xs">✕</button>
+  </div>`).join('');
+}
+async function addTask(){ const text=val('taskInput'); if(!text)return; await api('/api/tasks',{text,priority:'medium'}); document.getElementById('taskInput').value=''; tasks=await api('/api/tasks',null,'GET'); renderTasks(); refreshUI(); }
+async function toggleTask(id){ await api('/api/tasks/'+id,{done: tasks.find(x=>x.id===id).done?false:true},'PATCH'); tasks=await api('/api/tasks',null,'GET'); renderTasks(); refreshUI(); }
+async function delTask(id){ await api('/api/tasks/'+id,null,'DELETE'); tasks=await api('/api/tasks',null,'GET'); renderTasks(); refreshUI(); }
+function renderHabits(){ const el=document.getElementById('habitList'); el.innerHTML=habits.map(x=>`
+  <div class="glass rounded-xl p-5">
+    <div class="flex items-center justify-between mb-2"><div class="font-semibold">${escape(x.name)}</div><button onclick="delHabit(${x.id})" class="text-red-400 text-xs">✕</button></div>
+    <div class="flex items-end justify-between">
+      <div><div class="text-2xl font-bold text-green-400">${x.completed_today}/${x.target}</div><div class="text-xs text-gray-500">${t('target')}</div></div>
+      <div class="w-full h-2 bg-white/10 rounded-full mt-3"><div class="h-2 bg-green-400 rounded-full" style="width:${Math.min(100,x.completed_today/x.target*100)}%"></div></div>
+    </div>
+    <button onclick="logHabit(${x.id})" class="w-full mt-3 bg-green-600 hover:bg-green-700 py-2 rounded-lg text-sm font-semibold">${t('done')} +1</button>
+  </div>`).join('');
+}
+async function addHabit(){ const name=val('habitInput'); if(!name)return; await api('/api/habits',{name,target:1}); document.getElementById('habitInput').value=''; habits=await api('/api/habits',null,'GET'); renderHabits(); refreshUI(); }
+async function logHabit(id){ await api('/api/habits/'+id+'/complete',{},'POST'); habits=await api('/api/habits',null,'GET'); renderHabits(); refreshUI(); }
+async function delHabit(id){ await api('/api/habits/'+id,null,'DELETE'); habits=await api('/api/habits',null,'GET'); renderHabits(); refreshUI(); }
+
+// chat
+function makeMsg(txt,who){ const c=document.getElementById('chatBox'); const d=document.createElement('div'); d.className='flex fade '+(who==='user'?'justify-end':''); d.innerHTML=`<div class="max-w-[80%] ${who==='user'?'msg-u':'msg-a'} rounded-2xl px-4 py-2.5 whitespace-pre-line">${txt}</div>`; c.appendChild(d); c.scrollTop=c.scrollHeight; return d; }
+async function sendChat(){ const inp=document.getElementById('chatInput'); const m=inp.value.trim(); if(!m)return; makeMsg(escape(m),'user'); inp.value=''; document.getElementById('typing').classList.remove('hidden'); try{ const r=await api('/api/chat',{message:m}); const used=JSON.parse(localStorage.getItem('lifeos_chat_used_'+new Date().toDateString())||'0'); localStorage.setItem('lifeos_chat_used_'+new Date().toDateString(), JSON.stringify(used+1)); document.getElementById('typing').classList.add('hidden'); makeMsg(r.reply,'ai'); refreshUI(); }catch(e){ document.getElementById('typing').classList.add('hidden'); makeMsg('⚠ '+e.message,'ai'); } }
+
+// checkout
+let currentPayment=null;
+async function openCheckout(plan){ const conf=await api('/api/config/public',null,'GET'); const amount=conf.prices[plan]; document.getElementById('coTitle').textContent = (plan==='pro'?'Pro':'Life')+' · $'+amount; document.getElementById('coAmount').textContent='$'+amount.toFixed(2); document.getElementById('coTx').value=''; document.getElementById('coStatus').textContent=''; const r=await api('/api/checkout',{plan,email:user.email}); currentPayment=r; document.getElementById('coAddress').value=r.address; document.getElementById('coQR').src=r.qr; document.getElementById('checkout').classList.remove('hidden'); }
+function closeCheckout(){ document.getElementById('checkout').classList.add('hidden'); }
+function copyAddr(){ navigator.clipboard.writeText(document.getElementById('coAddress').value); document.getElementById('coStatus').textContent=lang==='ar'?'تم النسخ':'Copied'; }
+async function submitPayment(){ const tx=val('coTx'); if(!tx)return; try{ await api('/api/payments/'+currentPayment.payment_id+'/claim',{tx_hash:tx}); document.getElementById('coStatus').textContent=lang==='ar'?'أُرسل للمراجعة. سيتفعّل اشتراكك بعد التأكيد.':'Submitted. Your plan activates after confirmation.'; }catch(e){ document.getElementById('coStatus').textContent='⚠ '+e.message; } }
+
+function escape(s){ return String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])); }
+
+// init
+(async function init(){ applyLang(); const saved=localStorage.getItem('lifeos_user'); if(saved) try{user=JSON.parse(saved);}catch{} if(token){ try{ const r=await api('/api/me',null,'GET'); user=r.user; localStorage.setItem('lifeos_user',JSON.stringify(user)); document.getElementById('auth').classList.add('hidden'); document.getElementById('main').classList.remove('hidden'); refreshUI(); }catch(error){ if(String(error).includes('Unauthorized')){ logout(); } } } })();
+</script>
+</body>
+</html>

@@ -1,0 +1,66 @@
+<!DOCTYPE html>
+<html lang="en" dir="ltr">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>LifeOS AI — Owner</title>
+<script src="https://cdn.tailwindcss.com"></script>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet"/>
+<script src="https://unpkg.com/lucide@latest"></script>
+<style>*{font-family:'Inter',sans-serif}body{background:#0b0b14;color:#fff}.glass{background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.08)}</style>
+</head>
+<body class="min-h-screen">
+<div id="login" class="fixed inset-0 flex items-center justify-center p-4">
+  <div class="glass rounded-2xl p-8 w-full max-w-sm">
+    <h1 class="text-2xl font-bold mb-6 text-center">Owner Panel</h1>
+    <input id="email" placeholder="Owner email" class="w-full bg-white/5 border border-white/10 rounded-lg px-4 py-3 mb-3"/>
+    <input id="password" type="password" placeholder="Password" class="w-full bg-white/5 border border-white/10 rounded-lg px-4 py-3 mb-4"/>
+    <button onclick="login()" class="w-full bg-purple-600 hover:bg-purple-700 py-3 rounded-lg font-semibold">Log in</button>
+    <p id="err" class="text-red-400 text-center text-sm mt-2"></p>
+  </div>
+</div>
+
+<div id="panel" class="hidden max-w-6xl mx-auto px-6 py-10">
+  <div class="flex items-center justify-between mb-8">
+    <h1 class="text-3xl font-bold">LifeOS <span class="text-purple-400">Owner</span></h1>
+    <button onclick="logout()" class="text-red-400 text-sm">Logout</button>
+  </div>
+
+  <div class="grid md:grid-cols-4 gap-4 mb-8" id="stats"></div>
+
+  <h2 class="text-xl font-bold mb-3">Payments</h2>
+  <div class="glass rounded-xl overflow-x-auto mb-10">
+    <table class="w-full text-sm text-left">
+      <thead class="border-b border-white/10 text-gray-400"><tr><th class="p-3">ID</th><th class="p-3">Email</th><th class="p-3">Plan</th><th class="p-3">USD</th><th class="p-3">Tx</th><th class="p-3">Status</th><th class="p-3">Action</th></tr></thead>
+      <tbody id="payTable"></tbody>
+    </table>
+  </div>
+
+  <h2 class="text-xl font-bold mb-3">Users</h2>
+  <div class="glass rounded-xl overflow-x-auto">
+    <table class="w-full text-sm text-left">
+      <thead class="border-b border-white/10 text-gray-400"><tr><th class="p-3">ID</th><th class="p-3">Name</th><th class="p-3">Email</th><th class="p-3">Plan</th><th class="p-3">Until</th></tr></thead>
+      <tbody id="userTable"></tbody>
+    </table>
+  </div>
+</div>
+
+<script>
+let token=localStorage.getItem('lifeos_admin_token')||'';
+async function api(path,body,method='POST'){const r=await fetch(path,{method,headers:{'Content-Type':'application/json',...(token?{Authorization:'Bearer '+token}:{})},body:body?JSON.stringify(body):undefined});const d=await r.json().catch(()=>({}));if(!r.ok)throw new Error(d.error||'Error');return d;}
+async function login(){const email=document.getElementById('email').value.trim(),password=document.getElementById('password').value;try{const r=await api('/api/admin/login',{email,password});token=r.token;localStorage.setItem('lifeos_admin_token',token);document.getElementById('login').classList.add('hidden');document.getElementById('panel').classList.remove('hidden');load();}catch(e){document.getElementById('err').textContent=e.message;}}
+function logout(){token='';localStorage.removeItem('lifeos_admin_token');location.reload();}
+async function load(){const [stats,pay,users]=await Promise.all([api('/api/admin/stats',null,'GET'),api('/api/admin/payments',null,'GET'),api('/api/admin/users',null,'GET')]);
+ document.getElementById('stats').innerHTML=[
+  ['Users',stats.users,'text-blue-400'],['Revenue', '$'+stats.revenue_usd.toFixed(2),'text-green-400'],['Confirmed',stats.confirmed_payments,'text-green-300'],['Pending',stats.pending_payments,'text-yellow-400']].map(x=>`<div class="glass rounded-xl p-5"><div class="text-gray-400 text-sm">${x[0]}</div><div class="text-3xl font-bold mt-1 ${x[2]}">${x[1]}</div></div>`).join('');
+ document.getElementById('payTable').innerHTML=pay.map(p=>`<tr class="border-b border-white/5">
+  <td class="p-3">#${p.id}</td><td class="p-3">${p.email||'—'}</td><td class="p-3 capitalize">${p.plan}</td><td class="p-3">$${p.amount_usd.toFixed(2)}</td><td class="p-3 text-xs break-all max-w-40 truncate">${p.tx_hash||'—'}</td><td class="p-3"><span class="px-2 py-1 rounded text-xs ${p.status==='confirmed'?'bg-green-500/20 text-green-400':p.status==='submitted'?'bg-yellow-500/20 text-yellow-400':p.status==='rejected'?'bg-red-500/20 text-red-400':'bg-white/10 text-gray-300'}">${p.status}</span></td>
+  <td class="p-3">${p.status!=='confirmed'?`<button onclick="confirmPay(${p.id})" class="text-green-400 text-xs mr-2">Confirm</button><button onclick="rejectPay(${p.id})" class="text-red-400 text-xs">Reject</button>`:`<button onclick="rejectPay(${p.id})" class="text-red-400 text-xs">Reject</button>`}</td></tr>`).join('');
+ document.getElementById('userTable').innerHTML=users.map(u=>`<tr class="border-b border-white/5"><td class="p-3">${u.id}</td><td class="p-3">${u.name}</td><td class="p-3">${u.email}</td><td class="p-3 capitalize">${u.plan}</td><td class="p-3">${u.plan_until||'—'}</td></tr>`).join('');
+}
+async function confirmPay(id){await api('/api/admin/payments/'+id+'/confirm',{status:'confirmed'});load();}
+async function rejectPay(id){await api('/api/admin/payments/'+id+'/confirm',{status:'rejected'});load();}
+(async function(){if(token){try{await load();document.getElementById('login').classList.add('hidden');document.getElementById('panel').classList.remove('hidden');}catch(e){logout();}}})();
+</script>
+</body>
+</html>
