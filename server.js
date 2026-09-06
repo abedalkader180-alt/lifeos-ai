@@ -1,4 +1,4 @@
-require('dotenv').config();
+require('./src/config');
 const { app } = require('./src/app');
 const db = require('./src/db');
 

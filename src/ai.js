@@ -2,9 +2,19 @@
 // إذا كان AI_API_KEY موجوداً: نستخدم مزوّداً متوافقاً مع OpenAI.
 // إذا لم يكن موجوداً: نستخدم مساعداً داخلياً (regles) يعمل بدون مفتاح.
 
-const AI_ENABLED = process.env.AI_ENABLED === 'true' && !!process.env.AI_API_KEY;
-const AI_BASE_URL = (process.env.AI_BASE_URL || 'https://api.openai.com/v1').replace(/\/$/, '');
-const AI_MODEL = process.env.AI_MODEL || 'gpt-4o-mini';
+const KEY = (process.env.AI_API_KEY || '').trim();
+
+// يكتشف تلقائياً من بداية المفتاح: Groq / OpenRouter / OpenAI
+function detectProvider(key) {
+  if (key.startsWith('gsk_')) return { base: 'https://api.groq.com/openai/v1', model: 'llama-3.3-70b-versatile' };
+  if (key.startsWith('sk-or-')) return { base: 'https://openrouter.ai/api/v1', model: 'openrouter/free' };
+  return { base: 'https://api.openai.com/v1', model: 'gpt-4o-mini' };
+}
+
+const provider = detectProvider(KEY);
+const AI_ENABLED = process.env.AI_ENABLED === 'true' && !!KEY;
+const AI_BASE_URL = (process.env.AI_BASE_URL || provider.base).replace(/\/$/, '');
+const AI_MODEL = process.env.AI_MODEL || provider.model;
 
 async function chat({ user, message, history = [], locale = 'en' }) {
   const system = buildSystemPrompt(user, locale);
