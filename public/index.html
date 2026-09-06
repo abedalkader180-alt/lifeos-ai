@@ -183,6 +183,7 @@
 
   <footer class="border-t border-white/10 py-10 text-center text-gray-500 text-sm">
     <p>© 2026 LifeOS AI · <span data-i18n="foot">Honest. Private. Built to help you live better.</span></p>
+    <p class="mt-2 text-xs text-gray-600"><a href="/privacy.html" class="hover:text-gray-400">Privacy</a> · <a href="/terms.html" class="hover:text-gray-400">Terms</a></p>
   </footer>
 </div>
 
@@ -259,6 +260,7 @@ function applyLang() {
   lucide.createIcons();
 }
 function toggleLang() { lang = lang === 'ar' ? 'en' : 'ar'; localStorage.setItem('lifeos_lang', lang); applyLang(); }
+fetch('/api/events',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({type:'pageview',path:'/'})}).catch(()=>{});
 async function joinWaitlist() {
   const email = document.getElementById('wlEmail').value.trim();
   const msg = document.getElementById('wlMsg');

@@ -140,6 +140,14 @@
         <!-- Pricing -->
         <div id="s-pricing" class="hidden">
           <p class="text-gray-400 mb-6" data-k="price_intro">Upgrade your plan by sending USDT (TRC20) from your Trust Wallet. We verify each payment manually.</p>
+          <div class="glass rounded-xl p-5 mb-6 max-w-3xl">
+            <div class="text-sm text-gray-400 mb-2" data-k="coupon_label">Have a launch coupon?</div>
+            <div class="flex gap-2">
+              <input id="couponInput" placeholder="LIFE20" class="flex-1 bg-white/5 border border-white/10 rounded-lg px-4 py-2.5 focus:outline-none focus:border-purple-500"/>
+              <button onclick="applyCoupon()" class="bg-purple-600 hover:bg-purple-700 px-5 py-2.5 rounded-lg text-sm font-semibold" data-k="apply_coupon">Apply</button>
+            </div>
+            <p id="couponMsg" class="text-sm mt-2 text-gray-400"></p>
+          </div>
           <div class="grid md:grid-cols-2 gap-6 max-w-3xl">
             <div class="glass rounded-2xl p-7 border border-purple-500">
               <h3 class="text-xl font-bold">Pro</h3><div class="text-3xl font-bold mt-1">$9.99<span class="text-gray-400 text-base">/mo</span></div>
@@ -196,7 +204,7 @@ const I18 = {
     pp1:"Unlimited AI chats", pp2:"Smart scheduling", pp3:"Problem solver AI", ll1:"Everything in Pro", ll2:"Priority support", ll3:"Advanced AI planning",
     price_intro:"Upgrade your plan by sending USDT (TRC20) from your Trust Wallet. We verify each payment manually.",
     refer:"Refer & earn", refer_title:"Invite friends, earn rewards", refer_p:"Share your link. When a friend joins and upgrades, you both get a bonus.", copy:"Copy", ref_count:(n)=>`You invited ${n} ${n===1?'person':'people'} so far.`,
-    send_to:"Send exact amount to:", tx_label:"Transaction hash (TX)", submit_pay:"I paid — submit for review",
+    send_to:"Send exact amount to:", tx_label:"Transaction hash (TX)", submit_pay:"I paid — submit for review", coupon_label:"Have a launch coupon?", apply_coupon:"Apply", coupon_on:"Coupon applied: 50% off", coupon_err:"Invalid coupon",
     free_chat_left:"chats left today", done:"Done", target:"target", t_free:"Free", greeting:"Welcome", upd:"Upgrade to Pro", title_dash:"Dashboard", title_chat:"AI Assistant", title_tasks:"Tasks", title_habits:"Habits", title_pricing:"Upgrade", title_refer:"Refer & earn", copied:"Copied!" },
   ar:{ dash:"الرئيسية", chat:"المساعد الذكي", tasks:"المهام", habits:"العادات", upgrade:"الاشتراك", add:"إضافة", buy_pro:"اشترك بـ USDT", buy_life:"اختر حياة",
     t_tasks:"مهام اليوم", t_habits:"العادات المنجزة", t_plan:"خطتك", t_ai:"محادثات الذكاء المتبقية",
@@ -204,7 +212,7 @@ const I18 = {
     pp1:"محادثات ذكاء غير محدودة", pp2:"جدولة ذكية", pp3:"ذكاء حل المشاكل", ll1:"كل ميزات الاحترافي", ll2:"دعم أولوية", ll3:"تخطيط ذكاء متقدم",
     price_intro:"طوّر خطتك بإرسال USDT (TRC20) من محفظة Trust Wallet. نتحقق من كل دفعة يدوياً.",
     refer:"ادعُ واربح", refer_title:"ادعُ أصدقاءك واربح مكافآت", refer_p:"شارك رابطك. عندما ينضم صديق ويشترك، تحصلان معاً على مكافأة.", copy:"نسخ", ref_count:(n)=>`دعوت ${n} ${n===1?'شخص':'أشخاص'} حتى الآن.`,
-    send_to:"أرسل المبلغ بالضبط إلى:", tx_label:"Hash المعاملة (TX)", submit_pay:"دفعت — أرسل للمراجعة",
+    send_to:"أرسل المبلغ بالضبط إلى:", tx_label:"Hash المعاملة (TX)", submit_pay:"دفعت — أرسل للمراجعة", coupon_label:"عندك كوبون إطلاق؟", apply_coupon:"تطبيق", coupon_on:"تم تطبيق الكوبون: خصم 50%", coupon_err:"كوبون غير صحيح",
     free_chat_left:"محادثات متبقية اليوم", done:"تم", target:"الهدف", t_free:"مجاني", greeting:"أهلاً", upd:"طوّر إلى برو", title_dash:"الرئيسية", title_chat:"المساعد الذكي", title_tasks:"المهام", title_habits:"العادات", title_pricing:"الاشتراك", title_refer:"ادعُ واربح", copied:"تم النسخ!" }
 };
 let lang = localStorage.getItem('lifeos_lang') || 'en';
@@ -288,12 +296,24 @@ function copyRef(){
 
 // checkout
 let currentPayment=null;
-async function openCheckout(plan){ const conf=await api('/api/config/public',null,'GET'); const amount=conf.prices[plan]; document.getElementById('coTitle').textContent = (plan==='pro'?'Pro':'Life')+' · $'+amount; document.getElementById('coAmount').textContent='$'+amount.toFixed(2); document.getElementById('coTx').value=''; document.getElementById('coStatus').textContent=''; const r=await api('/api/checkout',{plan,email:user.email}); currentPayment=r; document.getElementById('coAddress').value=r.address; document.getElementById('coQR').src=r.qr; document.getElementById('checkout').classList.remove('hidden'); }
+let appliedCoupon='';
+function applyCoupon(){
+  const v=document.getElementById('couponInput').value.trim().toUpperCase();
+  appliedCoupon=v;
+  const msg=document.getElementById('couponMsg');
+  if(v==='LIFE20'){ msg.textContent=t('coupon_on'); msg.className='text-sm mt-2 text-green-400'; }
+  else if(!v){ msg.textContent=''; }
+  else { msg.textContent=t('coupon_err'); msg.className='text-sm mt-2 text-red-400'; }
+}
+async function openCheckout(plan){ const conf=await api('/api/config/public',null,'GET'); let amount=conf.prices[plan]; if(appliedCoupon==='LIFE20') amount=Math.round(amount*(1-conf.coupon.percent/100)*100)/100; document.getElementById('coTitle').textContent = (plan==='pro'?'Pro':'Life')+' · $'+amount; document.getElementById('coAmount').textContent='$'+amount.toFixed(2); document.getElementById('coTx').value=''; document.getElementById('coStatus').textContent=''; const r=await api('/api/checkout',{plan,email:user.email,coupon:appliedCoupon}); currentPayment=r; document.getElementById('coAddress').value=r.address; document.getElementById('coQR').src=r.qr; document.getElementById('checkout').classList.remove('hidden'); }
 function closeCheckout(){ document.getElementById('checkout').classList.add('hidden'); }
 function copyAddr(){ navigator.clipboard.writeText(document.getElementById('coAddress').value); document.getElementById('coStatus').textContent=lang==='ar'?'تم النسخ':'Copied'; }
 async function submitPayment(){ const tx=val('coTx'); if(!tx)return; try{ await api('/api/payments/'+currentPayment.payment_id+'/claim',{tx_hash:tx}); document.getElementById('coStatus').textContent=lang==='ar'?'أُرسل للمراجعة. سيتفعّل اشتراكك بعد التأكيد.':'Submitted. Your plan activates after confirmation.'; }catch(e){ document.getElementById('coStatus').textContent='⚠ '+e.message; } }
 
 function escape(s){ return String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])); }
+
+// pageview analytics
+fetch('/api/events',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({type:'pageview',path:'/app'})}).catch(()=>{});
 
 // init
 (async function init(){ applyLang(); const saved=localStorage.getItem('lifeos_user'); if(saved) try{user=JSON.parse(saved);}catch{} if(token){ try{ const r=await api('/api/me',null,'GET'); user=r.user; localStorage.setItem('lifeos_user',JSON.stringify(user)); document.getElementById('auth').classList.add('hidden'); document.getElementById('main').classList.remove('hidden'); refreshUI(); }catch(error){ if(String(error).includes('Unauthorized')){ logout(); } } } })();

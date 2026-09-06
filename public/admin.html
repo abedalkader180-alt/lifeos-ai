@@ -28,6 +28,11 @@
 
   <div class="grid md:grid-cols-4 gap-4 mb-8" id="stats"></div>
 
+  <div class="glass rounded-xl p-5 mb-8">
+    <h2 class="text-xl font-bold mb-3">Notifications</h2>
+    <div id="notifList" class="space-y-2 text-sm"></div>
+  </div>
+
   <h2 class="text-xl font-bold mb-3">Payments</h2>
   <div class="glass rounded-xl overflow-x-auto mb-10">
     <table class="w-full text-sm text-left">
@@ -66,9 +71,10 @@ let token=localStorage.getItem('lifeos_admin_token')||'';
 async function api(path,body,method='POST'){const r=await fetch(path,{method,headers:{'Content-Type':'application/json',...(token?{Authorization:'Bearer '+token}:{})},body:body?JSON.stringify(body):undefined});const d=await r.json().catch(()=>({}));if(!r.ok)throw new Error(d.error||'Error');return d;}
 async function login(){const email=document.getElementById('email').value.trim(),password=document.getElementById('password').value;try{const r=await api('/api/admin/login',{email,password});token=r.token;localStorage.setItem('lifeos_admin_token',token);document.getElementById('login').classList.add('hidden');document.getElementById('panel').classList.remove('hidden');load();}catch(e){document.getElementById('err').textContent=e.message;}}
 function logout(){token='';localStorage.removeItem('lifeos_admin_token');location.reload();}
-async function load(){const [stats,pay,users,wl,ref]=await Promise.all([api('/api/admin/stats',null,'GET'),api('/api/admin/payments',null,'GET'),api('/api/admin/users',null,'GET'),api('/api/admin/waitlist',null,'GET'),api('/api/admin/referrals',null,'GET')]);
+async function load(){const [stats,pay,users,wl,ref,notifs]=await Promise.all([api('/api/admin/stats',null,'GET'),api('/api/admin/payments',null,'GET'),api('/api/admin/users',null,'GET'),api('/api/admin/waitlist',null,'GET'),api('/api/admin/referrals',null,'GET'),api('/api/admin/notifications',null,'GET')]);
  document.getElementById('stats').innerHTML=[
-  ['Users',stats.users,'text-blue-400'],['Revenue', '$'+stats.revenue_usd.toFixed(2),'text-green-400'],['Confirmed',stats.confirmed_payments,'text-green-300'],['Pending',stats.pending_payments,'text-yellow-400'],['Waitlist',stats.waitlist,'text-purple-400'],['Referrals',stats.referrals,'text-pink-400']].map(x=>`<div class="glass rounded-xl p-5"><div class="text-gray-400 text-sm">${x[0]}</div><div class="text-3xl font-bold mt-1 ${x[2]}">${x[1]}</div></div>`).join('');
+  ['Users',stats.users,'text-blue-400'],['Revenue', '$'+stats.revenue_usd.toFixed(2),'text-green-400'],['Confirmed',stats.confirmed_payments,'text-green-300'],['Pending',stats.pending_payments,'text-yellow-400'],['Waitlist',stats.waitlist,'text-purple-400'],['Referrals',stats.referrals,'text-pink-400'],['Page views',stats.pageviews,'text-cyan-400']].map(x=>`<div class="glass rounded-xl p-5"><div class="text-gray-400 text-sm">${x[0]}</div><div class="text-3xl font-bold mt-1 ${x[2]}">${x[1]}</div></div>`).join('');
+ document.getElementById('notifList').innerHTML=notifs.length?notifs.slice(0,10).map(n=>`<div class="bg-white/5 rounded-lg p-3"><div class="font-semibold">${n.title}</div><div class="text-gray-400">${n.body||''}</div></div>`).join(''):'<div class="text-gray-500">No notifications yet.</div>';
  document.getElementById('payTable').innerHTML=pay.map(p=>`<tr class="border-b border-white/5">
   <td class="p-3">#${p.id}</td><td class="p-3">${p.email||'—'}</td><td class="p-3 capitalize">${p.plan}</td><td class="p-3">$${p.amount_usd.toFixed(2)}</td><td class="p-3 text-xs break-all max-w-40 truncate">${p.tx_hash||'—'}</td><td class="p-3"><span class="px-2 py-1 rounded text-xs ${p.status==='confirmed'?'bg-green-500/20 text-green-400':p.status==='submitted'?'bg-yellow-500/20 text-yellow-400':p.status==='rejected'?'bg-red-500/20 text-red-400':'bg-white/10 text-gray-300'}">${p.status}</span></td>
   <td class="p-3">${p.status!=='confirmed'?`<button onclick="confirmPay(${p.id})" class="text-green-400 text-xs mr-2">Confirm</button><button onclick="rejectPay(${p.id})" class="text-red-400 text-xs">Reject</button>`:`<button onclick="rejectPay(${p.id})" class="text-red-400 text-xs">Reject</button>`}</td></tr>`).join('');

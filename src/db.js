@@ -117,6 +117,9 @@ const SCHEMA_SQLITE = `
     network TEXT NOT NULL DEFAULT 'TRC20',
     wallet_address TEXT,
     tx_hash TEXT,
+    coupon TEXT,
+    discount_percent REAL DEFAULT 0,
+    verified INTEGER NOT NULL DEFAULT 0,
     status TEXT NOT NULL DEFAULT 'pending',
     created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
     FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE SET NULL
@@ -140,6 +143,23 @@ const SCHEMA_SQLITE = `
     created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
     FOREIGN KEY (inviter_user_id) REFERENCES users(id) ON DELETE SET NULL,
     FOREIGN KEY (invited_user_id) REFERENCES users(id) ON DELETE SET NULL
+  );
+  CREATE TABLE IF NOT EXISTS events (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    type TEXT NOT NULL,
+    path TEXT,
+    email TEXT,
+    created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP
+  );
+  CREATE TABLE IF NOT EXISTS notifications (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    user_id INTEGER NOT NULL,
+    title TEXT NOT NULL,
+    body TEXT,
+    link TEXT,
+    read INTEGER NOT NULL DEFAULT 0,
+    created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
   );
 `;
 
@@ -189,6 +209,9 @@ const SCHEMA_PG = `
     network TEXT NOT NULL DEFAULT 'TRC20',
     wallet_address TEXT,
     tx_hash TEXT,
+    coupon TEXT,
+    discount_percent REAL DEFAULT 0,
+    verified INTEGER NOT NULL DEFAULT 0,
     status TEXT NOT NULL DEFAULT 'pending',
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
   );
@@ -208,6 +231,22 @@ const SCHEMA_PG = `
     invited_user_id INTEGER REFERENCES users(id) ON DELETE SET NULL,
     status TEXT NOT NULL DEFAULT 'pending',
     reward TEXT NOT NULL DEFAULT 'discount',
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+  );
+  CREATE TABLE IF NOT EXISTS events (
+    id SERIAL PRIMARY KEY,
+    type TEXT NOT NULL,
+    path TEXT,
+    email TEXT,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+  );
+  CREATE TABLE IF NOT EXISTS notifications (
+    id SERIAL PRIMARY KEY,
+    user_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+    title TEXT NOT NULL,
+    body TEXT,
+    link TEXT,
+    read INTEGER NOT NULL DEFAULT 0,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
   );
 `;
@@ -234,6 +273,9 @@ async function initSchema() {
   // Migrate existing DBs that were created before referral fields existed.
   await ensureColumn('users', 'ref_code', 'ref_code TEXT');
   await ensureColumn('users', 'ref_by', 'ref_by INTEGER');
+  await ensureColumn('payments', 'coupon', 'coupon TEXT');
+  await ensureColumn('payments', 'discount_percent', 'discount_percent REAL');
+  await ensureColumn('payments', 'verified', 'verified INTEGER DEFAULT 0');
   // Unique index is safe on both engines and works even if column was added later.
   if (pool) {
     await pool.query('CREATE UNIQUE INDEX IF NOT EXISTS idx_users_ref_code ON users(ref_code)');
@@ -286,6 +328,24 @@ async function listReferrals() {
   return all('SELECT * FROM referrals ORDER BY id DESC');
 }
 
+async function listEvents() {
+  return all('SELECT * FROM events ORDER BY id DESC');
+}
+
+async function countEvents(type) {
+  const row = await get('SELECT COUNT(*) n FROM events WHERE type = ?', [type]);
+  return row ? (row.n || 0) : 0;
+}
+
+async function listNotifications(userId) {
+  return all('SELECT * FROM notifications WHERE user_id = ? ORDER BY id DESC', [userId]);
+}
+
+async function unreadNotifications(userId) {
+  const row = await get('SELECT COUNT(*) n FROM notifications WHERE user_id = ? AND read = 0', [userId]);
+  return row ? (row.n || 0) : 0;
+}
+
 module.exports = {
   IS_PG,
   PG_URL,
@@ -299,4 +359,8 @@ module.exports = {
   listPayments,
   listWaitlist,
   listReferrals,
+  listEvents,
+  countEvents,
+  listNotifications,
+  unreadNotifications,
 };

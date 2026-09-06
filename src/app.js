@@ -13,6 +13,11 @@ const OWNER_EMAIL = (process.env.OWNER_EMAIL || '').toLowerCase();
 const WALLET = process.env.TRUST_WALLET_ADDRESS || 'TXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX';
 const PRICE_PRO = parseFloat(process.env.PRICE_PRO || 9.99);
 const PRICE_LIFE = parseFloat(process.env.PRICE_LIFE || 19.99);
+const COUPON_CODE = (process.env.LAUNCH_COUPON || 'LIFE20').toUpperCase();
+const COUPON_PERCENT = parseFloat(process.env.LAUNCH_COUPON_PERCENT || '50');
+
+const TRONSCAN_BASE = 'https://apilist.tronscanapi.com';
+const USDT_TRC20_CONTRACT = 'TR7NHqjeKQxGTCi8q8ZY4pL8otSzgjLj6t';
 
 const app = express();
 app.use(cors());
@@ -40,6 +45,25 @@ function planPrice(plan) {
   if (plan === 'pro') return PRICE_PRO;
   if (plan === 'life') return PRICE_LIFE;
   return 0;
+}
+
+function applyCoupon(amount, coupon) {
+  const code = String(coupon || '').trim().toUpperCase();
+  if (code === COUPON_CODE) {
+    return {
+      amount: Math.round(amount * (100 - COUPON_PERCENT) / 100 * 100) / 100,
+      discount_percent: COUPON_PERCENT,
+      coupon: code,
+    };
+  }
+  return { amount, discount_percent: 0, coupon: code || null };
+}
+
+async function notifyOwner(title, body, link) {
+  const owner = await db.get('SELECT id FROM users WHERE email = ?', [OWNER_EMAIL]);
+  if (owner) {
+    await db.run('INSERT INTO notifications (user_id, title, body, link) VALUES (?, ?, ?, ?)', [owner.id, title, body, link || '']);
+  }
 }
 
 async function auth(req, res, next) {
@@ -103,7 +127,20 @@ app.get('/api/config/public', (req, res) => {
     asset: 'USDT',
     prices: { pro: PRICE_PRO, life: PRICE_LIFE },
     ai_enabled: ai.AI_ENABLED,
+    coupon: { code: COUPON_CODE, percent: COUPON_PERCENT, active: true },
   });
+});
+
+// ===== lightweight analytics event (public) =====
+app.post('/api/events', async (req, res) => {
+  const { type, path, email } = req.body || {};
+  if (!type) return res.status(400).json({ error: 'type required' });
+  await db.run('INSERT INTO events (type, path, email) VALUES (?, ?, ?)', [
+    String(type).slice(0, 60),
+    String(path || '').slice(0, 200),
+    email ? String(email).slice(0, 200) : null,
+  ]);
+  res.json({ ok: true });
 });
 
 // ===== auth =====
@@ -277,10 +314,12 @@ app.post('/api/chat', auth, async (req, res) => {
 
 // ===== checkout / payments =====
 app.post('/api/checkout', async (req, res) => {
-  const { plan, email } = req.body || {};
+  const { plan, email, coupon } = req.body || {};
   const valid = ['pro', 'life'];
   if (!valid.includes(plan)) return res.status(400).json({ error: 'invalid plan' });
-  const amount = planPrice(plan);
+  const baseAmount = planPrice(plan);
+  const discount = applyCoupon(baseAmount, coupon);
+  const amount = discount.amount;
   const address = WALLET;
 
   let userId = null;
@@ -293,12 +332,19 @@ app.post('/api/checkout', async (req, res) => {
   }
 
   const info = await db.run(
-    'INSERT INTO payments (user_id, email, plan, amount_usd, network, wallet_address) VALUES (?, ?, ?, ?, ?, ?) RETURNING id',
-    [userId, email || null, plan, amount, 'TRC20', address]
+    'INSERT INTO payments (user_id, email, plan, amount_usd, network, wallet_address, coupon, discount_percent) VALUES (?, ?, ?, ?, ?, ?, ?, ?) RETURNING id',
+    [userId, email || null, plan, amount, 'TRC20', address, discount.coupon, discount.discount_percent]
   );
 
   const payment = await db.get('SELECT * FROM payments WHERE id = ?', [info.lastInsertRowid]);
   const qr = await QRCode.toDataURL(address);
+
+  // Notify owner (only production-friendly; safe if owner not found).
+  await notifyOwner(
+    `New USDT payment ${payment.id}`,
+    `${payment.plan.toUpperCase()} — $${amount}${discount.coupon ? ' (' + discount.coupon + ')' : ''} / ${payment.email || ('user ' + userId)}`,
+    '/admin'
+  );
 
   res.json({
     payment_id: payment.id,
@@ -307,6 +353,8 @@ app.post('/api/checkout', async (req, res) => {
     address,
     amount,
     plan,
+    coupon: discount.coupon,
+    discount_percent: discount.discount_percent,
     qr,
     note: 'Send exact amount to the address above, then paste the transaction hash here.',
   });
@@ -321,13 +369,49 @@ app.get('/api/payments/:id', async (req, res) => {
   res.json(row);
 });
 
+async function verifyTronscanTx(txHash) {
+  const url = `${TRONSCAN_BASE}/api/transaction-info?hash=${encodeURIComponent(txHash)}`;
+  const res = await fetch(url, { headers: { Accept: 'application/json' } });
+  if (!res.ok) return { ok: false, reason: `HTTP ${res.status}` };
+  const data = await res.json();
+  const ok = data && (data.contractRet === 'SUCCESS' || data.confirmed === true);
+  const to = (data.toAddress || data.to_address || '').toLowerCase();
+  const amount = data.amount || 0;
+  const matchedWallet = to === WALLET.toLowerCase();
+  const isUsdt = !data.contractAddress || String(data.contractAddress).toLowerCase() === USDT_TRC20_CONTRACT.toLowerCase();
+  return { ok: ok && matchedWallet, reason: ok ? (matchedWallet ? 'matched wallet' : 'amount matched but wallet mismatch') : data.contractRet || 'not success', amount, to, isUsdt };
+}
+
+app.post('/api/payments/:id/verify', auth, async (req, res) => {
+  const payment = await db.get('SELECT * FROM payments WHERE id = ?', [req.params.id]);
+  if (!payment) return res.status(404).json({ error: 'not found' });
+  const hash = (req.body && req.body.tx_hash) || payment.tx_hash;
+  if (!hash) return res.status(400).json({ error: 'tx_hash required' });
+  try {
+    const result = await verifyTronscanTx(hash);
+    await db.run('UPDATE payments SET tx_hash = ?, verified = ? WHERE id = ?', [hash, result.ok ? 1 : 0, payment.id]);
+    res.json({ status: result.ok ? 'verified' : 'unverified', ...result });
+  } catch (e) {
+    await db.run('UPDATE payments SET tx_hash = ?, verified = 0 WHERE id = ?', [hash, payment.id]);
+    res.json({ status: 'unverified', reason: `verification failed: ${e.message}`, error: true });
+  }
+});
+
 app.post('/api/payments/:id/claim', auth, async (req, res) => {
   const payment = await db.get('SELECT * FROM payments WHERE id = ?', [req.params.id]);
   if (!payment) return res.status(404).json({ error: 'not found' });
   const { tx_hash } = req.body || {};
   if (!tx_hash || !tx_hash.trim()) return res.status(400).json({ error: 'tx_hash required' });
   await db.run('UPDATE payments SET tx_hash = ?, status = ? WHERE id = ?', [tx_hash.trim(), 'submitted', payment.id]);
-  res.json({ status: 'submitted', message: 'Payment submitted. Owner will confirm it.' });
+  let auto = null;
+  try {
+    auto = await verifyTronscanTx(tx_hash.trim());
+    await db.run('UPDATE payments SET verified = ? WHERE id = ?', [auto.ok ? 1 : 0, payment.id]);
+  } catch (e) {
+    auto = { status: 'unverified', reason: `auto-verify unavailable (${e.message})` };
+  }
+  await notifyOwner(`Payment #${payment.id} hash submitted`, `${payment.plan} — ${payment.email || ''}`, '/admin');
+  res.json({ status: 'submitted', auto, message: 'Payment submitted. Owner can confirm it.' });
 });
 
 // ===== admin =====
@@ -355,7 +439,15 @@ app.get('/api/admin/stats', ownerAuth, async (req, res) => {
     pending_payments: payments.filter(p => p.status === 'pending' || p.status === 'submitted').length,
     waitlist: waitlist.length,
     referrals: referrals.length,
+    pageviews: await db.countEvents('pageview'),
+    notifications: await db.unreadNotifications(req.user.id),
   });
+});
+
+app.get('/api/admin/notifications', ownerAuth, async (req, res) => {
+  const rows = await db.listNotifications(req.user.id);
+  await db.run('UPDATE notifications SET read = 1 WHERE user_id = ?', [req.user.id]);
+  res.json(rows);
 });
 
 app.get('/api/admin/payments', ownerAuth, async (req, res) => res.json(await db.listPayments()));
