@@ -23,7 +23,7 @@
 </style>
 </head>
 <body class="h-screen overflow-hidden">
-<div class="hidden flex h-full">
+<div class="flex h-full">
 
   <!-- Auth -->
   <div id="auth" class="fixed inset-0 z-50 flex items-center justify-center bg-[#0b0b14] p-4">
@@ -232,16 +232,18 @@ function setAuth(r){ token=r.token; user=r.user; applyLang(); localStorage.setIt
 function logout(){ token=''; user=null; localStorage.removeItem('lifeos_token'); localStorage.removeItem('lifeos_user'); location.reload(); }
 
 function val(id){ return document.getElementById(id).value.trim(); }
-async function api(path, body, method='POST'){ const res=await fetch(path,{method,headers:{'Content-Type':'application/json',...(token?{Authorization:'Bearer '+token}:{})},body:body?JSON.stringify(body):undefined}); const data=await res.json().catch(()=>({})); if(!res.ok){ if(data.error==='free_daily_limit') throw new Error(lang==='ar'?'وصلت للحد المجاني اليوم':'You reached the free daily AI limit.'); throw new Error(data.error||'Error'); } return data; }
+async function api(path, body, method='POST'){ const res=await fetch(path,{method,headers:{'Content-Type':'application/json',...(token?{Authorization:'Bearer '+token}:{})},body:body?JSON.stringify(body):undefined}); const data=await res.json().catch(()=>({})); if(!res.ok){ if(data.error==='free_daily_limit') throw new Error(lang==='ar'?'وصلت للحد المجاني اليوم':'You reached the free daily AI limit.'); const msg = (data && data.error) ? data.error : (res.status===404 ? ((lang==='ar')?'المسار غير متوفر حالياً':'Endpoint not available') : 'HTTP '+res.status); throw new Error(msg); } return data; }
 
 // UI
 function go(name){ ['dashboard','chat','tasks','habits','pricing','refer'].forEach(n=>{ document.getElementById('s-'+n).classList.toggle('hidden', n!==name); }); document.getElementById('pageTitle').textContent = t('title_'+name); if(name==='refer') loadReferral(); lucide.createIcons(); }
 async function refreshUI(){
   if(!token) return;
-  if(!user){ const r=await api('/api/me',null,'GET'); user=r.user; }
+  try { if(!user){ const r=await api('/api/me',null,'GET'); user=r.user; } } catch(e) { logout(); return; }
   applyLang();
-  const [ta,ha,conf]=await Promise.all([api('/api/tasks',null,'GET'),api('/api/habits',null,'GET'),api('/api/config/public',null,'GET')]);
-  tasks=ta; habits=ha;
+  let ta=[], ha=[], conf=null;
+  try { [ta,ha,conf]=await Promise.all([api('/api/tasks',null,'GET'),api('/api/habits',null,'GET'),api('/api/config/public',null,'GET')]); }
+  catch(e) { /* still show dashboard with defaults */ }
+  tasks=ta||[]; habits=ha||[];
   document.getElementById('dTasks').textContent = tasks.filter(x=>x.done).length+'/'+tasks.length;
   document.getElementById('dHabits').textContent = habits.reduce((s,h)=>s+Math.min(h.completed_today,h.target),0)+'/'+habits.reduce((s,h)=>s+h.target,0);
   document.getElementById('dPlan').textContent = user.plan==='free'?'Free':user.plan;
@@ -250,7 +252,7 @@ async function refreshUI(){
   renderTasks(); renderHabits();
   const used = JSON.parse(localStorage.getItem('lifeos_chat_used_'+new Date().toDateString())||'0');
   document.getElementById('dAi').textContent = user.plan==='free'? Math.max(0,3-used) : '∞';
-  if(!document.querySelector('#chatBox .msg-a')){ const ai=makeMsg('<b>A</b>'); }
+  if(!document.querySelector('#chatBox .msg-a')){ makeMsg('<b>A</b>'); }
 }
 function renderTasks(){ const el=document.getElementById('taskList'); el.innerHTML=tasks.map(x=>`
   <div class="flex items-center gap-3 glass rounded-lg px-4 py-3">
@@ -305,7 +307,7 @@ function applyCoupon(){
   else if(!v){ msg.textContent=''; }
   else { msg.textContent=t('coupon_err'); msg.className='text-sm mt-2 text-red-400'; }
 }
-async function openCheckout(plan){ const conf=await api('/api/config/public',null,'GET'); let amount=conf.prices[plan]; if(appliedCoupon==='LIFE20') amount=Math.round(amount*(1-conf.coupon.percent/100)*100)/100; document.getElementById('coTitle').textContent = (plan==='pro'?'Pro':'Life')+' · $'+amount; document.getElementById('coAmount').textContent='$'+amount.toFixed(2); document.getElementById('coTx').value=''; document.getElementById('coStatus').textContent=''; const r=await api('/api/checkout',{plan,email:user.email,coupon:appliedCoupon}); currentPayment=r; document.getElementById('coAddress').value=r.address; document.getElementById('coQR').src=r.qr; document.getElementById('checkout').classList.remove('hidden'); }
+async function openCheckout(plan){ let conf={prices:{pro:9.99,life:19.99},coupon:{percent:50}}; try { conf=await api('/api/config/public',null,'GET'); } catch(e) {} let amount=conf.prices[plan]; if(appliedCoupon==='LIFE20') amount=Math.round(amount*(1-(conf.coupon&&conf.coupon.percent||50)/100)*100)/100; document.getElementById('coTitle').textContent = (plan==='pro'?'Pro':'Life')+' · $'+amount; document.getElementById('coAmount').textContent='$'+amount.toFixed(2); document.getElementById('coTx').value=''; document.getElementById('coStatus').textContent=''; const r=await api('/api/checkout',{plan,email:user.email,coupon:appliedCoupon}); currentPayment=r; document.getElementById('coAddress').value=r.address; document.getElementById('coQR').src=r.qr; document.getElementById('checkout').classList.remove('hidden'); }
 function closeCheckout(){ document.getElementById('checkout').classList.add('hidden'); }
 function copyAddr(){ navigator.clipboard.writeText(document.getElementById('coAddress').value); document.getElementById('coStatus').textContent=lang==='ar'?'تم النسخ':'Copied'; }
 async function submitPayment(){ const tx=val('coTx'); if(!tx)return; try{ await api('/api/payments/'+currentPayment.payment_id+'/claim',{tx_hash:tx}); document.getElementById('coStatus').textContent=lang==='ar'?'أُرسل للمراجعة. سيتفعّل اشتراكك بعد التأكيد.':'Submitted. Your plan activates after confirmation.'; }catch(e){ document.getElementById('coStatus').textContent='⚠ '+e.message; } }
