@@ -146,6 +146,21 @@ app.get('/api/env-check', (req, res) => {
   res.json(out);
 });
 
+// ===== diagnostic test (works with GET, does not create account) =====
+app.get('/api/test', async (req, res) => {
+  const out = { ok: false, steps: [], database_url: !!process.env.DATABASE_URL, owner_email: process.env.OWNER_EMAIL || '' };
+  try {
+    const usersCols = await db.all('SELECT column_name FROM information_schema.columns WHERE table_name = ?', ['users']).catch(() => null);
+    out.steps.push({ step: 'users_columns', rows: Array.isArray(usersCols) ? usersCols.map(c => c.column_name) : 'FAILED' });
+    const c = await db.get('SELECT COUNT(*) n FROM users', []).catch(() => null);
+    out.steps.push({ step: 'users_count', count: c ? Number(c.n) : 'FAILED' });
+    out.ok = true;
+  } catch (e) {
+    out.steps.push({ step: 'error', detail: e.message });
+  }
+  res.json(out);
+});
+
 app.get('/api/db/check', async (req, res) => {
   const out = { ok: false, tables: {}, errors: [] };
   try {
