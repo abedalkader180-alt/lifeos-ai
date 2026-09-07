@@ -2,7 +2,7 @@
   "name": "lifeos-ai",
   "version": "1.0.0",
   "description": "LifeOS AI - bilingual AI life organizer with USDT TRC20 billing",
-  "main": "api/index.js",
+  "main": "server.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
     "start": "node server.js",
@@ -21,6 +21,6 @@
     "qrcode": "^1.5.4"
   },
   "engines": {
-    "node": "24.x"
+    "node": "22.x"
   }
 }
