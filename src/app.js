@@ -146,8 +146,33 @@ app.get('/api/env-check', (req, res) => {
   res.json(out);
 });
 
-// ===== public config =====
-app.get('/api/config/public', (req, res) => {
+app.get('/api/db/check', async (req, res) => {
+  const out = { ok: false, tables: {}, errors: [] };
+  try {
+    const tables = ['users', 'tasks', 'habits', 'payments', 'waitlist', 'referrals', 'events', 'notifications'];
+    for (const t of tables) {
+      try {
+        const r = await db.get(`SELECT count(*) n FROM ${t}`, []);
+        out.tables[t] = r ? r.n : 0;
+      } catch (e) {
+        out.tables[t] = 'MISSING:' + e.message;
+        out.errors.push(t + ': ' + e.message);
+      }
+    }
+    // Check users column existence
+    try {
+      const cols = await db.all('SELECT column_name FROM information_schema.columns WHERE table_name = ?', ['users']);
+      out.users_columns = (cols || []).map(c => c.column_name);
+    } catch (e) {
+      out.users_columns = 'ERR:' + e.message;
+    }
+    out.ok = !out.errors.length;
+  } catch (e) {
+    out.ok = false;
+    out.errors.push(e.message);
+  }
+  res.json(out);
+});
   res.json({
     wallet_address: WALLET,
     network: 'TRC20',
