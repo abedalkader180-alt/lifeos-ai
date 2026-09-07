@@ -129,6 +129,19 @@ app.get('/api/debug', (req, res) => {
   });
 });
 
+app.get('/api/env-check', (req, res) => {
+  const names = ['DATABASE_URL', 'POSTGRES_URL', 'POSTGRESQL_URL', 'TRUST_WALLET_ADDRESS', 'AI_ENABLED', 'AI_API_KEY', 'OWNER_EMAIL', 'OWNER_PASSWORD', 'JWT_SECRET'];
+  const out = {};
+  for (const n of names) {
+    const v = process.env[n] || '';
+    out[n] = v ? 'SET' : 'EMPTY';
+  }
+  out.vercel = process.env.VERCEL || '0';
+  out.database_prefix = process.env.DATABASE_URL ? String(process.env.DATABASE_URL).slice(0, 12) : 'none';
+  out.postgres_prefix = process.env.POSTGRES_URL ? String(process.env.POSTGRES_URL).slice(0, 12) : 'none';
+  res.json(out);
+});
+
 // ===== public config =====
 app.get('/api/config/public', (req, res) => {
   res.json({
