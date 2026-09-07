@@ -94,7 +94,7 @@ app.get('/api/ai/status', async (req, res) => {
   let detail = 'AI provider was not reachable from this environment.';
   if (ai.AI_ENABLED) {
     try {
-      const base = (process.env.AI_BASE_URL || 'https://api.openai.com/v1').replace(/\/$/, '');
+      const base = ai.AI_BASE_URL;
       const ctrl = new AbortController();
       const timer = setTimeout(() => ctrl.abort(), 6000);
       const r = await fetch(`${base}/models`, {
@@ -108,7 +108,7 @@ app.get('/api/ai/status', async (req, res) => {
       detail = `Reachability check failed: ${e.message}`;
     }
   }
-  res.json({ enabled: ai.AI_ENABLED, reachable, detail, base_url: (process.env.AI_BASE_URL || '').replace(/\/$/, ''), model: ai.AI_MODEL });
+  res.json({ enabled: ai.AI_ENABLED, reachable, detail, base_url: ai.AI_BASE_URL, model: ai.AI_MODEL });
 });
 
 // ===== health =====

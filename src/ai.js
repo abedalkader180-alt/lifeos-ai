@@ -116,4 +116,4 @@ function fallbackAssistant(user, message, locale) {
   return blocks.join('\n\n');
 }
 
-module.exports = { chat, AI_ENABLED, AI_MODEL };
+module.exports = { chat, AI_ENABLED, AI_MODEL, AI_BASE_URL };
