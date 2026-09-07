@@ -316,7 +316,7 @@ function escape(s){ return String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&l
 fetch('/api/events',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({type:'pageview',path:'/app'})}).catch(()=>{});
 
 // init
-(async function init(){ applyLang(); const saved=localStorage.getItem('lifeos_user'); if(saved) try{user=JSON.parse(saved);}catch{} if(token){ try{ const r=await api('/api/me',null,'GET'); user=r.user; localStorage.setItem('lifeos_user',JSON.stringify(user)); document.getElementById('auth').classList.add('hidden'); document.getElementById('main').classList.remove('hidden'); refreshUI(); }catch(error){ if(String(error).includes('Unauthorized')){ logout(); } } } })();
+(async function init(){ applyLang(); const saved=localStorage.getItem('lifeos_user'); if(saved) try{user=JSON.parse(saved);}catch{} if(token){ try{ const r=await api('/api/me',null,'GET'); user=r.user; localStorage.setItem('lifeos_user',JSON.stringify(user)); document.getElementById('auth').classList.add('hidden'); document.getElementById('main').classList.remove('hidden'); refreshUI(); }catch(error){ if(String(error).includes('Unauthorized')){ logout(); } else { authErr(lang==='ar' ? 'يوجد خطأ في الخادم: '+error.message : 'Server error: '+error.message); } } } } })();
 </script>
 </body>
 </html>

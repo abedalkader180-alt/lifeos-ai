@@ -136,7 +136,10 @@ app.get('/api/env-check', (req, res) => {
     const v = process.env[n] || '';
     out[n] = v ? 'SET' : 'EMPTY';
   }
+  out.lifeos_settings = process.env.LIFEOS_SETTINGS ? 'SET' : 'EMPTY';
   out.vercel = process.env.VERCEL || '0';
+  out.vercel_env = process.env.VERCEL_ENV || '';
+  out.vercel_branch = process.env.VERCEL_GIT_BRANCH || '';
   out.database_prefix = process.env.DATABASE_URL ? String(process.env.DATABASE_URL).slice(0, 12) : 'none';
   out.postgres_prefix = process.env.POSTGRES_URL ? String(process.env.POSTGRES_URL).slice(0, 12) : 'none';
   res.json(out);
