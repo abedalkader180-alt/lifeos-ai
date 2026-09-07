@@ -12,7 +12,9 @@ db.initSchema()
       console.log(`[lifeos] AI enabled: ${process.env.AI_ENABLED === 'true' && !!process.env.AI_API_KEY}`);
     });
   })
-  .catch((err) => {
-    console.error('[lifeos] failed to init schema', err);
-    process.exit(1);
+  .catch((e) => {
+    console.error('[lifeos] init schema failed (will still run app):', e && e.stack ? e.stack : e);
+    app.listen(PORT, '0.0.0.0', () => {
+      console.log(`[lifeos] listening BUT database init failed: check DATABASE_URL`);
+    });
   });

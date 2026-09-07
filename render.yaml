@@ -1,0 +1,26 @@
+services:
+  - type: web
+    name: lifeos-ai
+    runtime: node
+    plan: free
+    buildCommand: npm install
+    startCommand: npm start
+    envVars:
+      - key: NODE_VERSION
+        value: "22"
+      - key: PORT
+        value: 10000
+      - key: DATABASE_URL
+        sync: false
+      - key: TRUST_WALLET_ADDRESS
+        sync: false
+      - key: AI_ENABLED
+        value: "true"
+      - key: AI_API_KEY
+        sync: false
+      - key: OWNER_EMAIL
+        value: "owner@lifeos.app"
+      - key: OWNER_PASSWORD
+        sync: false
+      - key: JWT_SECRET
+        sync: false

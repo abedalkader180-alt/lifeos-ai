@@ -8,11 +8,9 @@ const path = require('path');
 const bcrypt = require('bcryptjs');
 
 const PG_URL = process.env.DATABASE_URL || process.env.POSTGRES_URL || process.env.POSTGRESQL_URL || '';
-// FORCE_SQLITE=true is used for local preview when the cloud DB is not reachable from this sandbox.
-// On Vercel (VERCEL env) we must use Postgres; local SQLite is NOT supported there.
-const IS_PG = (process.env.VERCEL === '1')
-  ? !!PG_URL
-  : !(process.env.FORCE_SQLITE === 'true') && !!PG_URL;
+// Not Vercel-specific: if DATABASE_URL exists we use Postgres.
+// Else in local dev use SQLite; on cloud without DB keep a clear error.
+const IS_PG = !(process.env.FORCE_SQLITE === 'true') && !!PG_URL;
 
 let pool = null;
 let sqlite = null;
@@ -27,10 +25,12 @@ if (IS_PG) {
     max: 10,
   });
   console.log('[db] Using PostgreSQL database');
-} else if (process.env.VERCEL === '1') {
-  // On Vercel we MUST NOT import node:sqlite (not available on Node 20).
-  // If DATABASE_URL is missing, keep the app alive so /api/debug can diagnose.
-  DB_ERROR = 'DATABASE_URL is not set on Vercel. Add LIFEOS_SETTINGS or individual env vars, then redeploy.';
+} else if (process.env.VERCEL === '1' || process.env.RENDER === 'true' || !PG_URL) {
+  // Cloud without DATABASE_URL: keep app alive with a clear error (no node:sqlite import).
+  const onCloud = process.env.VERCEL === '1' || process.env.RENDER === 'true';
+  DB_ERROR = onCloud
+    ? 'DATABASE_URL is not set. Add it in Render/Vercel environment variables, then redeploy.'
+    : 'No database configured. Set DATABASE_URL (Postgres) to store data.';
   console.error('[db] ' + DB_ERROR);
 } else {
   // Local dev/preview only. Load the built-in sqlite lazily/indirectly so
