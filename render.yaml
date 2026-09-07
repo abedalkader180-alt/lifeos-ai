@@ -3,6 +3,7 @@ services:
     name: lifeos-ai
     runtime: node
     branch: arena/01a07754-lifeos-ai
+    rootDir: .
     plan: free
     buildCommand: npm install
     startCommand: npm start
