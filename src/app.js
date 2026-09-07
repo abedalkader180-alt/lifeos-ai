@@ -188,6 +188,9 @@ app.get('/api/db/check', async (req, res) => {
   }
   res.json(out);
 });
+
+// ===== public config =====
+app.get('/api/config/public', (req, res) => {
   res.json({
     wallet_address: WALLET,
     network: 'TRC20',

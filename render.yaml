@@ -2,9 +2,12 @@ services:
   - type: web
     name: lifeos-ai
     runtime: node
+    branch: arena/01a07754-lifeos-ai
     plan: free
     buildCommand: npm install
     startCommand: npm start
+    healthCheckPath: /api/health
+    autoDeploy: true
     envVars:
       - key: NODE_VERSION
         value: "22"
