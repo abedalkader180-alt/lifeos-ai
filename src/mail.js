@@ -9,12 +9,15 @@ const nodemailer = require('nodemailer');
 const { NODE_ENV } = process.env;
 
 const RESEND_KEY = (process.env.RESEND_API_KEY || '').trim();
-const MAIL_FROM = (process.env.MAIL_FROM || 'LifeOS AI <onboarding@resend.dev>').trim();
 const SMTP_HOST = (process.env.SMTP_HOST || '').trim();
 const SMTP_PORT = parseInt(process.env.SMTP_PORT || '587', 10);
 const SMTP_USER = (process.env.SMTP_USER || '').trim();
 const SMTP_PASS = (process.env.SMTP_PASS || '').trim();
 const MAIL_DEV = process.env.MAIL_DEV === '1';
+// For Gmail SMTP the From address MUST be the authenticated account, otherwise
+// Gmail rejects the send. If MAIL_FROM is not set explicitly, derive it from SMTP_USER.
+const MAIL_FROM = (process.env.MAIL_FROM || '').trim() ||
+  (SMTP_USER ? `LifeOS AI <${SMTP_USER}>` : 'LifeOS AI <onboarding@resend.dev>');
 
 let transporter = null;
 if (SMTP_HOST && SMTP_USER && SMTP_PASS) {
@@ -47,37 +50,43 @@ async function sendVerificationCode(email, code, lang) {
     return { sent: false, mode: 'dev', detail: 'MAIL_DEV=1 (no real email sent)' };
   }
 
-  if (RESEND_KEY) {
-    const res = await fetch('https://api.resend.com/emails', {
-      method: 'POST',
-      headers: {
-        Authorization: `Bearer ${RESEND_KEY}`,
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({
+  try {
+    if (RESEND_KEY) {
+      const res = await fetch('https://api.resend.com/emails', {
+        method: 'POST',
+        headers: {
+          Authorization: `Bearer ${RESEND_KEY}`,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          from: MAIL_FROM,
+          to: [email],
+          subject: subject(lang),
+          text: bodyText(code, lang),
+        }),
+      });
+      if (!res.ok) throw new Error('Resend HTTP ' + res.status + ': ' + await res.text());
+      return { sent: true, mode: 'resend' };
+    }
+
+    if (transporter) {
+      await transporter.sendMail({
         from: MAIL_FROM,
-        to: [email],
+        to: email,
         subject: subject(lang),
         text: bodyText(code, lang),
-      }),
-    });
-    if (!res.ok) throw new Error('Resend HTTP ' + res.status + ': ' + await res.text());
-    return { sent: true, mode: 'resend' };
-  }
+      });
+      return { sent: true, mode: 'smtp' };
+    }
 
-  if (transporter) {
-    await transporter.sendMail({
-      from: MAIL_FROM,
-      to: email,
-      subject: subject(lang),
-      text: bodyText(code, lang),
-    });
-    return { sent: true, mode: 'smtp' };
+    // No mail provider configured: return mode 'unconfigured' so the API can expose
+    // a dev code during testing, showing clearly this is not a real email yet.
+    return { sent: false, mode: 'unconfigured', detail: 'No mail provider configured. Set RESEND_API_KEY or SMTP_* to send real emails.' };
+  } catch (e) {
+    console.error('[mail] send failed:', e && e.message ? e.message : e);
+    // Never let a mail failure crash the signup flow. Return an explicit error result.
+    return { sent: false, mode: 'error', detail: 'Email sending failed: ' + (e && e.message ? e.message : 'unknown error') };
   }
-
-  // No mail provider configured: return mode 'unconfigured' so the API can expose
-  // a dev code during testing, showing clearly this is not a real email yet.
-  return { sent: false, mode: 'unconfigured', detail: 'No mail provider configured. Set RESEND_API_KEY or SMTP_* to send real emails.' };
 }
 
-module.exports = { sendVerificationCode, mailEnabled };
+module.exports = { sendVerificationCode, mailEnabled, mailConfig: { mode: RESEND_KEY ? 'resend' : (transporter ? 'smtp' : 'unconfigured'), from: MAIL_FROM, host: SMTP_HOST, user: SMTP_USER, hasPassword: !!SMTP_PASS } };

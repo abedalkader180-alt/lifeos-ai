@@ -125,6 +125,7 @@ app.get('/api/health', (req, res) => res.json({
   ok: true,
   db: db.IS_PG ? 'postgres' : 'sqlite',
   ai: ai.AI_ENABLED,
+  mail: mail && mail.mailConfig ? mail.mailConfig : { mode: 'unconfigured' },
   time: new Date().toISOString(),
 }));
 
@@ -139,7 +140,7 @@ app.get('/api/debug', (req, res) => {
 });
 
 app.get('/api/env-check', (req, res) => {
-  const names = ['DATABASE_URL', 'POSTGRES_URL', 'POSTGRESQL_URL', 'TRUST_WALLET_ADDRESS', 'AI_ENABLED', 'AI_API_KEY', 'OWNER_EMAIL', 'OWNER_PASSWORD', 'JWT_SECRET'];
+  const names = ['DATABASE_URL', 'POSTGRES_URL', 'POSTGRESQL_URL', 'TRUST_WALLET_ADDRESS', 'AI_ENABLED', 'AI_API_KEY', 'OWNER_EMAIL', 'OWNER_PASSWORD', 'JWT_SECRET', 'SMTP_HOST', 'SMTP_USER', 'MAIL_FROM', 'RESEND_API_KEY'];
   const out = {};
   for (const n of names) {
     const v = process.env[n] || '';
@@ -236,11 +237,14 @@ function devCodeAllowed() {
   return process.env.ALLOW_DEV_VERIFY !== 'false';
 }
 function deliveryPayload(result, email, code) {
-  const out = { delivery: result.mode || 'unconfigured', delivery_sent: !!result.sent };
-  // Only expose the code when no real mail provider is configured (transparent testing mode).
-  if (result.mode === 'unconfigured' && devCodeAllowed()) {
+  const out = { delivery: result.mode || 'unconfigured', delivery_sent: !!result.sent, detail: result.detail || null };
+  // Expose the code when a real email could not be sent and testing mode is enabled,
+  // so the signup flow never dead-ends or returns a bare "internal error".
+  if (devCodeAllowed() && (result.mode === 'unconfigured' || result.mode === 'error')) {
     out.dev_code = code || result.dev_code;
-    out.dev_note = 'No email provider configured yet: verification is in testing mode. Set RESEND_API_KEY or SMTP_* to send real emails.';
+    out.dev_note = result.mode === 'error'
+      ? 'Email could not be sent yet. Code shown here for testing.'
+      : 'No email provider configured yet: verification is in testing mode. Set RESEND_API_KEY or SMTP_* to send real emails.';
   }
   return { ...out, email };
 }
