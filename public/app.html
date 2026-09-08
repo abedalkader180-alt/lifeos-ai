@@ -343,8 +343,8 @@ function showRegister(){ var a=document.getElementById('loginForm'); var b=docum
 function showLogin(){ var a=document.getElementById('regForm'); var b=document.getElementById('loginForm'); if(a){a.classList.add('hidden'); a.style.display='none';} if(b){b.classList.remove('hidden'); b.style.display='block';} authErr(''); }
 function authErr(m){ document.getElementById('authErr').textContent = m || ''; }
 function setBusy(on){ try{ const s=document.getElementById('authSpinner'); if(s){ s.classList.toggle('hidden',!on); s.style.display=on?'flex':'none'; } }catch(e){} }
-async function doLogin(){ const email=val('email'),password=val('password'); if(!email||!password)return authErr(lang==='ar'?'أدخل الإيميل وكلمة المرور':'Enter email and password'); authErr(''); setBusy(true); try{ const r=await api('/api/auth/login',{email,password}); setAuth(r); }catch(e){ if(e.data&&e.data.error==='email_not_verified'){ showVerify(email,e.data.dev_code,e.data.dev_note,e.data.detail); } else authErr(e.message); } finally{ setBusy(false); } }
-async function doRegister(){ const name=val('rName'),email=val('rEmail'),password=val('rPassword'); if(!name||!email||!password)return authErr(lang==='ar'?'أكمل البيانات':'Fill all fields'); authErr(''); setBusy(true); try{ const r=await api('/api/auth/register',{name,email,password,locale:lang}); if(r.needs_verification){ showVerify(r.email,r.dev_code||null,r.dev_note,r.detail); } else setAuth(r); }catch(e){ if(e.data&&e.data.error==='email_not_verified'){ showVerify(email,e.data.dev_code||null,e.data.dev_note,e.data.detail); } else authErr(e.message||(lang==='ar'?'حدث خطأ غير متوقع':'Unexpected error')); } finally{ setBusy(false); } }
+async function doLogin(){ const email=val('email'),password=val('password'); if(!email||!password)return authErr(lang==='ar'?'أدخل الإيميل وكلمة المرور':'Enter email and password'); authErr(''); setBusy(true); try{ const r=await api('/api/auth/login',{email,password}); setAuth(r); }catch(e){ if(e.data&&e.data.error==='email_not_verified'){ authErr(lang==='ar'?'حسابك مفعّل، حاول الدخول مجدداً.':'Your account is active, try logging in again.'); } else authErr(e.message); } finally{ setBusy(false); } }
+async function doRegister(){ const name=val('rName'),email=val('rEmail'),password=val('rPassword'); if(!name||!email||!password)return authErr(lang==='ar'?'أكمل البيانات':'Fill all fields'); authErr(''); setBusy(true); try{ const r=await api('/api/auth/register',{name,email,password,locale:lang}); setAuth(r); }catch(e){ if(e.data&&e.data.error==='email_not_verified'){ authErr(lang==='ar'?'حسابك يعمل الآن، حاول الدخول.':'Your account is ready, try logging in.'); } else authErr(e.message||(lang==='ar'?'حدث خطأ غير متوقع':'Unexpected error')); } finally{ setBusy(false); } }
 
 let pendingEmail='';
 function UserEmailLocal(){ try { const u=localStorage.getItem('lifeos_user'); if(u){ const o=JSON.parse(u); if(o && o.email) return o.email; } } catch(e){} return ''; }
@@ -393,7 +393,7 @@ function setAuth(r){ token=r.token; user=r.user; applyLang(); localStorage.setIt
 function logout(){ token=''; user=null; localStorage.removeItem('lifeos_token'); localStorage.removeItem('lifeos_user'); location.reload(); }
 
 function val(id){ return document.getElementById(id).value.trim(); }
-async function api(path, body, method='POST'){ const res=await fetch(path,{method,headers:{'Content-Type':'application/json',...(token?{Authorization:'Bearer '+token}:{})},body:body?JSON.stringify(body):undefined}); const data=await res.json().catch(()=>({})); if(!res.ok){ const err=new Error(data&&data.error||'Error'); err.data=data; if(data.error==='free_daily_limit') err.message=(lang==='ar'?'وصلت للحد المجاني اليوم':'You reached the free daily AI limit.'); else if(data.error==='email_not_verified') err.message=(lang==='ar'?'أكّد بريدك أولاً':'Verify your email first.'); else if(data.error==='invalid_code') err.message=(lang==='ar'?'الرمز غير صحيح':'Incorrect code.'); else if(data.error==='code_expired') err.message=(lang==='ar'?'انتهت صلاحية الرمز':'Code expired.'); else if(data.error==='too_many_attempts') err.message=(lang==='ar'?'محاولات كثيرة، اطلب رمزاً جديداً':'Too many attempts.'); else if(data.error==='already_verified') err.message=(lang==='ar'?'الحساب موثّق مسبقاً':'Already verified.'); else err.message=(data&&data.message)||data.error||'Error'; throw err; } return data; }
+async function api(path, body, method='POST'){ const res=await fetch(path,{method,headers:{'Content-Type':'application/json',...(token?{Authorization:'Bearer '+token}:{})},body:body?JSON.stringify(body):undefined}); const data=await res.json().catch(()=>({})); if(!res.ok){ const err=new Error(data&&data.error||'Error'); err.data=data; if(data.error==='free_daily_limit') err.message=(lang==='ar'?'وصلت للحد المجاني اليوم':'You reached the free daily AI limit.'); else if(data.error==='email_not_verified') err.message=(lang==='ar'?'حسابك مفعّل، حاول الدخول مجدداً.':'Your account is active, try logging in again.'); else if(data.error==='invalid_code') err.message=(lang==='ar'?'الرمز غير صحيح':'Incorrect code.'); else if(data.error==='code_expired') err.message=(lang==='ar'?'انتهت صلاحية الرمز':'Code expired.'); else if(data.error==='too_many_attempts') err.message=(lang==='ar'?'محاولات كثيرة، اطلب رمزاً جديداً':'Too many attempts.'); else if(data.error==='already_verified') err.message=(lang==='ar'?'الحساب موثّق مسبقاً':'Already verified.'); else err.message=(data&&data.message)||data.error||'Error'; throw err; } return data; }
 
 // UI
 function go(name){ ['dashboard','chat','tasks','habits','pricing','refer'].forEach(n=>{ document.getElementById('s-'+n).classList.toggle('hidden', n!==name); }); document.getElementById('pageTitle').textContent = t('title_'+name); ['dashboard','chat','tasks','habits','pricing','refer'].forEach(n=>{ var el=document.getElementById('nav-'+n); if(el){ if(n===name) el.classList.add('active'); else el.classList.remove('active'); } }); if(name==='refer') loadReferral(); renderIcons(); }
@@ -511,15 +511,6 @@ window.addEventListener('error', function(ev){
     }catch(error){
       const msg = String(error && (error.message||error) || '');
       if(msg.includes('Unauthorized')){ logout(); }
-      else if((error && error.data && error.data.error)==='email_not_verified' || msg.includes('email_not_verified')){
-        const email = (user && user.email) || UserEmailLocal() || '';
-        let devCode = null, note = '', detail = '';
-        try {
-          const r = await api('/api/auth/resend', { email });
-          devCode = r.dev_code || null; note = r.dev_note || ''; detail = r.detail || '';
-        } catch(e){}
-        showVerify(email, devCode, note, detail);
-      }
       else { authErr(lang==='ar' ? 'يوجد خطأ في الخادم: '+msg : 'Server error: '+msg); }
     }
   }

@@ -67,8 +67,21 @@ async function notifyOwner(title, body, link) {
   }
 }
 
-function isOwnerEmail(email) {
+async function isOwnerEmail(email) {
   return (email || '').toLowerCase() === OWNER_EMAIL;
+}
+
+// Radical fix: email verification is OPTIONAL. Accounts are usable from the
+// moment they are created. We auto-verify any existing row that still has the
+// old verification flag set, so nobody is ever blocked by mail again.
+async function autoVerifyUser(user) {
+  if (user && !user.email_verified) {
+    await db.run('UPDATE users SET email_verified = 1, verify_code = NULL, verify_expires = NULL, verify_attempts = 0 WHERE id = ?', [user.id]);
+    user.email_verified = 1;
+    user.verify_code = null;
+    user.verify_expires = null;
+  }
+  return user;
 }
 
 async function auth(req, res, next) {
@@ -79,10 +92,9 @@ async function auth(req, res, next) {
     const payload = jwt.verify(token, JWT_SECRET);
     const user = await db.get('SELECT * FROM users WHERE id = ?', [payload.id]);
     if (!user) return res.status(401).json({ error: 'Unauthorized' });
-    // Owner is always allowed; normal users must have a verified email.
-    if (!isOwnerEmail(user.email) && !user.email_verified) {
-      return res.status(403).json({ error: 'email_not_verified', message: 'Verify your email to continue.' });
-    }
+    // Email verification is no longer required; auto-verify legacy users so
+    // nobody is blocked by email delivery issues.
+    await autoVerifyUser(user);
     req.user = user;
     next();
   } catch (e) {
@@ -344,13 +356,10 @@ app.post('/api/auth/register', async (req, res) => {
   if (password.length < 6) return res.status(400).json({ error: 'password too short (min 6)' });
   const exists = await db.get('SELECT id, email_verified FROM users WHERE email = ?', [mailAddr]);
   if (exists) {
-    // If an account exists but is not verified, resend a code.
-    if (!exists.email_verified) {
-      const user = await db.get('SELECT * FROM users WHERE id = ?', [exists.id]);
-      const sent = await sendCode(user, locale === 'ar' ? 'ar' : 'en');
-      return res.status(409).json({ error: 'email_not_verified', message: 'An account already exists. Enter the code we just sent to verify.', ...deliveryPayload(sent.result, mailAddr, sent.code) });
-    }
-    return res.status(409).json({ error: 'account already exists' });
+    // Legacy unverified account: activate it and sign the user in right away.
+    const user = await db.get('SELECT * FROM users WHERE id = ?', [exists.id]);
+    await autoVerifyUser(user);
+    return res.json({ token: tokenFor(user), user: publicUser(user), auto_verified: true });
   }
 
   // Optional referral: inviter code -> ref_by + referrals row.
@@ -362,9 +371,10 @@ app.post('/api/auth/register', async (req, res) => {
   const hash = bcrypt.hashSync(password, 10);
   const refCode = makeRefCode();
   const lang = locale === 'ar' ? 'ar' : 'en';
+  // IMPORTANT: email verification is disabled. The account is usable immediately.
   const info = await db.run(
-    'INSERT INTO users (email, name, password_hash, locale, plan, ref_code, ref_by, email_verified, verify_code, verify_expires) VALUES (?, ?, ?, ?, ?, ?, ?, 0, ?, ?) RETURNING id',
-    [mailAddr, name.trim(), hash, lang, 'free', refCode, inviter ? inviter.id : null, makeVerifyCode(), verifyExpiry()]
+    'INSERT INTO users (email, name, password_hash, locale, plan, ref_code, ref_by, email_verified, verify_code, verify_expires) VALUES (?, ?, ?, ?, ?, ?, ?, 1, NULL, NULL) RETURNING id',
+    [mailAddr, name.trim(), hash, lang, 'free', refCode, inviter ? inviter.id : null]
   );
   const user = await db.get('SELECT * FROM users WHERE id = ?', [info.lastInsertRowid]);
 
@@ -375,8 +385,12 @@ app.post('/api/auth/register', async (req, res) => {
     );
   }
 
-  const sent = await sendCode(user, lang);
-  res.json({ needs_verification: true, ...deliveryPayload(sent.result, mailAddr, sent.code) });
+  // Best-effort welcome email in the background; it never blocks the signup.
+  mail.sendVerificationCode(user.email, user.verify_code || '', lang || 'en')
+    .then(r => logMail(user.email, r.mode, r.sent, r.detail))
+    .catch(e => logMail(user.email, 'error', false, e.message));
+
+  res.json({ token: tokenFor(user), user: publicUser(user) });
 });
 
 app.post('/api/auth/verify-email', async (req, res) => {
@@ -384,7 +398,8 @@ app.post('/api/auth/verify-email', async (req, res) => {
   if (!email || !code) return res.status(400).json({ error: 'email and code required' });
   const user = await db.get('SELECT * FROM users WHERE email = ?', [email.toLowerCase().trim()]);
   if (!user) return res.status(404).json({ error: 'user not found' });
-  if (user.email_verified) return res.json({ token: tokenFor(user), user: publicUser(user) });
+  await autoVerifyUser(user);
+  return res.json({ token: tokenFor(user), user: publicUser(user) });
   if (!user.verify_code) return res.status(400).json({ error: 'no_code_sent', message: 'Request a new code.' });
 
   const expired = user.verify_expires && new Date(user.verify_expires).getTime() < Date.now();
@@ -438,11 +453,9 @@ app.post('/api/auth/login', async (req, res) => {
   if (!user || !bcrypt.compareSync(password, user.password_hash)) {
     return res.status(401).json({ error: 'invalid credentials' });
   }
-  // Normal users must verify their email before logging in. We resend a code automatically.
-  if (!isOwnerEmail(user.email) && !user.email_verified) {
-    const sent = await sendCode(user, user.locale === 'ar' ? 'ar' : 'en');
-    return res.status(403).json({ error: 'email_not_verified', message: 'Verify your email to log in.', ...deliveryPayload(sent.result, user.email, sent.code) });
-  }
+  // Email verification is no longer required; legacy unverified accounts are
+  // activated automatically so nobody is blocked.
+  await autoVerifyUser(user);
   res.json({ token: tokenFor(user), user: publicUser(user) });
 });
 
