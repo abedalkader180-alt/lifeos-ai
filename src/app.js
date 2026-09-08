@@ -145,9 +145,13 @@ app.all('/api/ai/test', async (req, res) => {
   const t0 = Date.now();
   try {
     const reply = await ai.chat({ user: { name: 'Test', plan: 'free', locale: 'en', email: 'test@example.com' }, message, history: [], locale: 'en' });
-    res.json({ ok: true, elapsed_ms: Date.now() - t0, enabled: ai.AI_ENABLED, model: ai.AI_MODEL, reply, last_error: ai.getLastError ? ai.getLastError() : null });
+    const models = await ai.listModels().catch(() => []);
+    const chosen = ai.pickWorkingModel(models || []);
+    res.json({ ok: true, elapsed_ms: Date.now() - t0, enabled: ai.AI_ENABLED, model: chosen, reply, last_error: ai.getLastError ? ai.getLastError() : null });
   } catch (e) {
-    res.status(500).json({ ok: false, elapsed_ms: Date.now() - t0, enabled: ai.AI_ENABLED, model: ai.AI_MODEL, error: e.message, last_error: ai.getLastError ? ai.getLastError() : null });
+    const models = await ai.listModels().catch(() => []);
+    const chosen = ai.pickWorkingModel(models || []);
+    res.status(500).json({ ok: false, elapsed_ms: Date.now() - t0, enabled: ai.AI_ENABLED, model: chosen, error: e.message, last_error: ai.getLastError ? ai.getLastError() : null });
   }
 });
 

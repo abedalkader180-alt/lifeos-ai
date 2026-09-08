@@ -105,6 +105,7 @@ async function chatWithProvider(system, message, history, locale, model) {
     ...history.map(m => ({ role: m.role === 'ai' ? 'assistant' : 'user', content: m.content })),
     { role: 'user', content: message },
   ];
+  const useModel = model || AI_MODEL;
 
   const res = await fetch(`${AI_BASE_URL}/chat/completions`, {
     method: 'POST',
@@ -113,7 +114,7 @@ async function chatWithProvider(system, message, history, locale, model) {
       Authorization: `Bearer ${KEY}`,
     },
     body: JSON.stringify({
-      model: model || AI_MODEL,
+      model: useModel,
       messages,
       temperature: 0.7,
       max_tokens: 900,
