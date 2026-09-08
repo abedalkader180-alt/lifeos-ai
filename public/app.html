@@ -344,7 +344,7 @@ function showLogin(){ var a=document.getElementById('regForm'); var b=document.g
 function authErr(m){ document.getElementById('authErr').textContent = m || ''; }
 function setBusy(on){ try{ const s=document.getElementById('authSpinner'); if(s){ s.classList.toggle('hidden',!on); s.style.display=on?'flex':'none'; } }catch(e){} }
 async function doLogin(){ const email=val('email'),password=val('password'); if(!email||!password)return authErr(lang==='ar'?'أدخل الإيميل وكلمة المرور':'Enter email and password'); authErr(''); setBusy(true); try{ const r=await api('/api/auth/login',{email,password}); setAuth(r); }catch(e){ if(e.data&&e.data.error==='email_not_verified'){ showVerify(email,e.data.dev_code,e.data.dev_note,e.data.detail); } else authErr(e.message); } finally{ setBusy(false); } }
-async function doRegister(){ const name=val('rName'),email=val('rEmail'),password=val('rPassword'); if(!name||!email||!password)return authErr(lang==='ar'?'أكمل البيانات':'Fill all fields'); authErr(''); setBusy(true); try{ const r=await api('/api/auth/register',{name,email,password,locale:lang}); if(r.needs_verification){ showVerify(r.email,r.dev_code,r.dev_note,r.detail); } else setAuth(r); }catch(e){ if(e.data&&e.data.error==='email_not_verified'){ showVerify(email,e.data.dev_code,e.data.dev_note,e.data.detail); } else authErr(e.message||(lang==='ar'?'حدث خطأ غير متوقع':'Unexpected error')); } finally{ setBusy(false); } }
+async function doRegister(){ const name=val('rName'),email=val('rEmail'),password=val('rPassword'); if(!name||!email||!password)return authErr(lang==='ar'?'أكمل البيانات':'Fill all fields'); authErr(''); setBusy(true); try{ const r=await api('/api/auth/register',{name,email,password,locale:lang}); if(r.needs_verification){ showVerify(r.email,r.dev_code||null,r.dev_note,r.detail); } else setAuth(r); }catch(e){ if(e.data&&e.data.error==='email_not_verified'){ showVerify(email,e.data.dev_code||null,e.data.dev_note,e.data.detail); } else authErr(e.message||(lang==='ar'?'حدث خطأ غير متوقع':'Unexpected error')); } finally{ setBusy(false); } }
 
 let pendingEmail='';
 function UserEmailLocal(){ try { const u=localStorage.getItem('lifeos_user'); if(u){ const o=JSON.parse(u); if(o && o.email) return o.email; } } catch(e){} return ''; }
@@ -354,13 +354,19 @@ function showVerify(email, devCode, devNote, devDetail){
   document.getElementById('verifyCodeInput').value='';
   document.getElementById('verifyErr').textContent='';
   const dev=document.getElementById('verifyDev');
-  if(devCode){ dev.classList.remove('hidden');
+  const det=document.getElementById('verifyDet');
+  if(devCode){
+    dev.classList.remove('hidden');
     const msg = (lang==='ar' ? 'لم يُرسل البريد بعد. استخدم هذا الرمز مؤقتاً: ' : 'Email not sent yet. Use this code for now: ') + devCode + ' — ' + (devNote||'');
     dev.textContent = '⏳ ' + msg;
-    const det = document.getElementById('verifyDet');
     if(det){ if(devDetail){ det.classList.remove('hidden'); det.textContent = (lang==='ar' ? 'السبب: ' : 'Reason: ') + devDetail; } else { det.classList.add('hidden'); det.textContent=''; } }
   }
-  else { dev.classList.add('hidden'); dev.textContent=''; }
+  else {
+    dev.classList.remove('hidden');
+    dev.classList.add('dev-ok');
+    dev.textContent = (lang==='ar' ? '📬 أرسلنا رمزاً حقيقياً إلى بريدك. إذا لم يصلك، انقر "أعد إرسال الرمز".' : '📬 We sent a real code to your inbox. If it does not arrive, click "Resend code".');
+    if(det){ det.classList.add('hidden'); det.textContent=''; }
+  }
   document.getElementById('auth').classList.add('hidden');
   document.getElementById('auth').style.display='none';
   document.getElementById('verify').classList.remove('hidden');
@@ -377,7 +383,8 @@ async function verifyCode(){
 }
 async function resendCode(){
   if(!pendingEmail) return;
-  try{ const r=await api('/api/auth/resend',{email:pendingEmail}); document.getElementById('verifyErr').textContent=t('verify_sent'); if(r.dev_code){ showVerify(pendingEmail, r.dev_code, r.dev_note, r.detail); } }
+  document.getElementById('verifyErr').textContent=t('verify_ok');
+  try{ const r=await api('/api/auth/resend',{email:pendingEmail}); document.getElementById('verifyErr').textContent=r.delivery_sent?t('verify_sent'):t('verify_ok'); showVerify(pendingEmail, r.dev_code||null, r.dev_note, r.detail); }
   catch(e){ verifyErr(e.message); }
 }
 function verifyErr(m){ document.getElementById('verifyErr').textContent=m||''; }

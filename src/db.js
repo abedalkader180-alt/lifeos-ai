@@ -19,8 +19,11 @@ let DB_ERROR = null;
 
 if (IS_PG) {
   const { Pool } = require('pg');
+  // Remove sslmode from the URL: we configure TLS explicitly below, which silences
+  // pg's "SSL modes 'prefer', 'require', 'verify-ca' are treated as aliases" warning.
+  const cleanUrl = PG_URL.replace(/([?&])sslmode=[^&]*/i, '$1').replace(/[?&]$/, '');
   pool = new Pool({
-    connectionString: PG_URL,
+    connectionString: cleanUrl,
     ssl: { rejectUnauthorized: false },
     max: 10,
   });
@@ -183,6 +186,15 @@ const SCHEMA_SQLITE = `
     created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
     FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
   );
+  CREATE TABLE IF NOT EXISTS mail_logs (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    email TEXT NOT NULL,
+    mode TEXT,
+    sent INTEGER NOT NULL DEFAULT 0,
+    detail TEXT,
+    mail_from TEXT,
+    created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP
+  );
 `;
 
 const SCHEMA_PG = `
@@ -273,6 +285,15 @@ const SCHEMA_PG = `
     body TEXT,
     link TEXT,
     read INTEGER NOT NULL DEFAULT 0,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+  );
+  CREATE TABLE IF NOT EXISTS mail_logs (
+    id SERIAL PRIMARY KEY,
+    email TEXT NOT NULL,
+    mode TEXT,
+    sent INTEGER NOT NULL DEFAULT 0,
+    detail TEXT,
+    mail_from TEXT,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
   );
 `;

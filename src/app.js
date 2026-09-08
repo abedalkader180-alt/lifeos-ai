@@ -117,7 +117,19 @@ app.get('/api/ai/status', async (req, res) => {
       detail = `Reachability check failed: ${e.message}`;
     }
   }
-  res.json({ enabled: ai.AI_ENABLED, reachable, detail, base_url: ai.AI_BASE_URL, model: ai.AI_MODEL });
+  res.json({ enabled: ai.AI_ENABLED, reachable, detail, base_url: ai.AI_BASE_URL, model: ai.AI_MODEL, last_error: ai.getLastError ? ai.getLastError() : null });
+});
+
+// ===== real AI live test =====
+app.post('/api/ai/test', async (req, res) => {
+  const message = (req.body && req.body.message || 'What is the quickest way to organize my morning? Reply in one short paragraph.').toString();
+  const t0 = Date.now();
+  try {
+    const reply = await ai.chat({ user: { name: 'Test', plan: 'free', locale: 'en', email: 'test@example.com' }, message, history: [], locale: 'en' });
+    res.json({ ok: true, elapsed_ms: Date.now() - t0, enabled: ai.AI_ENABLED, model: ai.AI_MODEL, reply, last_error: ai.getLastError ? ai.getLastError() : null });
+  } catch (e) {
+    res.status(500).json({ ok: false, elapsed_ms: Date.now() - t0, enabled: ai.AI_ENABLED, model: ai.AI_MODEL, error: e.message, last_error: ai.getLastError ? ai.getLastError() : null });
+  }
 });
 
 // ===== health =====
@@ -212,7 +224,21 @@ app.get('/api/mail-test', async (req, res) => {
   } catch (e) {
     result = { sent: false, mode: 'error', detail: e.message };
   }
+  await logMail(to, result.mode, result.sent, result.detail);
   res.json({ config: cfg, to, result });
+});
+
+// ===== mail logs (diagnostic; shows real SMTP errors) =====
+app.get('/api/mail-logs', async (req, res) => {
+  const email = (req.query.email || '').toString().trim().toLowerCase();
+  try {
+    const rows = email
+      ? await db.all('SELECT id, email, mode, sent, detail, mail_from, created_at FROM mail_logs WHERE email = ? ORDER BY id DESC LIMIT 20', [email])
+      : await db.all('SELECT id, email, mode, sent, detail, mail_from, created_at FROM mail_logs ORDER BY id DESC LIMIT 30');
+    res.json({ rows });
+  } catch (e) {
+    res.status(500).json({ error: 'logs unavailable', detail: e.message });
+  }
 });
 
 // ===== public config =====
@@ -252,37 +278,62 @@ function verifyExpiry() {
 function devCodeAllowed() {
   return process.env.ALLOW_DEV_VERIFY !== 'false';
 }
+async function logMail(email, mode, sent, detail) {
+  try {
+    await db.run('INSERT INTO mail_logs (email, mode, sent, detail, mail_from) VALUES (?, ?, ?, ?, ?)',
+      [email || '', mode || 'unknown', sent ? 1 : 0, String(detail || '').slice(0, 500), (mail && mail.mailConfig ? mail.mailConfig.from : '')]);
+  } catch (e) {
+    console.error('[mail-log] failed to store:', e && e.message ? e.message : e);
+  }
+}
+
 function deliveryPayload(result, email, code) {
   const out = { delivery: result.mode || 'unconfigured', delivery_sent: !!result.sent, detail: result.detail || null };
-  // Expose a fallback code whenever the email was NOT actually sent (timeout/error/unconfigured),
-  // so the user can always continue. Once email works (delivery_sent=true) no code is exposed.
-  // We hide it only for real launch by setting ALLOW_DEV_VERIFY=false.
-  if (!result.sent) {
+  // While the email is actually being attempted in the background, do NOT leak the
+  // code on screen. The user waits for the real inbox code.
+  if (!result.sent && result.mode !== 'sending') {
     out.dev_code = code || result.dev_code;
-    out.dev_note = result.mode === 'smtp' || result.mode === 'timeout'
-      ? 'The email is still being sent. Use the code on screen to continue now.'
-      : result.mode === 'error'
-        ? 'Email could not be sent yet. Use the code on screen for now.'
-        : 'Email sending is not configured yet. Use the code on screen for now.';
+    out.dev_note = result.mode === 'error'
+      ? 'Email could not be sent yet. Use the code on screen for now.'
+      : 'Email sending is not configured yet. Use the code on screen for now.';
+  } else if (result.mode === 'sending') {
+    out.dev_note = 'We are sending you a real email. Check your inbox (and spam) for the code.';
   }
   return { ...out, email };
 }
 
 // Generate + save a new code, then SEND the email in the background so the API
 // responds instantly. The send promise runs on its own (Gmail can take >5s),
-// and it updates the same in-app fallback only if it succeeds for real.
-async function sendCode(user, lang) {
+// and we record the real outcome in mail_logs for diagnostics.
+async function sendCode(user, lang, opts = {}) {
   const code = makeVerifyCode();
   const expires = verifyExpiry();
   await db.run('UPDATE users SET verify_code = ?, verify_expires = ?, verify_attempts = 0 WHERE id = ?', [code, expires, user.id]);
-  // Fire-and-forget: never block the response waiting for a slow/failing provider.
-  mail.sendVerificationCode(user.email, code, lang)
+  const firePromise = () => mail.sendVerificationCode(user.email, code, lang)
     .then(r => {
+      logMail(user.email, r.mode, r.sent, r.detail);
       if (r && r.sent) console.log('[mail] verification code SENT to', user.email);
       else console.warn('[mail] verification code not sent to', user.email, r && r.mode, r && r.detail);
+      return r;
     })
-    .catch(e => console.error('[mail] background send failed:', user.email, e && e.message ? e.message : e));
-  return { code, result: { sent: false, mode: 'sending', detail: 'Email is being sent in the background.' } };
+    .catch(e => {
+      logMail(user.email, 'error', false, e.message);
+      return { sent: false, mode: 'error', detail: 'Email failed: ' + e.message };
+    });
+
+  // Default: respond instantly, email sent in background.
+  if (!opts.wait) {
+    firePromise();
+    return { code, result: { sent: false, mode: 'sending', detail: 'Email is being sent in the background.' } };
+  }
+
+  // Resend / explicit retry: wait up to 12s for a real provider answer so we can
+  // tell the user honestly whether it worked or show the code as a fallback.
+  const result = await Promise.race([
+    firePromise(),
+    new Promise(resolve => setTimeout(() => resolve({ sent: false, mode: 'timeout', detail: 'Email is taking longer than expected. Check inbox/spam.' }), 12000)),
+  ]);
+  return { code, result };
 }
 
 app.post('/api/auth/register', async (req, res) => {
@@ -357,7 +408,7 @@ app.post('/api/auth/resend', async (req, res) => {
   const user = await db.get('SELECT * FROM users WHERE email = ?', [email]);
   if (!user) return res.status(404).json({ error: 'user not found' });
   if (user.email_verified) return res.status(400).json({ error: 'already_verified' });
-  const sent = await sendCode(user, user.locale === 'ar' ? 'ar' : 'en');
+  const sent = await sendCode(user, user.locale === 'ar' ? 'ar' : 'en', { wait: true });
   res.json({ ...deliveryPayload(sent.result, email, sent.code) });
 });
 

@@ -16,14 +16,25 @@ const AI_ENABLED = process.env.AI_ENABLED === 'true' && !!KEY;
 const AI_BASE_URL = (process.env.AI_BASE_URL || provider.base).replace(/\/$/, '');
 const AI_MODEL = process.env.AI_MODEL || provider.model;
 
+let lastError = null;
+function getLastError() { return lastError; }
+
 async function chat({ user, message, history = [], locale = 'en' }) {
   const system = buildSystemPrompt(user, locale);
   if (AI_ENABLED) {
     try {
-      return await chatWithProvider(system, message, history, locale);
+      const reply = await chatWithProvider(system, message, history, locale);
+      lastError = null;
+      return reply;
     } catch (err) {
-      console.error('[ai] provider error, falling back:', err.message);
-      return fallbackAssistant(user, message, locale);
+      lastError = 'Provider error: ' + (err && err.message ? err.message : String(err));
+      console.error('[ai] provider error:', lastError);
+      // Only fall back to canned when explicitly allowed; otherwise fail visibly
+      // so the owner knows the AI key/model needs attention.
+      if (process.env.AI_ALLOW_FALLBACK === 'true') {
+        return fallbackAssistant(user, message, locale);
+      }
+      throw new Error(lastError);
     }
   }
   return fallbackAssistant(user, message, locale);
@@ -116,4 +127,4 @@ function fallbackAssistant(user, message, locale) {
   return blocks.join('\n\n');
 }
 
-module.exports = { chat, AI_ENABLED, AI_MODEL, AI_BASE_URL };
+module.exports = { chat, AI_ENABLED, AI_MODEL, AI_BASE_URL, getLastError };
