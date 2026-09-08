@@ -37,6 +37,9 @@ if (!RESEND_KEY && SMTP_HOST && SMTP_USER && SMTP_PASS) {
     port: SMTP_PORT,
     secure: SMTP_PORT === 465,
     auth: { user: SMTP_USER, pass: SMTP_PASS },
+    connectionTimeout: 20000,
+    greetingTimeout: 20000,
+    socketTimeout: 25000,
   });
 }
 

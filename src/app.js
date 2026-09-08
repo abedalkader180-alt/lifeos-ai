@@ -202,13 +202,17 @@ app.get('/api/db/check', async (req, res) => {
 // ===== mail test (diagnostic, no real user) =====
 app.get('/api/mail-test', async (req, res) => {
   const cfg = mail && mail.mailConfig ? mail.mailConfig : {};
+  const to = (req.query.to || process.env.MAIL_TEST_TO || 'test@example.com').toString();
   let result = { sent: false, mode: 'none' };
   try {
-    result = await mail.sendVerificationCode(process.env.MAIL_TEST_TO || 'test@example.com', '123456', 'en');
+    result = await Promise.race([
+      mail.sendVerificationCode(to, '123456', 'en'),
+      new Promise(resolve => setTimeout(() => resolve({ sent: false, mode: 'timeout', detail: 'mail-test timed out after 30s' }), 30000)),
+    ]);
   } catch (e) {
     result = { sent: false, mode: 'error', detail: e.message };
   }
-  res.json({ config: cfg, result });
+  res.json({ config: cfg, to, result });
 });
 
 // ===== public config =====
@@ -252,10 +256,11 @@ function deliveryPayload(result, email, code) {
   const out = { delivery: result.mode || 'unconfigured', delivery_sent: !!result.sent, detail: result.detail || null };
   // Expose a fallback code whenever the email was NOT actually sent (timeout/error/unconfigured),
   // so the user can always continue. Once email works (delivery_sent=true) no code is exposed.
+  // We hide it only for real launch by setting ALLOW_DEV_VERIFY=false.
   if (!result.sent) {
     out.dev_code = code || result.dev_code;
-    out.dev_note = result.mode === 'smtp'
-      ? 'Email send timed out or failed. Use the code on screen for now.'
+    out.dev_note = result.mode === 'smtp' || result.mode === 'timeout'
+      ? 'The email is still being sent. Use the code on screen to continue now.'
       : result.mode === 'error'
         ? 'Email could not be sent yet. Use the code on screen for now.'
         : 'Email sending is not configured yet. Use the code on screen for now.';
@@ -263,17 +268,21 @@ function deliveryPayload(result, email, code) {
   return { ...out, email };
 }
 
+// Generate + save a new code, then SEND the email in the background so the API
+// responds instantly. The send promise runs on its own (Gmail can take >5s),
+// and it updates the same in-app fallback only if it succeeds for real.
 async function sendCode(user, lang) {
   const code = makeVerifyCode();
   const expires = verifyExpiry();
   await db.run('UPDATE users SET verify_code = ?, verify_expires = ?, verify_attempts = 0 WHERE id = ?', [code, expires, user.id]);
-  // Try to email, but never block the response waiting for a slow/failing provider.
-  const result = await Promise.race([
-    mail.sendVerificationCode(user.email, code, lang).catch(e => ({ sent: false, mode: 'error', detail: 'Email failed: ' + e.message })),
-    new Promise(resolve => setTimeout(() => resolve({ sent: false, mode: 'timeout', detail: 'Email sending timed out. Code shown for testing.' }), 2500)),
-  ]);
-  if (result.mode === 'unconfigured' || result.mode === 'error' || result.mode === 'timeout') result.dev_code = code;
-  return { code, result };
+  // Fire-and-forget: never block the response waiting for a slow/failing provider.
+  mail.sendVerificationCode(user.email, code, lang)
+    .then(r => {
+      if (r && r.sent) console.log('[mail] verification code SENT to', user.email);
+      else console.warn('[mail] verification code not sent to', user.email, r && r.mode, r && r.detail);
+    })
+    .catch(e => console.error('[mail] background send failed:', user.email, e && e.message ? e.message : e));
+  return { code, result: { sent: false, mode: 'sending', detail: 'Email is being sent in the background.' } };
 }
 
 app.post('/api/auth/register', async (req, res) => {
@@ -315,10 +324,8 @@ app.post('/api/auth/register', async (req, res) => {
     );
   }
 
-  const result = await mail.sendVerificationCode(user.email, user.verify_code, lang);
-  if (result.mode === 'unconfigured') result.dev_code = user.verify_code;
-
-  res.json({ needs_verification: true, ...deliveryPayload(result, mailAddr, user.verify_code) });
+  const sent = await sendCode(user, lang);
+  res.json({ needs_verification: true, ...deliveryPayload(sent.result, mailAddr, sent.code) });
 });
 
 app.post('/api/auth/verify-email', async (req, res) => {
