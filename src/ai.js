@@ -37,6 +37,13 @@ const MODEL_CANDIDATES = [
   'mixtral-8x7b-32768',
   'gemma2-9b-it',
   'qwen-2.5-32b',
+  'qwen/qwen3.8-27b',
+  'qwen/qwen3.6-27b',
+  'openai/gpt-oss-120b',
+  'openai/gpt-oss-20b',
+  'groq/compound',
+  'groq/compound-mini',
+  'allam-2-7b',
 ].filter(Boolean);
 
 async function listModels() {
@@ -59,8 +66,14 @@ async function listModels() {
 }
 
 function pickWorkingModel(available) {
-  for (const cand of MODEL_CANDIDATES) {
-    if (available && available.length && available.includes(cand)) return cand;
+  if (available && available.length) {
+    for (const cand of MODEL_CANDIDATES) {
+      if (available.includes(cand)) return cand;
+    }
+    // Prefer a useful chat model if any available; avoid tiny/whisper/guard models.
+    const preferred = available.find(id => /qwen|\bllama\b|gpt-oss|compound|gemma|mistral/.test(id) && !/whisper|guard|22m|86m|prompt/.test(id));
+    if (preferred) return preferred;
+    return available[0];
   }
   return AI_MODEL;
 }
