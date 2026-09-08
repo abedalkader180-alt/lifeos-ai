@@ -54,6 +54,7 @@ function publicUser(u) {
 function planPrice(plan) {
   if (plan === 'pro') return PRICE_PRO;
   if (plan === 'life') return PRICE_LIFE;
+  if (plan === 'boost20') return 10;
   return 0;
 }
 
@@ -584,97 +585,135 @@ app.post('/api/chat', auth, async (req, res) => {
   res.json({ reply: response });
 });
 
-// ===== LifeOS 40-Day Life Mountain =====
-// Free: days 1-10 (Starter) - motivating, easy wins.
-// Pro:  days 11-30 (Rise)   - creative, viral, harder.
-// Life: days 31-40 (Legend) - intense, unforgettable.
-// Every account gets a DIFFERENT sequence (seeded by user id), difficulty grows,
-// and each check-in earns points/streak/milestone rewards.
+// ===== LifeOS Challenge Arena (60 missions) =====
+// Pure free-to-play: everyone can do all 60 challenges. Premium (Pro/Life) = 2x points,
+// deeper AI proof validation, and leaderboard boost. No hard paywall, ever.
+// Categories: action, social, creative, brain, physical, laugh, frozen/glitch, film.
+// Each challenge has a type + optional timer. Proof is text (no upload needed); the AI
+// reads the proof and gives a free, instant verdict.
 
-const CH_FREE_DAYS = 10;
-const CH_PRO_DAYS = 30;
-const CH_TOTAL_DAYS = 40;
-const CH_MILESTONES = { 7: 20, 10: 30, 14: 30, 21: 40, 30: 60, 40: 120 };
-
-const CH_FREE_POOL = [
-  { en: 'Write your #1 goal in one sentence and read it out loud.', ar: 'اكتب هدفك الأول بجملة واحدة واقرأه بصوت عالٍ.' },
-  { en: 'Choose the 3 most important tasks for today; write them down.', ar: 'اختر أهم ٣ مهام لهذا اليوم واكتبها.' },
-  { en: 'Do 20 minutes of focused work with zero phone.', ar: 'اعمل ٢٠ دقيقة بتركيز كامل بدون هاتف.' },
-  { en: 'Drink 8 glasses of water today.', ar: 'اشرب ٨ أكواب ماء اليوم.' },
-  { en: 'Walk or move outside for 15 minutes.', ar: 'امشِ أو تحرك خارجاً لمدة ١٥ دقيقة.' },
-  { en: 'Make your bed first thing in the morning.', ar: 'رتّب سريرك أول ما تصحى.' },
-  { en: 'Write 3 things you are grateful for.', ar: 'اكتب ٣ أشياء أنت ممتن لها.' },
-  { en: 'Plan tomorrow tonight before you sleep.', ar: 'خطط ليوم غدٍ قبل النوم.' },
-  { en: 'Read or listen to 10 minutes of something useful.', ar: 'اقرأ أو اسمع ١٠ دقائق شيئاً مفيداً.' },
-  { en: 'Do one small healthy meal choice today.', ar: 'اختر وجبة صحية واحدة اليوم.' },
-  { en: 'Remove one distraction from your environment.', ar: 'أزل مشتّتاً واحداً من بيئتك.' },
-  { en: 'Message or call someone you care about.', ar: 'تواصل مع شخص تهتم لأمره.' },
-  { en: 'Do 5 minutes of breathing or stretching.', ar: 'خذ ٥ دقائق تنفّس أو تمدّد.' },
-  { en: 'Identify one thing that drains you and say no to it.', ar: 'حدد شيئاً يستنزفك وقل له لا.' },
-  { en: 'Write one sentence about the person you want to become.', ar: 'اكتب جملة عن الشخص الذي تريد أن تصبحه.' },
-  { en: 'Do one act of kindness, big or small.', ar: 'قدّم لطفاً واحداً، كبيراً أو صغيراً.' },
-  { en: 'Check your energy: sleep, water, food. Fix one.', ar: 'افحص طاقتك: نوم، ماء، طعام. أصلح واحداً.' },
-  { en: 'Set one realistic goal for next week.', ar: 'ضع هدفاً واقعياً للأسبوع القادم.' },
-];
-
-const CH_PRO_POOL = [
-  { en: 'Record a 15-second video explaining your #1 goal. Post it if you dare.', ar: 'سجّل فيديو ١٥ ثانية تشرح فيه هدفك. انشره إذا تجرأت.' },
-  { en: 'Do a "smart hour": one hour, no distractions, one important thing.', ar: 'اعمل "ساعة ذكية": ساعة واحدة بلا تشتيت لشيء مهم واحد.' },
-  { en: 'Take a photo of your workspace and improve one thing about it.', ar: 'صوّر مكان عملك ثم حسّن شيئاً واحداً فيه.' },
-  { en: 'Send a specific compliment to 3 different people.', ar: 'أرسل إطراءً محدداً إلى ٣ أشخاص مختلفين.' },
-  { en: 'Do 30 minutes of exercise you actually enjoy (not punishment).', ar: 'أنجز ٣٠ دقيقة تمرين تستمتع به فعلاً.' },
-  { en: 'Delete one app that wastes your time and note how it feels.', ar: 'احذف تطبيقاً يضيع وقتك ولاحظ شعورك.' },
-  { en: 'Plan the next 7 days in 10 minutes. Take a screenshot.', ar: 'خطط الأيام السبعة القادمة في ١٠ دقائق. خذ لقطة شاشة.' },
-  { en: 'Eat one meal without any screen. Fully present.', ar: 'تناول وجبة كاملة بدون شاشة. حضور كامل.' },
-  { en: 'Write a 3-line "anti-routine": what you will NOT do tomorrow.', ar: 'اكتب "روتيناً مضاداً": ما الذي لن تفعله غداً.' },
-  { en: 'Call someone who used to matter to you.', ar: 'اتصل بشخص كان يهمك يوماً ما.' },
-  { en: 'Do one thing you have been postponing for over a week.', ar: 'أنهِ شيئاً تؤجله منذ أكثر من أسبوع.' },
-  { en: 'Create a 1-minute morning ritual and actually do it.', ar: 'أنشئ طقس صباحي مدته دقيقة ونفّذه فعلاً.' },
-  { en: 'Write 5 things you are proud of. Read them aloud.', ar: 'اكتب ٥ أشياء تفتخر بها واقرأها بصوت عالٍ.' },
-  { en: 'Improve your sleep: no screens 30 minutes before bed.', ar: 'حسّن نومك: بلا شاشات قبل النوم ب٣٠ دقيقة.' },
-  { en: 'Do one "brave" thing that scares you a little.', ar: 'افعل شيئاً "شجاعاً" يخيفك قليلاً.' },
-  { en: 'Make a short list of people who lift you up. Thank one.', ar: 'اكتب قائمة الأشخاص الذين يرفعونك. اشكر واحداً.' },
-  { en: 'Do a digital detox for 2 hours and notice everything.', ar: 'افصل عن العالم الرقمي ساعتين ولاحظ كل شيء.' },
-  { en: 'Take a photo of what you did today and share why it matters.', ar: 'صوّر ما أنجزته اليوم وشارك سبب أهميته.' },
-  { en: 'Say one hard truth you have been avoiding.', ar: 'قل حقيقة صعبة كنت تتجنبها.' },
-  { en: 'Write down 10 ideas for your future. Keep all of them.', ar: 'اكتب ١٠ أفكار لمستقبلك. احتفظ بها كلها.' },
-];
-
-const CH_LIFE_POOL = [
-  { en: 'Do a full 5-hour personal "deep work" marathon on your biggest goal.', ar: 'أنجز ماراثون "عمل عميق" ٥ ساعات كاملة على هدفك الأكبر.' },
-  { en: 'Write a 30-day plan for your #1 life area and print/save it.', ar: 'اكتب خطة ٣٠ يوماً لأهم مجال في حياتك واحفظها.' },
-  { en: 'Complete a project you have been putting off and document it.', ar: 'أنهِ مشروعاً يؤجله منذ زمن وتوثّقه.' },
-  { en: 'Do a 24-hour challenge: no complaining, no negativity.', ar: 'تحدي ٢٤ ساعة: لا شكوى، لا سلبية.' },
-  { en: 'Create something (article, video, design) and publish it.', ar: 'أنشئ شيئاً (مقال، فيديو، تصميم) وانشره.' },
-  { en: 'Do 50 minutes of hard physical training that pushes you.', ar: 'أنجز ٥٠ دقيقة تمرين جسدي صعب يدفعك للحد.' },
-  { en: 'Have one deep, honest 1-hour conversation with someone important.', ar: 'اخض محادثة صادقة وعميقة لساعة مع شخص مهم.' },
-  { en: 'Reinvent your routine: design a "1% better" system for one life area.', ar: 'أعد تصميم روتينك: نظام "أفضل ١٪" لمجال واحد.' },
-  { en: 'Do something public that shows your progress. Be proud.', ar: 'افعل شيئاً علنياً يعرض تقدمك. كن فخوراً.' },
-  { en: 'Give 30 minutes to help someone achieve a goal.', ar: 'ساعد شخصاً لتحقيق هدفه لمدة ٣٠ دقيقة.' },
-  { en: 'Write your own 5-year vision and read it aloud.', ar: 'اكتب رؤيتك لخمس سنوات واقرأها بصوت عالٍ.' },
-  { en: 'Do one thing today that your future self will thank you for.', ar: 'افعل شيئاً يشكرك عليه "نسختك المستقبلية".' },
-];
+const CH_TOTAL = 60;
+const CH_MILESTONES = { 7: 20, 10: 30, 14: 30, 21: 40, 30: 60, 40: 80, 50: 100, 60: 150 };
 
 function chStage(day) {
-  if (day <= 10) return { key: 'starter', name_en: 'Starter', name_ar: 'البداية', tier: 'free', color: '#34d399' };
-  if (day <= 30) return { key: 'rise', name_en: 'Rise', name_ar: 'الصعود', tier: 'pro', color: '#c084fc' };
-  return { key: 'legend', name_en: 'Legend', name_ar: 'الأسطورة', tier: 'life', color: '#fbbf24' };
+  if (day <= 10) return { key: 'seed', name_en: 'Seed', name_ar: 'البذرة', color: '#34d399' };
+  if (day <= 25) return { key: 'risk', name_en: 'Risk', name_ar: 'المخاطرة', color: '#c084fc' };
+  if (day <= 40) return { key: 'beast', name_en: 'Beast', name_ar: 'الوحش', color: '#fbbf24' };
+  return { key: 'legend', name_en: 'Legend', name_ar: 'الأسطورة', color: '#f472b6' };
+}
+
+const CH_TYPE = {
+  action: { en: 'Action', ar: 'حركي' },
+  social: { en: 'Social', ar: 'اجتماعي' },
+  creative: { en: 'Creative', ar: 'إبداعي' },
+  brain: { en: 'Brain', ar: 'ذكاء' },
+  physical: { en: 'Physical', ar: 'جسدي' },
+  laugh: { en: 'No-Laugh', ar: 'بدون ضحك' },
+  freeze: { en: 'Freeze/Glitch', ar: 'تجمّد/جليتش' },
+  film: { en: 'Improv', ar: 'تمثيل' },
+};
+
+function chType(t) { return CH_TYPE[t] || CH_TYPE.action; }
+
+// ---- Seed (1-10): warm, funny, energizing ----
+const CH_SEED = [
+  { en: 'Freeze like a statue for 10 seconds in a public place.', ar: 'تجمّد كتمثال ١٠ ثوانٍ في مكان عام.', type: 'freeze', timer: 10 },
+  { en: 'Walk in a straight line for 20 metres without looking back.', ar: 'امشِ بخط مستقيم ٢٠ متراً دون أن تلتفت.', type: 'action', timer: 20 },
+  { en: 'Do the "NPC Walk" — stiff, robot-like walking for 15 seconds.', ar: 'اعمل "مشية NPC" — مشية جامدة كالروبوت ١٥ ثانية.', type: 'action', timer: 15 },
+  { en: 'Say a funny sentence to someone near you without laughing.', ar: 'قل جملة مضحكة لشخص قريب منك دون أن تضحك.', type: 'laugh' },
+  { en: 'Definitely NOT easy: make your bed instantly at sunrise.', ar: 'رتّب سريرك فوراً عند استيقاظك.', type: 'action' },
+  { en: 'Drink a big glass of water and name one real benefit aloud.', ar: 'اشرب كوب ماء كبير واذكر فائدة حقيقية بصوت عالٍ.', type: 'physical' },
+  { en: 'Do 10 jumping jacks before breakfast.', ar: 'اعمل ١٠ نطّات قفز قبل الفطور.', type: 'physical', timer: 30 },
+  { en: 'Write your #1 goal in one sentence and read it out loud.', ar: 'اكتب هدفك الأول بجملة واحدة واقرأه بصوت عالٍ.', type: 'creative' },
+  { en: 'Plan the next 7 days in 10 minutes.', ar: 'خطط الأيام السبعة القادمة في ١٠ دقائق.', type: 'brain', timer: 600 },
+  { en: 'Say 3 things you are proud of. Out loud.', ar: 'قل ٣ أشياء تفتخر بها. بصوت عالٍ.', type: 'creative' },
+];
+
+// ---- Risk (11-25): funnier, faster, braver ----
+const CH_RISK = [
+  { en: 'Do a "Glitch Walk" for 10 seconds like a broken video-game character.', ar: 'اعمل "مشية جليتش" ١٠ ثوانٍ كشخصية لعبة معطوبة.', type: 'freeze', timer: 10 },
+  { en: 'Watch a funny video for 60 seconds without laughing (face visible).', ar: 'شاهد فيديو مضحك ٦٠ ثانية دون أن تضحك.', type: 'laugh', timer: 60 },
+  { en: 'Let a friend try to make you laugh for 30 seconds. You cannot laugh.', ar: 'دع صديقك يحاول إضحاكك ٣٠ ثانية. ممنوع تضحك.', type: 'laugh', timer: 30 },
+  { en: 'Tell your friend a joke without laughing yourself.', ar: 'حاول قول نكتة لصديقك دون أن تضحك أنت.', type: 'laugh' },
+  { en: 'Lip-sync a famous song silently.', ar: 'قلّد أغنية مشهورة بدون صوت.', type: 'film', timer: 45 },
+  { en: 'Lip-sync a super-fast song.', ar: 'اعمل Lip Sync لأغنية سريعة.', type: 'film', timer: 45 },
+  { en: 'Lip-sync a song in a language you do not know.', ar: 'اعمل Lip Sync لأغنية بلغة لا تعرفها.', type: 'film', timer: 45 },
+  { en: 'Solve a simple riddle in 60 seconds.', ar: 'حل لغزاً بسيطاً خلال ٦٠ ثانية.', type: 'brain', timer: 60 },
+  { en: 'Solve a simple math riddle in 45 seconds.', ar: 'حل لغزاً رياضياً بسيطاً خلال ٤٥ ثانية.', type: 'brain', timer: 45 },
+  { en: 'Solve a logic riddle in 30 seconds.', ar: 'حل لغزاً منطقياً خلال ٣٠ ثانية.', type: 'brain', timer: 30 },
+  { en: 'Arrange 5 objects in 20 seconds.', ar: 'رتّب ٥ أغراض خلال ٢٠ ثانية.', type: 'brain', timer: 20 },
+  { en: 'Say 10 words starting with the same letter in 30 seconds.', ar: 'قل ١٠ كلمات تبدأ بنفس الحرف خلال ٣٠ ثانية.', type: 'brain', timer: 30 },
+  { en: 'Do 15 jumping jacks in 20 seconds.', ar: 'اعمل ١٥ Jumping Jacks خلال ٢٠ ثانية.', type: 'physical', timer: 20 },
+  { en: 'Balance one small object on your finger for 10 seconds.', ar: 'وازن غرضاً صغيراً على إصبعك ١٠ ثوانٍ.', type: 'physical', timer: 10 },
+  { en: 'Balance two objects at the same time.', ar: 'وازن غرضين في نفس الوقت.', type: 'physical', timer: 15 },
+  { en: 'Toss a small paper into a bin from a short distance.', ar: 'ارمِ ورقة صغيرة في سلة من مسافة قصيرة.', type: 'action' },
+];
+
+// ---- Beast (26-40): hard, public, hilarious ----
+const CH_BEAST = [
+  { en: 'Freeze for 20 seconds in a crowded place.', ar: 'تجمّد ٢٠ ثانية في مكان مزدحم.', type: 'freeze', timer: 20 },
+  { en: 'Toss the paper from a farther distance.', ar: 'ارمِ الورقة من مسافة أبعد.', type: 'action' },
+  { en: 'Toss the paper from behind your back.', ar: 'ارمِ الورقة من خلف ظهرك.', type: 'action' },
+  { en: 'Sing a full verse of a song with a straight face.', ar: 'غنِّ مقطعاً كاملاً بأغنية بوجه ثابت.', type: 'film', timer: 30 },
+  { en: 'Give a 20-second motivational speech to an imaginary audience.', ar: 'ألقِ خطاباً تحفيزياً ٢٠ ثانية لجمهور خيالي.', type: 'film', timer: 20 },
+  { en: 'Act out a movie scene for 30 seconds using only your face.', ar: 'مثّل مشهداً سينمائياً ٣٠ ثانية بوجهك فقط.', type: 'film', timer: 30 },
+  { en: 'Do 25 squats in 45 seconds.', ar: 'اعمل ٢٥ سكوات في ٤٥ ثانية.', type: 'physical', timer: 45 },
+  { en: 'Recite the alphabet backwards in 30 seconds.', ar: 'قل الأبجدية بالعكس خلال ٣٠ ثانية.', type: 'brain', timer: 30 },
+  { en: 'Count from 50 to 1 in under 40 seconds.', ar: 'عُد من ٥٠ إلى ١ في أقل من ٤٠ ثانية.', type: 'brain', timer: 40 },
+  { en: 'Memory test: memorize 7 random words in 60s, then repeat.', ar: 'اختبار ذاكرة: احفظ ٧ كلمات عشوائية في ٦٠ ثانية ثم أعدها.', type: 'brain', timer: 60 },
+  { en: 'Destroy the "to-do later" list: complete one task you have avoided for a week.', ar: 'أنهِ مهمة تؤجلها منذ أسبوع.', type: 'action' },
+  { en: 'Compliment 3 different people genuinely, looking them in the eye.', ar: 'أعطِ ٣ إطراءات صادقة لثلاثة أشخاص وأنت تنظر في أعينهم.', type: 'social' },
+  { en: 'Do 10 "walk of shame" steps in public without a smile.', ar: 'اعمل ١٠ خطوات "مشية إحراج" في مكان عام دون ابتسامة.', type: 'freeze', timer: 15 },
+  { en: 'Record (in your head) a 10-second horror "glitch" sound and perform it.', ar: 'أدّي صوت "جليتش" مرعب لمدة ١٠ ثوانٍ.', type: 'film', timer: 10 },
+  { en: 'Do 30 seconds of robot dance in public.', ar: 'أدّي رقصة روبوت ٣٠ ثانية في مكان عام.', type: 'action', timer: 30 },
+];
+
+// ---- Legend (41-60): the real bosses ----
+const CH_LEGEND = [
+  { en: 'Do the frozen "Mannequin Challenge" with 2 people for 30 seconds.', ar: 'اعمل تحدي "الدمية" مع شخصين لمدة ٣٠ ثانية.', type: 'freeze', timer: 30 },
+  { en: 'Walk through a busy street with a fully straight face, 30 seconds.', ar: 'امشِ في شارع مزدحم بوجه ثابت تماماً، ٣٠ ثانية.', type: 'freeze', timer: 30 },
+  { en: 'Hold a 30-second serious interview with an imaginary reporter.', ar: 'أجرِ مقابلة جدية ٣٠ ثانية مع مراسل خيالي.', type: 'film', timer: 30 },
+  { en: 'Do 50 jumping jacks in 60 seconds.', ar: 'اعمل ٥٠ نطة قفز في ٦٠ ثانية.', type: 'physical', timer: 60 },
+  { en: 'Balance a book on your head while walking 10 steps.', ar: 'وازن كتاباً على رأسك وأنت تمشي ١٠ خطوات.', type: 'physical', timer: 30 },
+  { en: 'Memorize a 12-word sentence and repeat it perfectly after 2 minutes.', ar: 'احفظ جملة من ١٢ كلمة وكررها بإتقان بعد دقيقتين.', type: 'brain', timer: 120 },
+  { en: 'Solve a 5-piece jigsaw-style logic puzzle in 90 seconds (use anything).', ar: 'حل لغزاً منطقياً من ٥ قطع في ٩٠ ثانية.', type: 'brain', timer: 90 },
+  { en: 'Public improv: make a stranger believe your "tiny fact".', ar: 'ارتجال علني: اجعل غريباً يصدّق "حقيقة صغيرة" لديك.', type: 'social' },
+  { en: 'Do a 45-second silent comedy scene with zero words.', ar: 'أدّي مشهد صوتي كوميدي ٤٥ ثانية بدون كلمات.', type: 'film', timer: 45 },
+  { en: 'Give someone a sincere, detailed thank-you — 30 seconds.', ar: 'قدم شكراً صادقاً ومفصّلاً لشخص — ٣٠ ثانية.', type: 'social', timer: 30 },
+  { en: 'Do the "Zombie Walk" with a friend for 20 seconds without laughing.', ar: 'اعمل "مشية زامبي" مع صديق ٢٠ ثانية دون ضحك.', type: 'freeze', timer: 20 },
+  { en: 'Recreate 3 famous poses in 60 seconds (in your own style).', ar: 'أعد تمثيل ٣ أوضاع شهيرة في ٦٠ ثانية.', type: 'film', timer: 60 },
+  { en: 'Win a tiny personal battle: do 30 push-ups or 100 m sprint, then describe.', ar: 'ركّز: اعمل ٣٠ ضغطة أو ركض ١٠٠ متر ثم صف شعورك.', type: 'physical', timer: 60 },
+  { en: 'Do a 60-second "worst advice ever" motivational speech.', ar: 'ألقِ خطاباً تحفيزياً "أسوأ نصيحة" لمدة ٦٠ ثانية.', type: 'film', timer: 60 },
+  { en: 'Hold your breath for 15 seconds at the end of a funny act.', ar: 'احبس نفسك ١٥ ثانية في نهاية مشهد مضحك.', type: 'action', timer: 15 },
+  { en: 'Do a 90-second silent "marathon" of 5 mini-tasks (balance, freeze, sing-whisper, robot, comedy pose).', ar: 'أدّي "ماراثوناً" صامتاً ٩٠ ثانية من ٥ مهام صغيرة.', type: 'film', timer: 90 },
+];
+
+function chPoolFor(day) {
+  if (day <= 10) return CH_SEED;
+  if (day <= 25) return CH_RISK;
+  if (day <= 40) return CH_BEAST;
+  return CH_LEGEND;
 }
 
 function chTaskFor(day, userId, lang) {
-  const stage = chStage(day);
-  let pool;
-  if (stage.tier === 'free') pool = CH_FREE_POOL;
-  else if (stage.tier === 'pro') pool = CH_PRO_POOL;
-  else pool = CH_LIFE_POOL;
+  const pool = chPoolFor(day);
   const idx = Math.abs(((userId * 37 + day * 53) % 97) % pool.length);
   const item = pool[idx];
-  return { day, tier: stage.tier, stage: stage, text: lang === 'ar' ? item.ar : item.en };
+  const type = chType(item.type);
+  return {
+    day,
+    tier: chStage(day).key,
+    stage: chStage(day),
+    type: item.type,
+    type_name: lang === 'ar' ? type.ar : type.en,
+    timer: item.timer || null,
+    text: lang === 'ar' ? item.ar : item.en,
+  };
 }
 
 function chReward(day, streak, premium) {
   const mult = premium ? 2 : 1;
-  const base = (10 + Math.min(streak, 10)) * mult; // streak bonus
+  const base = (10 + Math.min(streak, 10)) * mult;
   const milestone = (CH_MILESTONES[day] || 0) * mult;
   const total = base + milestone;
   return { base, milestone, total, bonus: streak > 1 ? `+${Math.min(streak, 10) * mult} streak` : null };
@@ -685,31 +724,25 @@ app.get('/api/challenge', auth, async (req, res) => {
   const started = !!u.challenge_start;
   const day = u.challenge_day || 0;
   const completed = u.challenge_completed;
-  const plan = u.plan || 'free';
-  const premium = plan !== 'free';
+  const premium = (u.plan || 'free') !== 'free';
   const lang = req.query.lang || u.locale || 'en';
   const logs = await db.all('SELECT day_number, status, note, created_at FROM challenge_logs WHERE user_id = ? ORDER BY day_number ASC', [u.id]);
-  // Everyone can climb the full 40 days. Pro/Life just earn DOUBLE points and unlock
-  // a "surprise" spark at milestone days. No blocking paywall.
-  const maxAllowed = CH_TOTAL_DAYS;
-  const total = CH_TOTAL_DAYS;
-  const canContinue = started && !completed && (day < maxAllowed);
-  const today = started && !completed ? Math.min(day + 1, maxAllowed) : day;
-  const task = (started && !completed && canContinue) ? chTaskFor(Math.min(day + 1, maxAllowed), u.id, lang) : null;
-  const nextStage = started && !completed && canContinue ? chStage(Math.min(day + 1, maxAllowed)) : null;
-  const nextDay = Math.min(day + 1, maxAllowed);
+  const canContinue = started && !completed && (day < CH_TOTAL);
+  const nextDay = Math.min(day + 1, CH_TOTAL);
+  const task = canContinue ? chTaskFor(nextDay, u.id, lang) : null;
   const surprise = started && !completed && (nextDay === 10 && !premium)
-    ? { title_en: '🎁 Surprise unlocked!', title_ar: '🎁 مفاجأة انفتحت!', text_en: 'You just reached Day 10. Want 2× points AND a golden shield for the rest? Upgrade anytime — but your climb never stops.', text_ar: 'وصلت إلى اليوم 10. تريد ضعف النقاط ودرعاً ذهبياً للبقية؟ طوّر متى شئت — لكن تسلّقك لا يتوقف أبداً.' }
+    ? { title_en: '🎁 Free-to-play forever!', title_ar: '🎁 اللعب مجاني للأبد!', text_en: 'You reached Day 10. Every challenge is free. Want 2× points & AI deep-check? Upgrade boost anytime (optional, never blocks you).', text_ar: 'وصلت إلى اليوم 10. كل التحديات مجانية. تريد ضعف النقاط وفحصاً ذكياً عميقاً؟ فعّل التعزيز متى شئت (اختياري، لا يمنعك أبداً).' }
     : null;
   res.json({
     started, completed, streak: u.challenge_streak || 0, points: u.challenge_points || 0,
-    day, today, task, logs, plan, maxAllowed, total, premium, multiplier: premium ? 2 : 1,
-    canContinue, needUpgrade: false,
-    stage: nextStage, all_stages: ['seed', 'risk', 'beast'], surprise,
+    day, today: nextDay, task, logs, plan: u.plan || 'free', total: CH_TOTAL,
+    premium, multiplier: premium ? 2 : 1, canContinue, needUpgrade: false,
+    stage: task ? task.stage : null, all_stages: ['seed', 'risk', 'beast', 'legend'], surprise,
+    categories: Object.values(CH_TYPE),
     reward: task ? chReward(nextDay, (u.challenge_streak || 0) + 1, premium) : null,
     share_text: started
-      ? `Day ${nextDay}/40 on Jibāl Al-Ḥayāt 🏔️ 🎮 ${chStage(nextDay).name_en} #LifeOS40 #دردشة_الحياة`
-      : 'I just entered Jibāl Al-Ḥayāt 🏔️ 40-day survival game 🎮 #LifeOS40 #دردشة_الحياة',
+      ? `Day ${nextDay}/${CH_TOTAL} · ${task ? task.stage.name_en : 'Done'} on Jibāl Al-Ḥayāt 🏔️ #LifeOS60 #تحديات`
+      : 'I just joined Jibāl Al-Ḥayāt 🏔️ — a 60-mission free challenge game 🎮 #LifeOS60 #تحديات',
   });
 });
 
@@ -722,18 +755,32 @@ app.post('/api/challenge/start', auth, async (req, res) => {
   res.json({ ok: true, challenge: { started: !!fresh.challenge_start, day: fresh.challenge_day, points: fresh.challenge_points, streak: fresh.challenge_streak } });
 });
 
+// AI proof-check: the AI reads the player's text proof and the challenge, then
+// returns a free verdict (approved / retry) + feedback. No media upload needed.
+app.post('/api/challenge/validate-proof', auth, async (req, res) => {
+  const u = req.user;
+  const note = String((req.body && req.body.note) || '');
+  const taskText = String((req.body && req.body.task_text) || '');
+  const locale = (req.body && req.body.locale) || u.locale || 'en';
+  if (!note.trim()) return res.json({ approved: false, feedback: locale === 'ar' ? 'اكتب إثباتاً قصيراً أولاً.' : 'Write a short proof first.' });
+  if (note.trim().length < 12) return res.json({ approved: false, feedback: locale === 'ar' ? 'الإثبات قصير جداً. أضف تفاصيل أكثر.' : 'Proof is too short. Add a bit more detail.' });
+  const verdict = await ai.validateChallengeProof({ user: u, task: taskText, proof: note, locale });
+  res.json(verdict);
+});
+
 app.post('/api/challenge/checkin', auth, async (req, res) => {
   const u = req.user;
   if (u.challenge_completed) return res.status(400).json({ error: 'already_completed' });
   const premium = (u.plan || 'free') !== 'free';
   const day = (u.challenge_day || 0) + 1;
-  if (day > CH_TOTAL_DAYS) return res.status(400).json({ error: 'done' });
+  if (day > CH_TOTAL) return res.status(400).json({ error: 'done' });
   const doneToday = await db.get('SELECT id FROM challenge_logs WHERE user_id = ? AND day_number = ? AND status = ?', [u.id, day, 'done']);
   if (doneToday) return res.status(400).json({ error: 'already_checked' });
-  const note = (req.body && req.body.note || '').toString().slice(0, 200);
-  await db.run('INSERT INTO challenge_logs (user_id, day_number, status, note) VALUES (?, ?, ?, ?)', [u.id, day, 'done', note]);
+  const note = (req.body && req.body.note || '').toString().slice(0, 400);
+  const aiApproved = !!(req.body && req.body.ai_approved);
+  await db.run('INSERT INTO challenge_logs (user_id, day_number, status, note, ai_approved) VALUES (?, ?, ?, ?, ?)', [u.id, day, 'done', note, aiApproved ? 1 : 0]);
   const reward = chReward(day, (u.challenge_streak || 0) + 1, premium);
-  const completed = day >= CH_TOTAL_DAYS ? 1 : 0;
+  const completed = day >= CH_TOTAL ? 1 : 0;
   const points = (u.challenge_points || 0) + reward.total;
   const streak = (u.challenge_streak || 0) + 1;
   await db.run('UPDATE users SET challenge_day = ?, challenge_points = ?, challenge_streak = ?, challenge_completed = ? WHERE id = ?', [day, points, streak, completed, u.id]);
@@ -741,7 +788,7 @@ app.post('/api/challenge/checkin', auth, async (req, res) => {
   res.json({
     ok: true, reward,
     challenge: { day: fresh.challenge_day, points: fresh.challenge_points, streak: fresh.challenge_streak, completed: !!fresh.challenge_completed },
-    task: (completed || fresh.challenge_day >= CH_TOTAL_DAYS) ? null : chTaskFor(fresh.challenge_day + 1, u.id, u.locale),
+    task: (completed || fresh.challenge_day >= CH_TOTAL) ? null : chTaskFor(fresh.challenge_day + 1, u.id, u.locale),
     needUpgrade: false,
   });
 });
@@ -758,7 +805,7 @@ app.post('/api/challenge/skip', auth, async (req, res) => {
 // ===== checkout / payments =====
 app.post('/api/checkout', async (req, res) => {
   const { plan, email, coupon } = req.body || {};
-  const valid = ['pro', 'life'];
+  const valid = ['pro', 'life', 'boost20'];
   if (!valid.includes(plan)) return res.status(400).json({ error: 'invalid plan' });
   const baseAmount = planPrice(plan);
   const discount = applyCoupon(baseAmount, coupon);
@@ -905,7 +952,7 @@ app.post('/api/admin/payments/:id/confirm', ownerAuth, async (req, res) => {
   await db.run('UPDATE payments SET status = ? WHERE id = ?', [status, payment.id]);
 
   if (status === 'confirmed' && payment.user_id) {
-    const until = payment.plan === 'life' ? '2999-12-31' : `${new Date(Date.now() + 30 * 864e5).toISOString().slice(0, 10)}`;
+    const until = (payment.plan === 'life' || payment.plan === 'boost20') ? '2999-12-31' : `${new Date(Date.now() + 30 * 864e5).toISOString().slice(0, 10)}`;
     await db.run('UPDATE users SET plan = ?, plan_until = ? WHERE id = ?', [payment.plan, until, payment.user_id]);
   }
   const updated = await db.get('SELECT * FROM payments WHERE id = ?', [payment.id]);

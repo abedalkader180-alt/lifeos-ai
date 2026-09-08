@@ -219,6 +219,7 @@ const SCHEMA_SQLITE = `
     day_number INTEGER NOT NULL,
     status TEXT NOT NULL DEFAULT 'done',
     note TEXT,
+    ai_approved INTEGER NOT NULL DEFAULT 0,
     created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP
   );
 `;
@@ -346,6 +347,7 @@ const SCHEMA_PG = `
     day_number INTEGER NOT NULL,
     status TEXT NOT NULL DEFAULT 'done',
     note TEXT,
+    ai_approved INTEGER NOT NULL DEFAULT 0,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
   );
 `;
@@ -387,6 +389,7 @@ async function initSchema() {
   await ensureColumn('users', 'challenge_streak', 'challenge_streak INTEGER DEFAULT 0');
   await ensureColumn('users', 'challenge_points', 'challenge_points INTEGER DEFAULT 0');
   await ensureColumn('users', 'challenge_completed', 'challenge_completed INTEGER DEFAULT 0');
+  await ensureColumn('challenge_logs', 'ai_approved', 'ai_approved INTEGER DEFAULT 0');
   await ensureColumn('payments', 'coupon', 'coupon TEXT');
   await ensureColumn('payments', 'discount_percent', 'discount_percent REAL');
   await ensureColumn('payments', 'verified', 'verified INTEGER DEFAULT 0');

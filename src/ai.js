@@ -284,4 +284,51 @@ function fallbackAssistant(user, message, locale) {
   return blocks.join('\n\n');
 }
 
-module.exports = { chat, buildWeeklyPlan, AI_ENABLED, AI_MODEL, AI_BASE_URL, getLastError, listModels, pickWorkingModel };
+// Free text-based challenge proof verification. The AI reads what the player did
+// and returns a verdict. No images/videos needed, no extra cost.
+async function validateChallengeProof({ user, task = '', proof = '', locale = 'en' }) {
+  const lang = locale === 'ar' ? 'Arabic' : 'English';
+  const system = `You are the strict but fair referee of a real-life challenge game. ${user ? user.name : 'A player'} claims to have completed this challenge: "${task}".
+Their proof says: "${proof}".
+In ${lang}. Decide honestly whether the proof is specific, believable, and shows the task was really attempted (not just "yes I did it").
+Return ONLY JSON: {"approved":true|false,"feedback":"short reason shown to player","points_boost":0|5}
+Rules:
+- approved=true only if the proof has real details about WHERE/WHAT/HOW (public place, distance, seconds, people, etc.).
+- approved=false if the proof is generic/one-line/fake/unrelated.
+Keep feedback 1 sentence, encouraging if false.`;
+
+  try {
+    let text;
+    if (AI_ENABLED) {
+      const available = await listModels();
+      text = await chatWithProvider(system, proof, [], locale, pickWorkingModel(available));
+    } else {
+      text = heuristicProof(proof, task);
+    }
+    return parseProofVerdict(text);
+  } catch (e) {
+    lastError = 'Proof check error: ' + (e && e.message ? e.message : String(e));
+    return parseProofVerdict(heuristicProof(proof, task));
+  }
+}
+
+function heuristicProof(proof, task) {
+  const p = String(proof || '').trim();
+  const specific = /(\d+|\bseconds\b|متر|دقيقة|ثانية|public|مكان|شارع|ناس|people|house|room|seconds|مرة|مرتين|person|friend|سلطة|سلة|ورقة|خطاء|قفز|squat|push)/i.test(p);
+  const hasVerb = p.split(/\s+/).length >= 6;
+  const approved = specific && hasVerb;
+  return JSON.stringify({ approved, feedback: approved ? 'Good, you clearly did it. Claim locked in.' : 'Add more real detail: where, what, how long, or what happened.' });
+}
+
+function parseProofVerdict(text) {
+  const m = String(text).match(/\{[\s\S]*\}/);
+  if (m) {
+    try {
+      const j = JSON.parse(m[0]);
+      if (typeof j.approved === 'boolean') return { approved: j.approved, feedback: j.feedback || '', points_boost: j.points_boost || 0 };
+    } catch (e) {}
+  }
+  return { approved: /true/i.test(String(text)), feedback: String(text).slice(0, 160) };
+}
+
+module.exports = { chat, buildWeeklyPlan, validateChallengeProof, AI_ENABLED, AI_MODEL, AI_BASE_URL, getLastError, listModels, pickWorkingModel };
