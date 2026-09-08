@@ -672,11 +672,12 @@ function chTaskFor(day, userId, lang) {
   return { day, tier: stage.tier, stage: stage, text: lang === 'ar' ? item.ar : item.en };
 }
 
-function chReward(day, streak) {
-  const base = 10 + Math.min(streak, 10); // streak bonus
-  const milestone = CH_MILESTONES[day] || 0;
+function chReward(day, streak, premium) {
+  const mult = premium ? 2 : 1;
+  const base = (10 + Math.min(streak, 10)) * mult; // streak bonus
+  const milestone = (CH_MILESTONES[day] || 0) * mult;
   const total = base + milestone;
-  return { base, milestone, total, bonus: streak > 1 ? `+${Math.min(streak, 10)} streak` : null };
+  return { base, milestone, total, bonus: streak > 1 ? `+${Math.min(streak, 10) * mult} streak` : null };
 }
 
 app.get('/api/challenge', auth, async (req, res) => {
@@ -685,23 +686,30 @@ app.get('/api/challenge', auth, async (req, res) => {
   const day = u.challenge_day || 0;
   const completed = u.challenge_completed;
   const plan = u.plan || 'free';
+  const premium = plan !== 'free';
   const lang = req.query.lang || u.locale || 'en';
   const logs = await db.all('SELECT day_number, status, note, created_at FROM challenge_logs WHERE user_id = ? ORDER BY day_number ASC', [u.id]);
-  const maxAllowed = plan === 'life' ? CH_TOTAL_DAYS : (plan === 'pro' ? CH_PRO_DAYS : CH_FREE_DAYS);
+  // Everyone can climb the full 40 days. Pro/Life just earn DOUBLE points and unlock
+  // a "surprise" spark at milestone days. No blocking paywall.
+  const maxAllowed = CH_TOTAL_DAYS;
   const total = CH_TOTAL_DAYS;
   const canContinue = started && !completed && (day < maxAllowed);
-  const needUpgrade = started && !completed && (day >= maxAllowed) && (maxAllowed < total);
   const today = started && !completed ? Math.min(day + 1, maxAllowed) : day;
   const task = (started && !completed && canContinue) ? chTaskFor(Math.min(day + 1, maxAllowed), u.id, lang) : null;
   const nextStage = started && !completed && canContinue ? chStage(Math.min(day + 1, maxAllowed)) : null;
+  const nextDay = Math.min(day + 1, maxAllowed);
+  const surprise = started && !completed && (nextDay === 10 && !premium)
+    ? { title_en: '🎁 Surprise unlocked!', title_ar: '🎁 مفاجأة انفتحت!', text_en: 'You just reached Day 10. Want 2× points AND a golden shield for the rest? Upgrade anytime — but your climb never stops.', text_ar: 'وصلت إلى اليوم 10. تريد ضعف النقاط ودرعاً ذهبياً للبقية؟ طوّر متى شئت — لكن تسلّقك لا يتوقف أبداً.' }
+    : null;
   res.json({
     started, completed, streak: u.challenge_streak || 0, points: u.challenge_points || 0,
-    day, today, task, logs, plan, maxAllowed, total, needUpgrade, canContinue,
-    stage: nextStage, all_stages: ['starter', 'rise', 'legend'],
-    reward: task ? chReward(Math.min(day + 1, maxAllowed), (u.challenge_streak || 0) + 1) : null,
+    day, today, task, logs, plan, maxAllowed, total, premium, multiplier: premium ? 2 : 1,
+    canContinue, needUpgrade: false,
+    stage: nextStage, all_stages: ['seed', 'risk', 'beast'], surprise,
+    reward: task ? chReward(nextDay, (u.challenge_streak || 0) + 1, premium) : null,
     share_text: started
-      ? `I'm on Day ${Math.min(day + 1, maxAllowed)} of the LifeOS 40-Day Life Mountain 🚀 ${chStage(Math.min(day + 1, maxAllowed)).name_en} #LifeOS40 #مرشد_حياتك`
-      : 'I just joined the LifeOS 40-Day Life Mountain 🚀 #LifeOS40 #مرشد_حياتك',
+      ? `Day ${nextDay}/40 on Jibāl Al-Ḥayāt 🏔️ 🎮 ${chStage(nextDay).name_en} #LifeOS40 #دردشة_الحياة`
+      : 'I just entered Jibāl Al-Ḥayāt 🏔️ 40-day survival game 🎮 #LifeOS40 #دردشة_الحياة',
   });
 });
 
@@ -717,15 +725,14 @@ app.post('/api/challenge/start', auth, async (req, res) => {
 app.post('/api/challenge/checkin', auth, async (req, res) => {
   const u = req.user;
   if (u.challenge_completed) return res.status(400).json({ error: 'already_completed' });
-  const plan = u.plan || 'free';
-  const maxAllowed = plan === 'life' ? CH_TOTAL_DAYS : (plan === 'pro' ? CH_PRO_DAYS : CH_FREE_DAYS);
+  const premium = (u.plan || 'free') !== 'free';
   const day = (u.challenge_day || 0) + 1;
-  if (day > maxAllowed) return res.status(403).json({ error: 'upgrade_required', message: 'Upgrade to continue this challenge.' });
+  if (day > CH_TOTAL_DAYS) return res.status(400).json({ error: 'done' });
   const doneToday = await db.get('SELECT id FROM challenge_logs WHERE user_id = ? AND day_number = ? AND status = ?', [u.id, day, 'done']);
   if (doneToday) return res.status(400).json({ error: 'already_checked' });
   const note = (req.body && req.body.note || '').toString().slice(0, 200);
   await db.run('INSERT INTO challenge_logs (user_id, day_number, status, note) VALUES (?, ?, ?, ?)', [u.id, day, 'done', note]);
-  const reward = chReward(day, (u.challenge_streak || 0) + 1);
+  const reward = chReward(day, (u.challenge_streak || 0) + 1, premium);
   const completed = day >= CH_TOTAL_DAYS ? 1 : 0;
   const points = (u.challenge_points || 0) + reward.total;
   const streak = (u.challenge_streak || 0) + 1;
@@ -734,8 +741,8 @@ app.post('/api/challenge/checkin', auth, async (req, res) => {
   res.json({
     ok: true, reward,
     challenge: { day: fresh.challenge_day, points: fresh.challenge_points, streak: fresh.challenge_streak, completed: !!fresh.challenge_completed },
-    task: (completed || fresh.challenge_day >= maxAllowed) ? null : chTaskFor(fresh.challenge_day + 1, u.id, u.locale),
-    needUpgrade: fresh.challenge_day >= maxAllowed && maxAllowed < CH_TOTAL_DAYS,
+    task: (completed || fresh.challenge_day >= CH_TOTAL_DAYS) ? null : chTaskFor(fresh.challenge_day + 1, u.id, u.locale),
+    needUpgrade: false,
   });
 });
 
