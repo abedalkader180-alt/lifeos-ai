@@ -59,7 +59,7 @@ async function chatWithProvider(system, message, history, locale) {
 
 function buildSystemPrompt(user, locale) {
   const lang = locale === 'ar' ? 'Arabic' : 'English';
-  return `You are LifeOS AI, a helpful, warm, and practical AI life architect.
+  return `You are LifeOS AI, a helpful, warm, and practical AI life guide.
 Language: respond in ${lang}. Keep answers concise (under ~180 words), structured, and actionable.
 You help the user organize their daily and weekly routine, solve productivity problems, and balance work, health, relationships, and growth.
 Always ask clarifying questions when needed, and propose concrete steps the user can do today.
@@ -72,8 +72,8 @@ function fallbackAssistant(user, message, locale) {
   const ar = locale === 'ar';
 
   const intro = ar
-    ? `أهلاً ${user.name}! أنا أرشيتكت حياتك. أحلل رسالتك وأنظم نصائح عملية لك.`
-    : `Hi ${user.name}! I'm your life architect. I analyzed your message and turned it into practical steps.`;
+    ? `أهلاً ${user.name}! أنا مرشد حياتك الذكي. أحلل رسالتك وأنظم لك نصائح عملية.`
+    : `Hi ${user.name}! I'm LifeOS AI, your life guide. I analyzed your message and turned it into practical steps.`;
 
   const blocks = [];
   blocks.push(intro);

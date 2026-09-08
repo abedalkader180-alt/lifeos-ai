@@ -7,6 +7,7 @@ const jwt = require('jsonwebtoken');
 const QRCode = require('qrcode');
 const db = require('./db');
 const ai = require('./ai');
+const mail = require('./mail');
 
 const JWT_SECRET = process.env.JWT_SECRET || 'dev-secret-change-me';
 const OWNER_EMAIL = (process.env.OWNER_EMAIL || '').toLowerCase();
@@ -66,6 +67,10 @@ async function notifyOwner(title, body, link) {
   }
 }
 
+function isOwnerEmail(email) {
+  return (email || '').toLowerCase() === OWNER_EMAIL;
+}
+
 async function auth(req, res, next) {
   try {
     const h = req.headers.authorization || '';
@@ -74,6 +79,10 @@ async function auth(req, res, next) {
     const payload = jwt.verify(token, JWT_SECRET);
     const user = await db.get('SELECT * FROM users WHERE id = ?', [payload.id]);
     if (!user) return res.status(401).json({ error: 'Unauthorized' });
+    // Owner is always allowed; normal users must have a verified email.
+    if (!isOwnerEmail(user.email) && !user.email_verified) {
+      return res.status(403).json({ error: 'email_not_verified', message: 'Verify your email to continue.' });
+    }
     req.user = user;
     next();
   } catch (e) {
@@ -217,15 +226,50 @@ app.post('/api/events', async (req, res) => {
 function makeRefCode() {
   return 'LIFE' + Math.random().toString(36).slice(2, 8).toUpperCase();
 }
+function makeVerifyCode() {
+  return String(Math.floor(100000 + Math.random() * 900000));
+}
+function verifyExpiry() {
+  return new Date(Date.now() + 10 * 60 * 1000).toISOString();
+}
+function devCodeAllowed() {
+  return process.env.ALLOW_DEV_VERIFY !== 'false';
+}
+function deliveryPayload(result, email, code) {
+  const out = { delivery: result.mode || 'unconfigured', delivery_sent: !!result.sent };
+  // Only expose the code when no real mail provider is configured (transparent testing mode).
+  if (result.mode === 'unconfigured' && devCodeAllowed()) {
+    out.dev_code = code || result.dev_code;
+    out.dev_note = 'No email provider configured yet: verification is in testing mode. Set RESEND_API_KEY or SMTP_* to send real emails.';
+  }
+  return { ...out, email };
+}
+
+async function sendCode(user, lang) {
+  const code = makeVerifyCode();
+  const expires = verifyExpiry();
+  await db.run('UPDATE users SET verify_code = ?, verify_expires = ?, verify_attempts = 0 WHERE id = ?', [code, expires, user.id]);
+  const result = await mail.sendVerificationCode(user.email, code, lang);
+  if (result.mode === 'unconfigured') result.dev_code = code;
+  return { code, result };
+}
 
 app.post('/api/auth/register', async (req, res) => {
   const { email, name, password, locale, ref } = req.body || {};
   if (!email || !password || !name) return res.status(400).json({ error: 'email, name, password required' });
-  const mail = email.toLowerCase().trim();
-  if (!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(mail)) return res.status(400).json({ error: 'invalid email' });
+  const mailAddr = email.toLowerCase().trim();
+  if (!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(mailAddr)) return res.status(400).json({ error: 'invalid email' });
   if (password.length < 6) return res.status(400).json({ error: 'password too short (min 6)' });
-  const exists = await db.get('SELECT id FROM users WHERE email = ?', [mail]);
-  if (exists) return res.status(409).json({ error: 'account already exists' });
+  const exists = await db.get('SELECT id, email_verified FROM users WHERE email = ?', [mailAddr]);
+  if (exists) {
+    // If an account exists but is not verified, resend a code.
+    if (!exists.email_verified) {
+      const user = await db.get('SELECT * FROM users WHERE id = ?', [exists.id]);
+      const sent = await sendCode(user, locale === 'ar' ? 'ar' : 'en');
+      return res.status(409).json({ error: 'email_not_verified', message: 'An account already exists. Enter the code we just sent to verify.', ...deliveryPayload(sent.result, mailAddr, sent.code) });
+    }
+    return res.status(409).json({ error: 'account already exists' });
+  }
 
   // Optional referral: inviter code -> ref_by + referrals row.
   let inviter = null;
@@ -235,20 +279,57 @@ app.post('/api/auth/register', async (req, res) => {
 
   const hash = bcrypt.hashSync(password, 10);
   const refCode = makeRefCode();
+  const lang = locale === 'ar' ? 'ar' : 'en';
   const info = await db.run(
-    'INSERT INTO users (email, name, password_hash, locale, plan, ref_code, ref_by) VALUES (?, ?, ?, ?, ?, ?, ?) RETURNING id',
-    [mail, name.trim(), hash, locale === 'ar' ? 'ar' : 'en', 'free', refCode, inviter ? inviter.id : null]
+    'INSERT INTO users (email, name, password_hash, locale, plan, ref_code, ref_by, email_verified, verify_code, verify_expires) VALUES (?, ?, ?, ?, ?, ?, ?, 0, ?, ?) RETURNING id',
+    [mailAddr, name.trim(), hash, lang, 'free', refCode, inviter ? inviter.id : null, makeVerifyCode(), verifyExpiry()]
   );
   const user = await db.get('SELECT * FROM users WHERE id = ?', [info.lastInsertRowid]);
 
   if (inviter) {
     await db.run(
       'INSERT INTO referrals (inviter_user_id, invited_email, invited_user_id, status, reward) VALUES (?, ?, ?, ?, ?)',
-      [inviter.id, mail, user.id, 'pending', 'discount']
+      [inviter.id, mailAddr, user.id, 'pending', 'discount']
     );
   }
 
-  res.json({ token: tokenFor(user), user: publicUser(user) });
+  const result = await mail.sendVerificationCode(user.email, user.verify_code, lang);
+  if (result.mode === 'unconfigured') result.dev_code = user.verify_code;
+
+  res.json({ needs_verification: true, ...deliveryPayload(result, mailAddr, user.verify_code) });
+});
+
+app.post('/api/auth/verify-email', async (req, res) => {
+  const { email, code } = req.body || {};
+  if (!email || !code) return res.status(400).json({ error: 'email and code required' });
+  const user = await db.get('SELECT * FROM users WHERE email = ?', [email.toLowerCase().trim()]);
+  if (!user) return res.status(404).json({ error: 'user not found' });
+  if (user.email_verified) return res.json({ token: tokenFor(user), user: publicUser(user) });
+  if (!user.verify_code) return res.status(400).json({ error: 'no_code_sent', message: 'Request a new code.' });
+
+  const expired = user.verify_expires && new Date(user.verify_expires).getTime() < Date.now();
+  if (expired) return res.status(400).json({ error: 'code_expired', message: 'Code expired. Request a new one.' });
+
+  if ((user.verify_attempts || 0) >= 5) return res.status(400).json({ error: 'too_many_attempts', message: 'Too many attempts. Request a new code.' });
+
+  if (String(user.verify_code).trim() !== String(code).trim()) {
+    await db.run('UPDATE users SET verify_attempts = verify_attempts + 1 WHERE id = ?', [user.id]);
+    return res.status(400).json({ error: 'invalid_code', message: 'Incorrect code.' });
+  }
+
+  await db.run('UPDATE users SET email_verified = 1, verify_code = NULL, verify_expires = NULL, verify_attempts = 0 WHERE id = ?', [user.id]);
+  const fresh = await db.get('SELECT * FROM users WHERE id = ?', [user.id]);
+  res.json({ token: tokenFor(fresh), user: publicUser(fresh), verified: true });
+});
+
+app.post('/api/auth/resend', async (req, res) => {
+  const email = (req.body && req.body.email || '').trim().toLowerCase();
+  if (!email) return res.status(400).json({ error: 'email required' });
+  const user = await db.get('SELECT * FROM users WHERE email = ?', [email]);
+  if (!user) return res.status(404).json({ error: 'user not found' });
+  if (user.email_verified) return res.status(400).json({ error: 'already_verified' });
+  const sent = await sendCode(user, user.locale === 'ar' ? 'ar' : 'en');
+  res.json({ ...deliveryPayload(sent.result, email, sent.code) });
 });
 
 // ===== waitlist (public) =====
@@ -276,6 +357,11 @@ app.post('/api/auth/login', async (req, res) => {
   const user = await db.get('SELECT * FROM users WHERE email = ?', [email.toLowerCase().trim()]);
   if (!user || !bcrypt.compareSync(password, user.password_hash)) {
     return res.status(401).json({ error: 'invalid credentials' });
+  }
+  // Normal users must verify their email before logging in. We resend a code automatically.
+  if (!isOwnerEmail(user.email) && !user.email_verified) {
+    const sent = await sendCode(user, user.locale === 'ar' ? 'ar' : 'en');
+    return res.status(403).json({ error: 'email_not_verified', message: 'Verify your email to log in.', ...deliveryPayload(sent.result, user.email, sent.code) });
   }
   res.json({ token: tokenFor(user), user: publicUser(user) });
 });

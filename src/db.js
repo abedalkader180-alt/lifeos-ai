@@ -25,14 +25,12 @@ if (IS_PG) {
     max: 10,
   });
   console.log('[db] Using PostgreSQL database');
-} else if (process.env.VERCEL === '1' || process.env.RENDER === 'true' || !PG_URL) {
+} else if (process.env.VERCEL === '1' || process.env.RENDER === 'true') {
   // Cloud without DATABASE_URL: keep app alive with a clear error (no node:sqlite import).
-  const onCloud = process.env.VERCEL === '1' || process.env.RENDER === 'true';
-  DB_ERROR = onCloud
-    ? 'DATABASE_URL is not set. Add it in Render/Vercel environment variables, then redeploy.'
-    : 'No database configured. Set DATABASE_URL (Postgres) to store data.';
+  DB_ERROR = 'DATABASE_URL is not set. Add it in Render/Vercel environment variables, then redeploy.';
   console.error('[db] ' + DB_ERROR);
 } else {
+  // Local dev/preview without DATABASE_URL: fall back to SQLite (node:sqlite).
   // Local dev/preview only. Load the built-in sqlite lazily/indirectly so
   // serverless bundlers (Vercel NCC/NFT, Node 20) never try to resolve
   // `node:sqlite` at bundle time (it does not exist on Node 20 / Vercel).
@@ -99,6 +97,10 @@ const SCHEMA_SQLITE = `
     plan_until TEXT,
     ref_code TEXT UNIQUE,
     ref_by INTEGER,
+    email_verified INTEGER NOT NULL DEFAULT 0,
+    verify_code TEXT,
+    verify_expires TEXT,
+    verify_attempts INTEGER NOT NULL DEFAULT 0,
     created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP
   );
   CREATE TABLE IF NOT EXISTS tasks (
@@ -194,6 +196,10 @@ const SCHEMA_PG = `
     plan_until TEXT,
     ref_code TEXT UNIQUE,
     ref_by INTEGER,
+    email_verified INTEGER NOT NULL DEFAULT 0,
+    verify_code TEXT,
+    verify_expires TEXT,
+    verify_attempts INTEGER NOT NULL DEFAULT 0,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
   );
   CREATE TABLE IF NOT EXISTS tasks (
@@ -297,6 +303,10 @@ async function initSchema() {
   // Migrate existing DBs that were created before referral fields existed.
   await ensureColumn('users', 'ref_code', 'ref_code TEXT');
   await ensureColumn('users', 'ref_by', 'ref_by INTEGER');
+  await ensureColumn('users', 'email_verified', 'email_verified INTEGER DEFAULT 0');
+  await ensureColumn('users', 'verify_code', 'verify_code TEXT');
+  await ensureColumn('users', 'verify_expires', 'verify_expires TEXT');
+  await ensureColumn('users', 'verify_attempts', 'verify_attempts INTEGER DEFAULT 0');
   await ensureColumn('payments', 'coupon', 'coupon TEXT');
   await ensureColumn('payments', 'discount_percent', 'discount_percent REAL');
   await ensureColumn('payments', 'verified', 'verified INTEGER DEFAULT 0');
@@ -314,7 +324,7 @@ async function initSchema() {
     if (!exists) {
       const hash = bcrypt.hashSync(ownerPassword, 10);
       await run(
-        'INSERT INTO users (email, name, password_hash, plan, plan_until) VALUES (?, ?, ?, ?, ?) RETURNING id',
+        'INSERT INTO users (email, name, password_hash, plan, plan_until, email_verified) VALUES (?, ?, ?, ?, ?, 1) RETURNING id',
         [ownerEmail.toLowerCase(), 'Owner', hash, 'life', '2999-12-31']
       );
       console.log('[db] Owner account created:', ownerEmail);

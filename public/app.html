@@ -73,7 +73,7 @@
       <div class="text-center mb-6">
         <i data-lucide="brain" class="w-12 h-12 text-purple-400 mx-auto mb-2"></i>
         <h1 class="text-2xl font-bold">LifeOS <span class="text-purple-400">AI</span></h1>
-        <p id="authSub" class="text-gray-400 mt-1">Your AI life architect</p>
+        <p id="authSub" class="text-gray-400 mt-1">Your AI life guide</p>
       </div>
       <div id="loginForm">
         <input id="email" placeholder="Email" class="field"/>
@@ -90,6 +90,24 @@
       </div>
       <p id="authErr" class="text-red-400 text-center text-sm mt-3 min-h-4"></p>
       <button onclick="toggleLang()" id="langBtn" class="mt-2 w-full text-gray-400 text-sm hover:text-white">العربية</button>
+      <div class="text-center text-xs text-gray-500 mt-4"><span data-k="auth_providers">Use any email: Gmail · iCloud · Outlook · Yahoo · Zoho</span></div>
+    </div>
+  </div>
+
+  <!-- Verify email -->
+  <div id="verify" class="hidden fixed inset-0 z-50 flex items-center justify-center bg-[#0b0b14] p-4">
+    <div class="rightbox glass">
+      <div class="text-center mb-6">
+        <i data-lucide="mail-check" class="w-12 h-12 text-purple-400 mx-auto mb-2"></i>
+        <h1 class="text-2xl font-bold"><span data-k="verify_title">Verify your email</span></h1>
+        <p class="text-gray-400 mt-2 text-sm"><span data-k="verify_sub">We sent a 6-digit code to</span> <b id="verifyEmail" class="text-white"></b></p>
+      </div>
+      <input id="verifyCodeInput" inputmode="numeric" maxlength="6" placeholder="000000" class="field text-center text-2xl tracking-[0.4em]"/>
+      <button onclick="verifyCode()" class="btn"><span data-k="verify_btn">Confirm code</span></button>
+      <p id="verifyErr" class="text-red-400 text-center text-sm mt-3 min-h-4"></p>
+      <p id="verifyDev" class="hidden text-center text-xs text-yellow-300 bg-yellow-500/10 border border-yellow-400/20 rounded-lg p-3 mt-2"></p>
+      <p class="text-center text-sm mt-4"><span data-k="verify_no">Didn't get it?</span> <button onclick="resendCode()" class="text-purple-400 underline" data-k="verify_resend">Resend code</button></p>
+      <p class="text-center text-xs text-gray-500 mt-3" data-k="verify_providers">Works with Gmail, iCloud, Outlook, Yahoo, Zoho and any email.</p>
     </div>
   </div>
 
@@ -126,7 +144,7 @@
         <div id="s-dashboard">
           <div class="hero">
             <h2><span id="heroHi" data-k="greeting">Ahlan</span> <span id="heroName">Friend</span>! 👋</h2>
-            <p data-k="heroSub">Your AI life architect is ready. Let's build a great day together.</p>
+            <p data-k="heroSub">Your AI life guide is ready. Let's build a great day together.</p>
             <div class="upgrade-flex">
               <button onclick="go('pricing')" class="btn-upgrade">⭐ <span data-k="upgrade_cta">Upgrade to Pro</span></button>
               <button onclick="go('chat')" class="btn-ghost">✨ <span data-k="d_ai_btn">Open AI Assistant</span></button>
@@ -280,25 +298,27 @@ const I18 = {
   en:{ dash:"Dashboard", chat:"AI Assistant", tasks:"Tasks", habits:"Habits", upgrade:"Upgrade", add:"Add", buy_pro:"Upgrade with USDT", buy_life:"Go Life",
     t_tasks:"Tasks today", t_habits:"Habits done", t_plan:"Your plan", t_ai:"AI chats left",
     d_ai_hint:"Ask AI to build your day", d_ai_p:"Go to the AI Assistant and tell it your goals or problems. It will build a practical plan for you.", d_ai_btn:"Open AI Assistant",
-    heroHi:"Hola", heroSub:"Your AI life architect is ready. Let's build a great day together.", upgrade_cta:"Upgrade to Pro",
+    heroHi:"Hola", heroSub:"Your AI life guide is ready. Let's build a great day together.", upgrade_cta:"Upgrade to Pro",
     q_chat:"Ask AI", q_chat_s:"Plan your day", q_tasks:"Add task", q_tasks_s:"Stay focused", q_upgrade:"Go Pro", q_upgrade_s:"Unlock everything",
     quote:"Small wins every day create an unstoppable life. Start with one task now.",
     pp1:"Unlimited AI chats", pp2:"Smart scheduling", pp3:"Problem solver AI", ll1:"Everything in Pro", ll2:"Priority support", ll3:"Advanced AI planning",
     price_intro:"Upgrade your plan by sending USDT (TRC20) from your Trust Wallet. We verify each payment manually.",
     refer:"Refer & earn", refer_title:"Invite friends, earn rewards", refer_p:"Share your link. When a friend joins and upgrades, you both get a bonus.", copy:"Copy", ref_count:(n)=>`You invited ${n} ${n===1?'person':'people'} so far.`,
     send_to:"Send exact amount to:", tx_label:"Transaction hash (TX)", submit_pay:"I paid — submit for review", coupon_label:"Have a launch coupon?", apply_coupon:"Apply", coupon_on:"Coupon applied: 50% off", coupon_err:"Invalid coupon",
-    free_chat_left:"chats left today", done:"Done", target:"target", t_free:"Free", greeting:"Welcome", upd:"Upgrade to Pro", title_dash:"Dashboard", title_chat:"AI Assistant", title_tasks:"Tasks", title_habits:"Habits", title_pricing:"Upgrade", title_refer:"Refer & earn", copied:"Copied!" },
+    free_chat_left:"chats left today", done:"Done", target:"target", t_free:"Free", greeting:"Welcome", upd:"Upgrade to Pro", title_dash:"Dashboard", title_chat:"AI Assistant", title_tasks:"Tasks", title_habits:"Habits", title_pricing:"Upgrade", title_refer:"Refer & earn", copied:"Copied!",
+    verify_title:"Verify your email", verify_sub:"We sent a 6-digit code to", verify_btn:"Confirm code", verify_no:"Didn't get it?", verify_resend:"Resend code", verify_providers:"Works with Gmail, iCloud, Outlook, Yahoo, Zoho and any email.", verify_ok:"Verifying...", verify_sent:"New code sent.", auth_providers:"Use any email: Gmail · iCloud · Outlook · Yahoo · Zoho" },
   ar:{ dash:"الرئيسية", chat:"المساعد الذكي", tasks:"المهام", habits:"العادات", upgrade:"الاشتراك", add:"إضافة", buy_pro:"اشترك بـ USDT", buy_life:"اختر حياة",
     t_tasks:"مهام اليوم", t_habits:"العادات المنجزة", t_plan:"خطتك", t_ai:"محادثات الذكاء المتبقية",
     d_ai_hint:"اطلب من الذكاء بناء يومك", d_ai_p:"اذهب إلى المساعد الذكي واحكي له أهدافك ومشاكلك، وسيبني لك خطة عملية.", d_ai_btn:"افتح المساعد الذكي",
-    heroHi:"أهلاً", heroSub:"أرشيتكت حياتك الذكية جاهزة. لنبنِ يوماً رائعاً معاً.", upgrade_cta:"طوّر إلى برو",
+    heroHi:"أهلاً", heroSub:"مرشد حياتك الذكي جاهز. لنبنِ يوماً رائعاً معاً.", upgrade_cta:"طوّر إلى برو",
     q_chat:"اسأل الذكاء", q_chat_s:"خطط يومك", q_tasks:"أضف مهمة", q_tasks_s:"حافظ على تركيزك", q_upgrade:"اختر برو", q_upgrade_s:"افتح كل المزايا",
     quote:"الانتصارات الصغيرة كل يوم تصنع حياة لا تُهزم. ابدأ بمهمة واحدة الآن.",
     pp1:"محادثات ذكاء غير محدودة", pp2:"جدولة ذكية", pp3:"ذكاء حل المشاكل", ll1:"كل ميزات الاحترافي", ll2:"دعم أولوية", ll3:"تخطيط ذكاء متقدم",
     price_intro:"طوّر خطتك بإرسال USDT (TRC20) من محفظة Trust Wallet. نتحقق من كل دفعة يدوياً.",
     refer:"ادعُ واربح", refer_title:"ادعُ أصدقاءك واربح مكافآت", refer_p:"شارك رابطك. عندما ينضم صديق ويشترك، تحصلان معاً على مكافأة.", copy:"نسخ", ref_count:(n)=>`دعوت ${n} ${n===1?'شخص':'أشخاص'} حتى الآن.`,
     send_to:"أرسل المبلغ بالضبط إلى:", tx_label:"Hash المعاملة (TX)", submit_pay:"دفعت — أرسل للمراجعة", coupon_label:"عندك كوبون إطلاق؟", apply_coupon:"تطبيق", coupon_on:"تم تطبيق الكوبون: خصم 50%", coupon_err:"كوبون غير صحيح",
-    free_chat_left:"محادثات متبقية اليوم", done:"تم", target:"الهدف", t_free:"مجاني", greeting:"أهلاً", upd:"طوّر إلى برو", title_dash:"الرئيسية", title_chat:"المساعد الذكي", title_tasks:"المهام", title_habits:"العادات", title_pricing:"الاشتراك", title_refer:"ادعُ واربح", copied:"تم النسخ!" }
+    free_chat_left:"محادثات متبقية اليوم", done:"تم", target:"الهدف", t_free:"مجاني", greeting:"أهلاً", upd:"طوّر إلى برو", title_dash:"الرئيسية", title_chat:"المساعد الذكي", title_tasks:"المهام", title_habits:"العادات", title_pricing:"الاشتراك", title_refer:"ادعُ واربح", copied:"تم النسخ!",
+    verify_title:"أكّد بريدك الإلكتروني", verify_sub:"أرسلنا رمزاً من 6 أرقام إلى", verify_btn:"تأكيد الرمز", verify_no:"لم يصلك؟", verify_resend:"أعد إرسال الرمز", verify_providers:"يدعم Gmail و iCloud و Outlook و Yahoo و Zoho وأي بريد آخر.", verify_ok:"جاري التحقق...", verify_sent:"تم إرسال رمز جديد.", auth_providers:"استخدم أي بريد: Gmail · iCloud · Outlook · Yahoo · Zoho" }
 };
 let lang = localStorage.getItem('lifeos_lang') || 'en';
 let token = localStorage.getItem('lifeos_token') || '';
@@ -319,14 +339,42 @@ function toggleLang(){ lang=lang==='ar'?'en':'ar'; localStorage.setItem('lifeos_
 function showRegister(){ document.getElementById('loginForm').classList.add('hidden'); document.getElementById('regForm').classList.remove('hidden'); authErr(''); }
 function showLogin(){ document.getElementById('regForm').classList.add('hidden'); document.getElementById('loginForm').classList.remove('hidden'); authErr(''); }
 function authErr(m){ document.getElementById('authErr').textContent = m || ''; }
-async function doLogin(){ const email=val('email'),password=val('password'); if(!email||!password)return authErr(lang==='ar'?'أدخل الإيميل وكلمة المرور':'Enter email and password'); authErr(''); try{ const r=await api('/api/auth/login',{email,password}); setAuth(r); }catch(e){ authErr(e.message); } }
-async function doRegister(){ const name=val('rName'),email=val('rEmail'),password=val('rPassword'); if(!name||!email||!password)return authErr(lang==='ar'?'أكمل البيانات':'Fill all fields'); authErr(''); try{ const r=await api('/api/auth/register',{name,email,password,locale:lang}); setAuth(r); }catch(e){ authErr(e.message); } }
-function showMain(){ try { document.getElementById('auth').classList.add('hidden'); document.getElementById('main').classList.remove('hidden'); } catch(e){} }
+async function doLogin(){ const email=val('email'),password=val('password'); if(!email||!password)return authErr(lang==='ar'?'أدخل الإيميل وكلمة المرور':'Enter email and password'); authErr(''); try{ const r=await api('/api/auth/login',{email,password}); setAuth(r); }catch(e){ if(e.data&&e.data.error==='email_not_verified'){ showVerify(email,e.data.dev_code,e.data.dev_note); } else authErr(e.message); } }
+async function doRegister(){ const name=val('rName'),email=val('rEmail'),password=val('rPassword'); if(!name||!email||!password)return authErr(lang==='ar'?'أكمل البيانات':'Fill all fields'); authErr(''); try{ const r=await api('/api/auth/register',{name,email,password,locale:lang}); if(r.needs_verification){ showVerify(r.email,r.dev_code,r.dev_note); } else setAuth(r); }catch(e){ if(e.data&&e.data.error==='email_not_verified'){ showVerify(email,e.data.dev_code,e.data.dev_note); } else authErr(e.message); } }
+
+let pendingEmail='';
+function showVerify(email, devCode, devNote){
+  pendingEmail=email||'';
+  document.getElementById('verifyEmail').textContent=pendingEmail;
+  document.getElementById('verifyCodeInput').value='';
+  document.getElementById('verifyErr').textContent='';
+  const dev=document.getElementById('verifyDev');
+  if(devCode){ dev.classList.remove('hidden'); dev.textContent='⏳ '+(lang==='ar'?'وضع تجريبي (بدون إعداد بريد بعد). رمزك: ':'Testing mode (no mail configured yet). Your code: ')+devCode+' — '+devNote; }
+  else { dev.classList.add('hidden'); dev.textContent=''; }
+  document.getElementById('auth').classList.add('hidden');
+  document.getElementById('verify').classList.remove('hidden');
+  setTimeout(()=>document.getElementById('verifyCodeInput').focus(),50);
+}
+function hideVerify(){ document.getElementById('verify').classList.add('hidden'); document.getElementById('auth').classList.remove('hidden'); }
+async function verifyCode(){
+  const code=val('verifyCodeInput');
+  if(!code) return verifyErr(lang==='ar'?'أدخل الرمز':'Enter code');
+  verifyErr(''); document.getElementById('verifyErr').textContent=t('verify_ok');
+  try{ const r=await api('/api/auth/verify-email',{email:pendingEmail,code}); setAuth(r); }
+  catch(e){ verifyErr(e.message); if(e.data&&e.data.error==='code_expired'||e.data&&e.data.error==='too_many_attempts'){ /* allow resend */ } }
+}
+async function resendCode(){
+  if(!pendingEmail) return;
+  try{ const r=await api('/api/auth/resend',{email:pendingEmail}); document.getElementById('verifyErr').textContent=t('verify_sent'); if(r.dev_code){ const dev=document.getElementById('verifyDev'); dev.classList.remove('hidden'); dev.textContent='⏳ '+(lang==='ar'?'وضع تجريبي. رمزك: ':'Testing mode. Your code: ')+r.dev_code; } }
+  catch(e){ verifyErr(e.message); }
+}
+function verifyErr(m){ document.getElementById('verifyErr').textContent=m||''; }
+function showMain(){ try { document.getElementById('verify').classList.add('hidden'); document.getElementById('auth').classList.add('hidden'); document.getElementById('main').classList.remove('hidden'); } catch(e){} }
 function setAuth(r){ token=r.token; user=r.user; applyLang(); localStorage.setItem('lifeos_token',token); localStorage.setItem('lifeos_user',JSON.stringify(user)); showMain(); refreshUI(); }
 function logout(){ token=''; user=null; localStorage.removeItem('lifeos_token'); localStorage.removeItem('lifeos_user'); location.reload(); }
 
 function val(id){ return document.getElementById(id).value.trim(); }
-async function api(path, body, method='POST'){ const res=await fetch(path,{method,headers:{'Content-Type':'application/json',...(token?{Authorization:'Bearer '+token}:{})},body:body?JSON.stringify(body):undefined}); const data=await res.json().catch(()=>({})); if(!res.ok){ if(data.error==='free_daily_limit') throw new Error(lang==='ar'?'وصلت للحد المجاني اليوم':'You reached the free daily AI limit.'); const msg = (data && data.error) ? data.error : (res.status===404 ? ((lang==='ar')?'المسار غير متوفر حالياً':'Endpoint not available') : 'HTTP '+res.status); throw new Error(msg); } return data; }
+async function api(path, body, method='POST'){ const res=await fetch(path,{method,headers:{'Content-Type':'application/json',...(token?{Authorization:'Bearer '+token}:{})},body:body?JSON.stringify(body):undefined}); const data=await res.json().catch(()=>({})); if(!res.ok){ const err=new Error(data&&data.error||'Error'); err.data=data; if(data.error==='free_daily_limit') err.message=(lang==='ar'?'وصلت للحد المجاني اليوم':'You reached the free daily AI limit.'); else if(data.error==='email_not_verified') err.message=(lang==='ar'?'أكّد بريدك أولاً':'Verify your email first.'); else if(data.error==='invalid_code') err.message=(lang==='ar'?'الرمز غير صحيح':'Incorrect code.'); else if(data.error==='code_expired') err.message=(lang==='ar'?'انتهت صلاحية الرمز':'Code expired.'); else if(data.error==='too_many_attempts') err.message=(lang==='ar'?'محاولات كثيرة، اطلب رمزاً جديداً':'Too many attempts.'); else if(data.error==='already_verified') err.message=(lang==='ar'?'الحساب موثّق مسبقاً':'Already verified.'); else err.message=(data&&data.message)||data.error||'Error'; throw err; } return data; }
 
 // UI
 function go(name){ ['dashboard','chat','tasks','habits','pricing','refer'].forEach(n=>{ document.getElementById('s-'+n).classList.toggle('hidden', n!==name); }); document.getElementById('pageTitle').textContent = t('title_'+name); ['dashboard','chat','tasks','habits','pricing','refer'].forEach(n=>{ var el=document.getElementById('nav-'+n); if(el){ if(n===name) el.classList.add('active'); else el.classList.remove('active'); } }); if(name==='refer') loadReferral(); renderIcons(); }
