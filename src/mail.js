@@ -134,4 +134,55 @@ async function sendVerificationCode(email, code, lang) {
   }
 }
 
-module.exports = { sendVerificationCode, mailEnabled, mailConfig: { mode: MAIL_MODE, from: MAIL_FROM, host: SMTP_HOST, resolved_host: resolvedIpv4, resolver: resolverState, user: SMTP_USER, hasPassword: !!SMTP_PASS, resendKey: !!RESEND_KEY } };
+function planReminderBody(daysLeft, lang) {
+  if (lang === 'ar') {
+    return `اشتراكك في LifeOS AI ينتهي خلال ${daysLeft} ${daysLeft === 1 ? 'يوم' : 'أيام'}.\n\nجدّد الآن من داخل التطبيق (صفحة الاشتراك) حتى لا تتوقف مزاياك: التحديات، النقاط المضاعفة، ووسائل المساعدة.\n\n— فريق LifeOS AI`;
+  }
+  return `Your LifeOS AI plan ends in ${daysLeft} day${daysLeft === 1 ? '' : 's'}.\n\nRenew now from the app (Plans page) so your benefits don't stop: challenges, double points, and helper tools.\n\n— LifeOS AI Team`;
+}
+
+async function sendPlanReminder(email, lang, daysLeft) {
+  if (MAIL_DEV) {
+    console.log('[mail:dev] plan reminder for', email, '=', daysLeft, 'days left');
+    return { sent: false, mode: 'dev', detail: 'MAIL_DEV=1 (no real email sent)' };
+  }
+  const subject = lang === 'ar'
+    ? `تذكير: اشتراكك ينتهي خلال ${daysLeft} ${daysLeft === 1 ? 'يوم' : 'أيام'}`
+    : `Reminder: your LifeOS AI plan ends in ${daysLeft} day${daysLeft === 1 ? '' : 's'}`;
+  try {
+    if (RESEND_KEY) {
+      const res = await fetch('https://api.resend.com/emails', {
+        method: 'POST',
+        headers: {
+          Authorization: `Bearer ${RESEND_KEY}`,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          from: MAIL_FROM,
+          to: [email],
+          subject,
+          text: planReminderBody(daysLeft, lang),
+        }),
+      });
+      if (!res.ok) throw new Error('Resend HTTP ' + res.status + ': ' + await res.text());
+      return { sent: true, mode: 'resend' };
+    }
+
+    if (transporter) {
+      await transporter.sendMail({
+        from: MAIL_FROM,
+        to: email,
+        subject,
+        text: planReminderBody(daysLeft, lang),
+      });
+      return { sent: true, mode: 'smtp' };
+    }
+
+    return { sent: false, mode: 'unconfigured', detail: 'No mail provider configured. Set RESEND_API_KEY or SMTP_* to send real emails.' };
+  } catch (e) {
+    console.error('[mail] send failed:', e && e.message ? e.message : e);
+    return { sent: false, mode: 'error', detail: 'Email sending failed: ' + (e && e.message ? e.message : 'unknown') };
+  }
+}
+
+module.exports = { sendVerificationCode, sendPlanReminder, mailEnabled, mailConfig: { mode: MAIL_MODE, from: MAIL_FROM, host: SMTP_HOST, resolved_host: resolvedIpv4, resolver: resolverState, user: SMTP_USER, hasPassword: !!SMTP_PASS, resendKey: !!RESEND_KEY } };

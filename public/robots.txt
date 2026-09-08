@@ -1,4 +1,4 @@
 User-agent: *
 Allow: /
 
-Sitemap: https://lifeos-ai.vercel.app/sitemap.xml
+Sitemap: https://lifeos-ai-1-c5qv.onrender.com/sitemap.xml

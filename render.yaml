@@ -28,6 +28,8 @@ services:
         value: "false"
       - key: FREE_AI_DAILY_LIMIT
         value: "10"
+      - key: CH_FREE_DAYS
+        value: "10"
       - key: OWNER_EMAIL
         value: "owner@lifeos.app"
       - key: OWNER_PASSWORD

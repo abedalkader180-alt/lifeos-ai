@@ -155,8 +155,8 @@
         <div class="p-5 flex items-center gap-2"><i data-lucide="brain" class="w-7 h-7 text-purple-400"></i><span class="font-bold text-lg hide-m">LifeOS<span class="text-purple-400">AI</span></span></div>
         <button onclick="go('pricing')" class="btn-upgrade hide-m" style="margin:0 14px 14px;text-align:center;">⭐ <span data-k="upgrade">Upgrade</span></button>
         <nav class="flex-1 px-3 space-y-1">
-          <a id="nav-challenge" onclick="go('challenge')" class="side active flex items-center gap-3 px-3 py-2.5 rounded-lg cursor-pointer text-sm"><i data-lucide="mountain" class="w-5 h-5 text-orange-400"></i><span class="hide-m" data-k="challenge">Challenges</span></a>
-          <a id="nav-dashboard" onclick="go('dashboard')" class="side flex items-center gap-3 px-3 py-2.5 rounded-lg cursor-pointer text-sm"><i data-lucide="layout-dashboard" class="w-5 h-5"></i><span class="hide-m" data-k="dash">Dashboard</span></a>
+          <a id="nav-dashboard" onclick="go('dashboard')" class="side active flex items-center gap-3 px-3 py-2.5 rounded-lg cursor-pointer text-sm"><i data-lucide="layout-dashboard" class="w-5 h-5"></i><span class="hide-m" data-k="dash">Dashboard</span></a>
+          <a id="nav-challenge" onclick="go('challenge')" class="side flex items-center gap-3 px-3 py-2.5 rounded-lg cursor-pointer text-sm"><i data-lucide="mountain" class="w-5 h-5 text-orange-400"></i><span class="hide-m" data-k="challenge">Challenges</span></a>
           <a id="nav-chat" onclick="go('chat')" class="side flex items-center gap-3 px-3 py-2.5 rounded-lg cursor-pointer text-sm"><i data-lucide="message-square" class="w-5 h-5"></i><span class="hide-m" data-k="chat">AI Assistant</span></a>
           <a id="nav-tasks" onclick="go('tasks')" class="side flex items-center gap-3 px-3 py-2.5 rounded-lg cursor-pointer text-sm"><i data-lucide="check-square" class="w-5 h-5"></i><span class="hide-m" data-k="tasks">Tasks</span></a>
           <a id="nav-habits" onclick="go('habits')" class="side flex items-center gap-3 px-3 py-2.5 rounded-lg cursor-pointer text-sm"><i data-lucide="trending-up" class="w-5 h-5"></i><span class="hide-m" data-k="habits">Habits</span></a>
@@ -178,12 +178,13 @@
       <main class="maincol">
         <h1 id="pageTitle" class="text-3xl font-bold mb-6">Dashboard</h1>
 
-        <!-- Dashboard -->
-        <div id="s-dashboard" class="hidden">
+        <!-- Dashboard (home) -->
+        <div id="s-dashboard">
           <div class="hero">
             <h2><span id="heroHi" data-k="greeting">Ahlan</span> <span id="heroName">Friend</span>! 👋</h2>
             <p data-k="heroSub">Your AI life guide is ready. Let's build a great day together.</p>
             <div class="upgrade-flex">
+              <button onclick="go('challenge')" class="btn-upgrade" style="background:linear-gradient(135deg,#ff9d3c,#c084fc);color:#fff;">🏔️ <span data-k="d_ch_btn">Challenge Arena</span></button>
               <button onclick="go('pricing')" class="btn-upgrade">⭐ <span data-k="upgrade_cta">Upgrade to Pro</span></button>
               <button onclick="go('chat')" class="btn-ghost">✨ <span data-k="d_ai_btn">Open AI Assistant</span></button>
             </div>
@@ -213,9 +214,9 @@
           </div>
 
           <div class="quick">
+            <button onclick="go('challenge')" class="qbtn"><div class="qi">🏔️</div><div class="qt" data-k="q_challenge">Challenge Arena</div><div class="qs" data-k="q_challenge_s">I dare you</div></button>
             <button onclick="go('chat')" class="qbtn"><div class="qi">🤖</div><div class="qt" data-k="q_chat">Ask AI</div><div class="qs" data-k="q_chat_s">Plan your day</div></button>
             <button onclick="go('tasks')" class="qbtn"><div class="qi">📝</div><div class="qt" data-k="q_tasks">Add task</div><div class="qs" data-k="q_tasks_s">Stay focused</div></button>
-            <button onclick="go('pricing')" class="qbtn"><div class="qi">🚀</div><div class="qt" data-k="q_upgrade">Go Pro</div><div class="qs" data-k="q_upgrade_s">Unlock everything</div></button>
           </div>
 
           <div class="quote">
@@ -273,13 +274,18 @@
         </div>
 
         <!-- Life Mountain: gamified challenge -->
-        <div id="s-challenge">
+        <div id="s-challenge" class="hidden">
+          <div id="chPlanBanner" class="hidden rounded-2xl p-4 mb-4 border border-amber-400/40 bg-amber-500/10 flex items-center justify-between flex-wrap gap-3">
+            <div class="font-bold text-amber-300" id="chPlanBannerText"></div>
+            <button onclick="go('pricing')" class="bg-amber-500 hover:bg-amber-400 text-slate-900 font-black px-5 py-2.5 rounded-xl text-sm" data-k="ch_renew">⏳ Renew now</button>
+          </div>
+
           <div class="ch-hero rounded-3xl p-6 mb-5">
             <div class="flex items-center justify-between gap-3 flex-wrap">
               <div>
-                <div class="text-xs tracking-widest font-bold text-orange-300 mb-1" data-k="ch_eyebrow">CHALLENGE · PAID OR FREE · 40 DAYS</div>
-                <h3 class="text-2xl md:text-3xl font-black" data-k="ch_title">JIBAL AL-HAYAT 🏔️</h3>
-                <p class="text-gray-300/90 text-sm mt-1" data-k="ch_sub">60 missions. 4 stages. Free forever. Your AI referee checks your proof and gives you points.</p>
+                <div class="text-xs tracking-widest font-bold text-orange-300 mb-1" data-k="ch_eyebrow">CHALLENGE ARENA · 120 MISSIONS · 4 STAGES</div>
+                <h3 class="text-2xl md:text-3xl font-black" data-k="ch_title">I DARE YOU TO DO IT 🏔️</h3>
+                <p class="text-gray-300/90 text-sm mt-1" data-k="ch_sub">Real-life challenges. Do it, prove it, level up.</p>
               </div>
               <div class="text-right">
                 <div class="text-4xl font-black text-orange-300" id="chDay">0</div>
@@ -287,10 +293,10 @@
               </div>
             </div>
             <div class="mt-4 flex gap-2 text-[11px] flex-wrap">
-              <span class="ch-stage ch-stage1" data-k="ch_stage_seed">🌱 Seed · 1-10</span>
-              <span class="ch-stage ch-stage2" data-k="ch_stage_risk">🔥 Risk · 11-25</span>
-              <span class="ch-stage ch-stage3" data-k="ch_stage_beast">👑 Beast · 26-40</span>
-              <span class="ch-stage ch-stage4" data-k="ch_stage_legend">⭐ Legend · 41-60</span>
+              <span class="ch-stage ch-stage1" data-k="ch_stage_seed">🌱 Seed · 1-20</span>
+              <span class="ch-stage ch-stage2" data-k="ch_stage_risk">🔥 Risk · 21-50</span>
+              <span class="ch-stage ch-stage3" data-k="ch_stage_beast">👑 Beast · 51-85</span>
+              <span class="ch-stage ch-stage4" data-k="ch_stage_legend">⭐ Legend · 86-120</span>
             </div>
             <div class="mt-4">
               <div class="flex justify-between text-xs text-gray-300 mb-1"><span data-k="ch_streak">Streak</span><span id="chPct">0%</span></div>
@@ -300,9 +306,9 @@
 
           <div id="chNotStarted" class="text-center py-10">
             <div class="text-7xl mb-3 ch-float">⛰️</div>
-            <p class="text-2xl font-black mb-2" data-k="ch_notstart">Ready to prove yourself?</p>
-            <p class="text-gray-400 text-sm mb-5" data-k="ch_start_sub">60 missions. 4 stages. Start free — no payment, no lock.</p>
-            <button onclick="startChallenge()" class="ch-btn-lg"><span data-k="ch_start">⚡ Start my journey</span></button>
+            <p class="text-2xl font-black mb-2" data-k="ch_notstart">I dare you to do it</p>
+            <p class="text-gray-400 text-sm mb-5" data-k="ch_start_sub">120 missions. 4 stages. Climb from Seed to Legend.</p>
+            <button onclick="startChallenge()" class="ch-btn-lg"><span data-k="ch_start">⚡ Start my first challenge</span></button>
           </div>
 
           <div id="chActive" class="hidden">
@@ -310,6 +316,14 @@
               <div class="ch-stat"><div class="text-xs text-gray-400" data-k="ch_streak">Streak</div><div class="text-2xl font-black" id="chStreak" style="color:#ff9d3c">0</div></div>
               <div class="ch-stat"><div class="text-xs text-gray-400" data-k="ch_score">Life Score</div><div class="text-2xl font-black" id="chPoints" style="color:#c084fc">0</div></div>
               <div class="ch-stat"><div class="text-xs text-gray-400" data-k="ch_level">Level</div><div class="text-2xl font-black" id="chLevel" style="color:#4ade80">1</div></div>
+            </div>
+
+            <!-- Paywall: shown when the next mission needs a plan -->
+            <div id="chLocked" class="hidden ch-task rounded-3xl p-8 mb-4 text-center">
+              <div class="text-6xl mb-3">🔒🔥</div>
+              <p class="text-2xl font-black mb-2" data-k="ch_locked_title">The next challenge is waiting for you</p>
+              <p class="text-gray-400 text-sm mb-5" data-k="ch_locked_sub">Keep your streak alive and keep climbing — Seed to Legend.</p>
+              <button onclick="go('pricing')" class="ch-btn-lg"><span data-k="ch_locked_btn">⭐ Continue climbing</span></button>
             </div>
 
             <div id="chTaskCard" class="ch-task rounded-3xl p-6 mb-4">
@@ -324,30 +338,39 @@
               <p id="chTask" class="text-xl md:text-2xl font-black leading-snug text-white mb-4"></p>
 
               <div class="ch-proof mb-4">
-                <label class="text-xs text-gray-400 mb-1 block" data-k="ch_proof_label">✨ Proof (tell us what you did — your AI referee reads it):</label>
+                <label class="text-xs text-gray-400 mb-1 block" data-k="ch_proof_label">✍️ Write what you did — where, what, how long:</label>
                 <textarea id="chProof" oninput="chProofChanged()" class="w-full bg-white/5 border border-white/15 rounded-xl px-3 py-2.5 text-sm text-white focus:outline-none focus:border-orange-400" placeholder="..." rows="2"></textarea>
+                <p class="text-[11px] text-gray-500 mt-1" data-k="ch_review_note">🔒 Your answer is reviewed before the points are counted.</p>
                 <label class="flex items-center gap-2 mt-2 text-xs text-orange-300 cursor-pointer">
                   <input type="checkbox" id="chHonest" class="accent-orange-500" />
                   <span data-k="ch_honest">✅ I actually did this. I'm honest.</span>
                 </label>
                 <div class="flex gap-2 mt-3">
-                  <button onclick="challengeValidate()" class="ch-btn-mini w-full"><span data-k="ch_ai_check">🤖 AI check my proof</span></button>
+                  <button onclick="challengeValidate()" class="ch-btn-mini w-full"><span data-k="ch_check">🔍 Review my answer</span></button>
                 </div>
                 <p id="chAIVerdict" class="hidden text-center text-sm font-bold px-3 py-2 rounded-xl mt-2"></p>
               </div>
+
+              <!-- Helper tools (Pro / Life) -->
+              <div class="grid grid-cols-3 gap-2 mb-4">
+                <button onclick="chCoach()" id="chCoachBtn" class="ch-btn-mini !w-full"><span class="ch-lock"></span><span data-k="ch_coach">🎯 Coach tips</span></button>
+                <button onclick="chSwap()" id="chSwapBtn" class="ch-btn-mini !w-full"><span class="ch-lock"></span><span data-k="ch_swap">🔄 Swap</span></button>
+                <button onclick="chStats()" id="chStatsBtn" class="ch-btn-mini !w-full"><span class="ch-lock"></span><span data-k="ch_stats">📊 Stats</span></button>
+              </div>
+              <p class="text-center text-[11px] text-gray-500 mb-3" data-k="ch_aids_note">Helper tools are included with Pro &amp; Life plans.</p>
+
+              <div id="chCoachPanel" class="hidden rounded-2xl p-4 mb-4 border border-blue-400/30 bg-blue-500/5 text-sm whitespace-pre-line"></div>
+              <div id="chStatsPanel" class="hidden rounded-2xl p-4 mb-4 border border-green-400/30 bg-green-500/5 text-sm"></div>
 
               <button onclick="challengeCheckin()" class="ch-btn w-full mb-2"><span data-k="ch_done">⚡ Claim reward &amp; level up</span></button>
               <button onclick="challengeSkip()" class="ch-btn-ghost w-full" data-k="ch_skip">Postpone today</button>
             </div>
 
-            <div class="ch-boost rounded-2xl p-4 mb-4 border border-amber-400/40 bg-amber-500/5">
-              <div class="flex items-center justify-between flex-wrap gap-3">
-                <div class="min-w-0">
-                  <div class="font-black text-amber-300" data-k="ch_boost_title">⚡ Boost Pack — 2× points + deeper AI check</div>
-                  <div class="text-xs text-gray-400 mt-1" data-k="ch_boost_sub">$10 · 20 challenges · USDT TRC20. Optional — never blocks your free progress.</div>
-                </div>
-                <button onclick="boostCheckout()" class="bg-amber-500 hover:bg-amber-400 text-slate-900 font-black px-5 py-2.5 rounded-xl text-sm" data-k="ch_boost_buy">⚡ Get Boost</button>
-              </div>
+            <!-- Leaderboard -->
+            <div class="glass rounded-2xl p-5 mb-4">
+              <h4 class="font-black mb-3 flex items-center gap-2">🏆 <span data-k="ch_board">Champions board</span></h4>
+              <div id="chBoardList" class="space-y-1 text-sm"></div>
+              <div id="chBoardMe" class="mt-3 pt-3 border-t border-white/10 text-sm font-bold text-orange-300"></div>
             </div>
 
             <button onclick="shareChallenge()" class="ch-btn-ghost-full"><span data-k="ch_share">📣 Share my win</span></button>
@@ -369,14 +392,14 @@
             <div class="glass rounded-2xl p-7 border border-purple-500">
               <h3 class="text-xl font-bold">Pro</h3><div class="text-3xl font-bold mt-1">$9.99<span class="text-gray-400 text-base">/mo</span></div>
               <ul class="text-gray-300 text-sm space-y-1 my-4">
-                <li>• <span data-k="pp1">Unlimited AI chats</span></li><li>• <span data-k="pp2">Smart scheduling</span></li><li>• <span data-k="pp3">Problem solver AI</span></li>
+                <li>• <span data-k="pp1">All 120 challenges + milestones</span></li><li>• <span data-k="pp2">Unlimited AI chats</span></li><li>• <span data-k="pp3">3 helper tools: coach, swap, stats</span></li><li>• <span data-k="pp4">Smart tasks &amp; habits planner</span></li>
               </ul>
               <button onclick="openCheckout('pro')" class="btn w-full bg-purple-600 hover:bg-purple-700 py-2.5 rounded-full font-semibold" data-k="buy_pro">Upgrade with USDT</button>
             </div>
             <div class="glass rounded-2xl p-7">
-              <h3 class="text-xl font-bold">Life</h3><div class="text-3xl font-bold mt-1">$19.99<span class="text-gray-400 text-base">/mo</span></div>
+              <h3 class="text-xl font-bold">Life</h3><div class="text-3xl font-bold mt-1">$19.99<span class="text-gray-400 text-base" data-k="life_once">· once</span></div>
               <ul class="text-gray-300 text-sm space-y-1 my-4">
-                <li>• <span data-k="ll1">Everything in Pro</span></li><li>• <span data-k="ll2">Priority support</span></li><li>• <span data-k="ll3">Advanced AI planning</span></li>
+                <li>• <span data-k="ll1">Everything in Pro</span></li><li>• <span data-k="ll2">Endless challenge mode</span></li><li>• <span data-k="ll3">Yours forever — pay once</span></li>
               </ul>
               <button onclick="openCheckout('life')" class="btn w-full bg-purple-600 hover:bg-purple-700 py-2.5 rounded-full font-semibold" data-k="buy_life">Go Life</button>
             </div>
@@ -417,27 +440,63 @@
 const I18 = {
   en:{ dash:"Dashboard", chat:"AI Assistant", tasks:"Tasks", habits:"Habits", upgrade:"Upgrade", add:"Add", buy_pro:"Upgrade with USDT", buy_life:"Go Life",
     t_tasks:"Tasks today", t_habits:"Habits done", t_plan:"Your plan", t_ai:"AI chats left",
-    d_ai_hint:"Ask AI to build your day", d_ai_p:"Go to the AI Assistant and tell it your goals or problems. It will build a practical plan for you.", d_ai_btn:"Open AI Assistant",
+    d_ai_hint:"Ask AI to build your day", d_ai_p:"Go to the AI Assistant and tell it your goals or problems. It will build a practical plan for you.", d_ai_btn:"Open AI Assistant", d_ch_btn:"Challenge Arena",
     heroHi:"Hola", heroSub:"Your AI life guide is ready. Let's build a great day together.", upgrade_cta:"Upgrade to Pro",
-    q_chat:"Ask AI", q_chat_s:"Plan your day", q_tasks:"Add task", q_tasks_s:"Stay focused", q_upgrade:"Go Pro", q_upgrade_s:"Unlock everything",
+    q_challenge:"Challenge Arena", q_challenge_s:"I dare you", q_chat:"Ask AI", q_chat_s:"Plan your day", q_tasks:"Add task", q_tasks_s:"Stay focused",
     quote:"Small wins every day create an unstoppable life. Start with one task now.",
-    pp1:"Unlimited AI chats", pp2:"Smart scheduling", pp3:"Problem solver AI", ll1:"Everything in Pro", ll2:"Priority support", ll3:"Advanced AI planning",
+    pp1:"All 120 challenges + milestones", pp2:"Unlimited AI chats", pp3:"3 helper tools: coach, swap, stats", pp4:"Smart tasks & habits planner", ll1:"Everything in Pro", ll2:"Endless challenge mode", ll3:"Yours forever — pay once", life_once:"· once",
     price_intro:"Upgrade your plan by sending USDT (TRC20) from your Trust Wallet. We verify each payment manually.",
-    refer:"Refer & earn", refer_title:"Invite friends, earn rewards", refer_p:"Share your link. When a friend joins and upgrades, you both get a bonus.", copy:"Copy", ref_count:(n)=>`You invited ${n} ${n===1?'person':'people'} so far.`,
+    refer:"Refer & earn", refer_title:"Invite friends, earn rewards", refer_p:"Share your link. When a friend joins and upgrades, you both get a bonus.",
+    copy:"Copy", ref_count:(n)=>`You invited ${n} ${n===1?'person':'people'} so far.`,
     send_to:"Send exact amount to:", tx_label:"Transaction hash (TX)", submit_pay:"I paid — submit for review", coupon_label:"Have a launch coupon?", apply_coupon:"Apply", coupon_on:"Coupon applied: 50% off", coupon_err:"Invalid coupon",
-    free_chat_left:"chats left today", done:"Done", target:"target", t_free:"Free", greeting:"Welcome", upd:"Upgrade to Pro", title_dash:"Dashboard", title_chat:"AI Assistant", title_tasks:"Tasks", title_habits:"Habits", title_pricing:"Upgrade", title_refer:"Refer & earn", title_challenge:"Challenges", challenge:"Challenges", ch_title:"JIBĀL AL-ḤAYĀT ARENA 🏟️", ch_sub:"60 missions. 4 stages. Free forever. Your AI referee checks your proof and gives you points.", ch_eyebrow:"CHALLENGE ARENA · FREE TO PLAY · 60 MISSIONS", ch_notstart:"Ready to prove yourself?", ch_streak:"Streak", ch_score:"Life Score", ch_level:"Level", ch_stage_seed:"🌱 Seed · 1-10", ch_stage_risk:"🔥 Risk · 11-25", ch_stage_beast:"👑 Beast · 26-40", ch_stage_legend:"⭐ Legend · 41-60", ch_start:"⚡ Start my first challenge", ch_start_sub:"60 missions. 4 stages. Start free — no payment, no lock.", ch_day:"Day", today_task:"TODAY'S TASK", ch_proof_label:"✨ Proof (tell us what you did — your AI referee reads it):", ch_honest:"✅ I actually did this. I'm honest.", ch_ai_check:"🤖 AI check my proof", ch_done:"⚡ Claim reward & level up", ch_skip:"Postpone today", ch_share:"📣 Share my win", ch_timer:"⏱ Keep time!", ch_ai_verdict_ok:"✅ AI approved! Claim it now.", ch_ai_verdict_bad:"❌ Not enough proof — add real details.", ch_boost_title:"⚡ Boost Pack — 2× points + deeper AI check", ch_boost_sub:"$10 · 20 challenges · USDT TRC20. Optional — never blocks your free progress.", ch_boost_buy:"⚡ Get Boost", ch_ai_verifying:"🤖 AI is reading your proof…", copied:"Copied!",
+    free_chat_left:"chats left today", done:"Done", target:"target", t_free:"Free", greeting:"Welcome", upd:"Upgrade to Pro", title_dash:"Dashboard", title_chat:"AI Assistant", title_tasks:"Tasks", title_habits:"Habits", title_pricing:"Plans", title_refer:"Refer & earn", title_challenge:"Challenges", challenge:"Challenges",
+    ch_title:"I DARE YOU TO DO IT 🏔️", ch_sub:"Real-life challenges. Do it, prove it, level up.", ch_eyebrow:"CHALLENGE ARENA · 120 MISSIONS · 4 STAGES",
+    ch_notstart:"I dare you to do it", ch_streak:"Streak", ch_score:"Life Score", ch_level:"Level",
+    ch_stage_seed:"🌱 Seed · 1-20", ch_stage_risk:"🔥 Risk · 21-50", ch_stage_beast:"👑 Beast · 51-85", ch_stage_legend:"⭐ Legend · 86-120",
+    ch_start:"⚡ Start my first challenge", ch_start_sub:"120 missions. 4 stages. Climb from Seed to Legend.",
+    ch_day:"Day", ch_proof_label:"✍️ Write what you did — where, what, how long:", ch_review_note:"🔒 Your answer is reviewed before the points are counted.",
+    ch_honest:"✅ I actually did this. I'm honest.", ch_check:"🔍 Review my answer", ch_reviewing:"⏳ Reviewing your answer…",
+    ch_verdict_ok:"✅ Reviewed & accepted — claim it now!", ch_verdict_bad:"❌ Not enough detail after review — add real specifics.",
+    ch_done:"⚡ Claim reward & level up", ch_skip:"Postpone today", ch_share:"📣 Share my win", ch_timer:"⏱ Keep time!",
+    ch_locked_title:"The next challenge is waiting for you", ch_locked_sub:"Keep your streak alive and keep climbing — Seed to Legend.", ch_locked_btn:"⭐ Continue climbing",
+    ch_coach:"🎯 Coach tips", ch_swap:"🔄 Swap", ch_stats:"📊 Stats", ch_aids_note:"Helper tools are included with the Pro & Life plans.",
+    ch_premium_only:"🔒 This helper tool is part of the Pro & Life plans. Open Plans to subscribe.",
+    ch_coach_loading:"⏳ Getting your tips ready…", ch_coach_title:"🎯 Coach tips for today",
+    ch_stats_title:"📊 Your advanced stats", ch_stats_done:"Completed", ch_stats_rate:"Accepted proofs", ch_stats_best:"Best streak", ch_stats_cats:"By category", ch_stats_recent:"Recent missions",
+    ch_board:"Champions board", ch_board_rank:(n)=>`Your rank: #${n}`,
+    ch_endless_badge:"♾️ Endless mode", ch_endless_msg:"🏆 You finished all 120 missions! Endless mode is on — a new legend mission every day.", ch_done_all:"🏆 You conquered all 120 missions! A true legend.",
+    ch_renew:"⏳ Renew now", plan_banner_days:(n)=>`⏳ Your plan ends in ${n} day${n===1?'':'s'} — renew so you don't lose your benefits.`, plan_banner_expired:"⚠️ Your plan ended — renew to keep climbing and keep your benefits.",
+    copied:"Copied!",
     verify_title:"Verify your email", verify_sub:"We sent a 6-digit code to", verify_btn:"Confirm code", verify_no:"Didn't get it?", verify_resend:"Resend code", verify_back:"← Back to login / create account", verify_providers:"Works with Gmail, iCloud, Outlook, Yahoo, Zoho and any email.", verify_ok:"Verifying...", verify_sent:"New code sent.", auth_providers:"Use any email: Gmail · iCloud · Outlook · Yahoo · Zoho", loading:"Please wait..." },
-  ar:{ dash:"الرئيسية", chat:"المساعد الذكي", tasks:"المهام", habits:"العادات", upgrade:"الاشتراك", add:"إضافة", buy_pro:"اشترك بـ USDT", buy_life:"اختر حياة",
+  ar:{ dash:"الرئيسية", chat:"المساعد الذكي", tasks:"المهام", habits:"العادات", upgrade:"الاشتراك", add:"إضافة", buy_pro:"اشترك بـ USDT", buy_life:"اختر لايف",
     t_tasks:"مهام اليوم", t_habits:"العادات المنجزة", t_plan:"خطتك", t_ai:"محادثات الذكاء المتبقية",
-    d_ai_hint:"اطلب من الذكاء بناء يومك", d_ai_p:"اذهب إلى المساعد الذكي واحكي له أهدافك ومشاكلك، وسيبني لك خطة عملية.", d_ai_btn:"افتح المساعد الذكي",
+    d_ai_hint:"اطلب من الذكاء بناء يومك", d_ai_p:"اذهب إلى المساعد الذكي واحكي له أهدافك ومشاكلك، وسيبني لك خطة عملية.", d_ai_btn:"افتح المساعد الذكي", d_ch_btn:"ساحة التحديات",
     heroHi:"أهلاً", heroSub:"مرشد حياتك الذكي جاهز. لنبنِ يوماً رائعاً معاً.", upgrade_cta:"طوّر إلى برو",
-    q_chat:"اسأل الذكاء", q_chat_s:"خطط يومك", q_tasks:"أضف مهمة", q_tasks_s:"حافظ على تركيزك", q_upgrade:"اختر برو", q_upgrade_s:"افتح كل المزايا",
+    q_challenge:"ساحة التحديات", q_challenge_s:"اتحداك", q_chat:"اسأل الذكاء", q_chat_s:"خطط يومك", q_tasks:"أضف مهمة", q_tasks_s:"حافظ على تركيزك",
     quote:"الانتصارات الصغيرة كل يوم تصنع حياة لا تُهزم. ابدأ بمهمة واحدة الآن.",
-    pp1:"محادثات ذكاء غير محدودة", pp2:"جدولة ذكية", pp3:"ذكاء حل المشاكل", ll1:"كل ميزات الاحترافي", ll2:"دعم أولوية", ll3:"تخطيط ذكاء متقدم",
+    pp1:"كل التحديات الـ120 مع الإنجازات", pp2:"محادثات ذكاء غير محدودة", pp3:"3 وسائل مساعدة: المدرب، التبديل، الإحصائيات", pp4:"مخطط مهام وعادات ذكي", ll1:"كل ميزات برو", ll2:"وضع التحديات اللانهائي", ll3:"لك مدى الحياة — دفعة واحدة", life_once:"· دفعة واحدة",
     price_intro:"طوّر خطتك بإرسال USDT (TRC20) من محفظة Trust Wallet. نتحقق من كل دفعة يدوياً.",
-    refer:"ادعُ واربح", refer_title:"ادعُ أصدقاءك واربح مكافآت", refer_p:"شارك رابطك. عندما ينضم صديق ويشترك، تحصلان معاً على مكافأة.", copy:"نسخ", ref_count:(n)=>`دعوت ${n} ${n===1?'شخص':'أشخاص'} حتى الآن.`,
+    refer:"ادعُ واربح", refer_title:"ادعُ أصدقاءك واربح مكافآت", refer_p:"شارك رابطك. عندما ينضم صديق ويشترك، تحصلان معاً على مكافأة.",
+    copy:"نسخ", ref_count:(n)=>`دعوت ${n} ${n===1?'شخص':'أشخاص'} حتى الآن.`,
     send_to:"أرسل المبلغ بالضبط إلى:", tx_label:"Hash المعاملة (TX)", submit_pay:"دفعت — أرسل للمراجعة", coupon_label:"عندك كوبون إطلاق؟", apply_coupon:"تطبيق", coupon_on:"تم تطبيق الكوبون: خصم 50%", coupon_err:"كوبون غير صحيح",
-    free_chat_left:"محادثات متبقية اليوم", done:"تم", target:"الهدف", t_free:"مجاني", greeting:"أهلاً", upd:"طوّر إلى برو", title_dash:"الرئيسية", title_chat:"المساعد الذكي", title_tasks:"المهام", title_habits:"العادات", title_pricing:"الاشتراك", title_refer:"ادعُ واربح", title_challenge:"ساحة التحديات", challenge:"ساحة التحديات", ch_title:"جبال الحياة ← ساحة التحديات 🏟️", ch_sub:"60 تحدياً. 4 مراحل. مجاني للجميع. الذكاء الاصطناعي يفحص إثباتك ويعطيك نقاطاً.", ch_eyebrow:"ساحة التحديات · مجاني بالكامل · 60 تحدياً", ch_notstart:"جاهز تثبت نفسك؟", ch_streak:"السلسلة", ch_score:"نقاط الحياة", ch_level:"المستوى", ch_stage_seed:"🌱 البذرة · 1-10", ch_stage_risk:"🔥 الخطر · 11-25", ch_stage_beast:"👑 الوحش · 26-40", ch_stage_legend:"⭐ الأسطورة · 41-60", ch_start:"⚡ ابدأ أول تحدي", ch_start_sub:"60 تحدياً. 4 مراحل. ابدأ مجاناً — بلا دفع ولا قفل.", ch_day:"اليوم", today_task:"تحدي اليوم", ch_proof_label:"✨ الإثبات (أخبرنا ماذا فعلت فعلاً — الذكاء الاصطناعي يقرأه):", ch_honest:"✅ أنجزتها فعلاً. أنا صادق.", ch_ai_check:"🤖 خلّ الذكاء الاصطناعي يفحص إثباتي", ch_done:"⚡ آخذ مكافأتي وأرتقي", ch_skip:"أجّلها لاحقاً", ch_share:"📣 شارك فوزي", ch_timer:"⏱ حافظ على الوقت!", ch_ai_verdict_ok:"✅ الذكاء الاصطناعي وافق! ثبّت الآن.", ch_ai_verdict_bad:"❌ الإثبات ضعيف — اكتب تفاصيل حقيقية.", ch_boost_title:"⚡ حزمة التعزيز — ضعف النقاط + فحص ذكي أعمق", ch_boost_sub:"$10 · 20 تحدياً · USDT TRC20. اختيارية — لا تمنع تقدمك المجاني أبداً.", ch_boost_buy:"⚡ فعّل التعزيز", ch_ai_verifying:"🤖 الذكاء الاصطناعي يقرأ إثباتك…", copied:"تم النسخ!",
+    free_chat_left:"محادثات متبقية اليوم", done:"تم", target:"الهدف", t_free:"مجاني", greeting:"أهلاً", upd:"طوّر إلى برو", title_dash:"الرئيسية", title_chat:"المساعد الذكي", title_tasks:"المهام", title_habits:"العادات", title_pricing:"الاشتراك", title_refer:"ادعُ واربح", title_challenge:"ساحة التحديات", challenge:"ساحة التحديات",
+    ch_title:"اتحداك تفعلها 🏔️", ch_sub:"تحديات حقيقية في حياتك اليومية. نفّذ، أثبت، ارتقِ.", ch_eyebrow:"ساحة التحديات · 120 تحدياً · 4 مراحل",
+    ch_notstart:"اتحداك تفعلها", ch_streak:"السلسلة", ch_score:"نقاط الحياة", ch_level:"المستوى",
+    ch_stage_seed:"🌱 البذرة · 1-20", ch_stage_risk:"🔥 الخطر · 21-50", ch_stage_beast:"👑 الوحش · 51-85", ch_stage_legend:"⭐ الأسطورة · 86-120",
+    ch_start:"⚡ ابدأ أول تحدي", ch_start_sub:"120 تحدياً. 4 مراحل. اصعد من البذرة إلى الأسطورة.",
+    ch_day:"اليوم", ch_proof_label:"✍️ اكتب ماذا فعلت — أين، ماذا، وكم استغرق:", ch_review_note:"🔒 سيتم التدقيق في إجابتك قبل احتساب النقاط.",
+    ch_honest:"✅ أنجزتها فعلاً. أنا صادق.", ch_check:"🔍 دقّق إجابتي", ch_reviewing:"⏳ جاري التدقيق في إجابتك…",
+    ch_verdict_ok:"✅ تم التدقيق وقُبلت إجابتك — ثبّتها الآن!", ch_verdict_bad:"❌ الإجابة غير كافية بعد التدقيق — أضف تفاصيل حقيقية.",
+    ch_done:"⚡ آخذ مكافأتي وأرتقي", ch_skip:"أجّلها لاحقاً", ch_share:"📣 شارك فوزي", ch_timer:"⏱ حافظ على الوقت!",
+    ch_locked_title:"التحدي التالي بانتظارك", ch_locked_sub:"حافظ على سلسلتك وواصل الصعود — من البذرة إلى الأسطورة.", ch_locked_btn:"⭐ واصل التحدي",
+    ch_coach:"🎯 نصائح المدرب", ch_swap:"🔄 تبديل", ch_stats:"📊 إحصائيات", ch_aids_note:"وسائل المساعدة مشمولة مع باقتي برو ولايف.",
+    ch_premium_only:"🔒 هذه الوسيلة ضمن باقتي برو ولايف. افتح صفحة الاشتراك لتفعيلها.",
+    ch_coach_loading:"⏳ نجهّز نصائحك…", ch_coach_title:"🎯 نصائح المدرب لتحدي اليوم",
+    ch_stats_title:"📊 إحصائياتك المتقدمة", ch_stats_done:"أكملت", ch_stats_rate:"إثباتات مقبولة", ch_stats_best:"أفضل سلسلة", ch_stats_cats:"حسب الفئة", ch_stats_recent:"أحدث التحديات",
+    ch_board:"لوحة الأبطال", ch_board_rank:(n)=>`ترتيبك: #${n}`,
+    ch_endless_badge:"♾️ الوضع اللانهائي", ch_endless_msg:"🏆 أنهيت كل الـ120 تحدياً! الوضع اللانهائي مفعّل — تحدٍّ أسطوري جديد كل يوم.", ch_done_all:"🏆 أنهيت كل الـ120 تحدياً! أسطورة حقيقية.",
+    ch_renew:"⏳ جدّد الآن", plan_banner_days:(n)=>`⏳ اشتراكك ينتهي خلال ${n} ${n===1?'يوم':'أيام'} — جدّده حتى لا تفقد مزاياك.`, plan_banner_expired:"⚠️ انتهى اشتراكك — جدّده لتواصل الصعود وتحافظ على مزاياك.",
+    copied:"تم النسخ!",
     verify_title:"أكّد بريدك الإلكتروني", verify_sub:"أرسلنا رمزاً من 6 أرقام إلى", verify_btn:"تأكيد الرمز", verify_no:"لم يصلك؟", verify_resend:"أعد إرسال الرمز", verify_back:"← رجوع إلى تسجيل الدخول / إنشاء حساب", verify_providers:"يدعم Gmail و iCloud و Outlook و Yahoo و Zoho وأي بريد آخر.", verify_ok:"جاري التحقق...", verify_sent:"تم إرسال رمز جديد.", auth_providers:"استخدم أي بريد: Gmail · iCloud · Outlook · Yahoo · Zoho", loading:"لحظة من فضلك..." }
 };
 let lang = localStorage.getItem('lifeos_lang') || 'en';
@@ -506,11 +565,11 @@ async function resendCode(){
 }
 function verifyErr(m){ document.getElementById('verifyErr').textContent=m||''; }
 function showMain(){ try { const v=document.getElementById('verify'); const a=document.getElementById('auth'); const m=document.getElementById('main'); if(v){v.classList.add('hidden'); v.style.display='none';} if(a){a.classList.add('hidden'); a.style.display='none';} if(m){m.classList.remove('hidden'); m.style.display='block';} } catch(e){} }
-function setAuth(r){ token=r.token; user=r.user; applyLang(); localStorage.setItem('lifeos_token',token); localStorage.setItem('lifeos_user',JSON.stringify(user)); showMain(); refreshUI(); go('challenge'); }
+function setAuth(r){ token=r.token; user=r.user; applyLang(); localStorage.setItem('lifeos_token',token); localStorage.setItem('lifeos_user',JSON.stringify(user)); showMain(); refreshUI(); go('dashboard'); }
 function logout(){ token=''; user=null; localStorage.removeItem('lifeos_token'); localStorage.removeItem('lifeos_user'); location.reload(); }
 
 function val(id){ return document.getElementById(id).value.trim(); }
-async function api(path, body, method='POST'){ const res=await fetch(path,{method,headers:{'Content-Type':'application/json',...(token?{Authorization:'Bearer '+token}:{})},body:body?JSON.stringify(body):undefined}); const data=await res.json().catch(()=>({})); if(!res.ok){ const err=new Error(data&&data.error||'Error'); err.data=data; if(data.error==='free_daily_limit') err.message=(lang==='ar'?'وصلت للحد المجاني اليوم':'You reached the free daily AI limit.'); else if(data.error==='email_not_verified') err.message=(lang==='ar'?'حسابك مفعّل، حاول الدخول مجدداً.':'Your account is active, try logging in again.'); else if(data.error==='invalid_code') err.message=(lang==='ar'?'الرمز غير صحيح':'Incorrect code.'); else if(data.error==='code_expired') err.message=(lang==='ar'?'انتهت صلاحية الرمز':'Code expired.'); else if(data.error==='too_many_attempts') err.message=(lang==='ar'?'محاولات كثيرة، اطلب رمزاً جديداً':'Too many attempts.'); else if(data.error==='already_verified') err.message=(lang==='ar'?'الحساب موثّق مسبقاً':'Already verified.'); else err.message=(data&&data.message)||data.error||'Error'; throw err; } return data; }
+async function api(path, body, method='POST'){ const res=await fetch(path,{method,headers:{'Content-Type':'application/json',...(token?{Authorization:'Bearer '+token}:{})},body:body?JSON.stringify(body):undefined}); const data=await res.json().catch(()=>({})); if(!res.ok){ const err=new Error(data&&data.error||'Error'); err.data=data; if(data.error==='free_daily_limit') err.message=(lang==='ar'?'وصلت للحد المجاني اليوم':'You reached the free daily AI limit.'); else if(data.error==='premium_required') err.message=(lang==='ar'?'هذه الميزة ضمن باقتي برو ولايف':'This feature is part of the Pro & Life plans'); else if(data.error==='upgrade_required') err.message=(lang==='ar'?'تابع التحديات مع باقة برو أو لايف':'Keep climbing with a Pro or Life plan'); else if(data.error==='email_not_verified') err.message=(lang==='ar'?'حسابك مفعّل، حاول الدخول مجدداً.':'Your account is active, try logging in again.'); else if(data.error==='invalid_code') err.message=(lang==='ar'?'الرمز غير صحيح':'Incorrect code.'); else if(data.error==='code_expired') err.message=(lang==='ar'?'انتهت صلاحية الرمز':'Code expired.'); else if(data.error==='too_many_attempts') err.message=(lang==='ar'?'محاولات كثيرة، اطلب رمزاً جديداً':'Too many attempts.'); else if(data.error==='already_verified') err.message=(lang==='ar'?'الحساب موثّق مسبقاً':'Already verified.'); else err.message=(data&&data.message)||data.error||'Error'; throw err; } return data; }
 
 // UI
 function go(name){ const views=['dashboard','chat','tasks','habits','pricing','refer','challenge']; views.forEach(n=>{ const e=document.getElementById('s-'+n); if(e) e.classList.toggle('hidden', n!==name); }); document.getElementById('pageTitle').textContent = t('title_'+name); views.forEach(n=>{ const el=document.getElementById('nav-'+n); if(el){ if(n===name) el.classList.add('active'); else el.classList.remove('active'); } }); if(name==='refer') loadReferral(); if(name==='challenge') loadChallenge(); renderIcons(); }
@@ -521,7 +580,7 @@ async function refreshUI(){
     applyLang();
     showMain();
     const used0=JSON.parse(localStorage.getItem('lifeos_chat_used_'+new Date().toDateString())||'0');
-    document.getElementById('dAi').textContent = (user.plan==='free')? Math.max(0,10-used0) : '∞';
+    document.getElementById('dAi').textContent = (user.plan==='free' || (user.plan==='pro' && !user.plan_active))? Math.max(0,10-used0) : '∞';
     if(document.getElementById('heroName')) document.getElementById('heroName').textContent = (user && user.name) ? user.name.split(' ')[0] : 'Friend';
     renderTasks(); renderHabits();
   } catch(e) {
@@ -537,13 +596,18 @@ async function refreshUI(){
   tasks=ta||[]; habits=ha||[];
   document.getElementById('dTasks').textContent = tasks.filter(x=>x.done).length+'/'+tasks.length;
   document.getElementById('dHabits').textContent = habits.reduce((s,h)=>s+Math.min(h.completed_today,h.target),0)+'/'+habits.reduce((s,h)=>s+h.target,0);
-  const planName = user.plan==='free' ? 'Free' : (user.plan==='boost20' ? '⚡ Boost' : (user.plan==='life'?'Life':'Pro'));
+  const planName = !user.plan_active ? (user.plan==='pro' ? (lang==='ar'?'منتهي':'Expired') : (lang==='ar'?'مجاني':'Free')) : (user.plan==='life'?(lang==='ar'?'لايف':'Life'):(user.plan==='boost20'?'⚡ Boost':(lang==='ar'?'برو':'Pro')));
   document.getElementById('dPlan').textContent = planName;
   document.getElementById('planLabel').textContent = planName;
-  document.getElementById('planNote').textContent = user.plan==='free'? t('free_chat_left')+' · 10' : (user.plan==='life'?'Life · Unlimited':(user.plan==='boost20'?'2× points in Arena':'Pro · Unlimited'));
+  let planNote;
+  if(user.plan==='free') planNote = t('free_chat_left')+' · 10';
+  else if(user.plan==='pro' && !user.plan_active) planNote = (lang==='ar'?'انتهى الاشتراك — جدّده':'Plan ended — renew');
+  else if(user.plan==='pro' && user.plan_days_left!=null) planNote = (lang==='ar'?('متبقي '+user.plan_days_left+' يوم'):(user.plan_days_left+' days left'));
+  else planNote = (lang==='ar'?'بلا حدود':'Unlimited');
+  document.getElementById('planNote').textContent = planNote;
   renderTasks(); renderHabits();
   const used = JSON.parse(localStorage.getItem('lifeos_chat_used_'+new Date().toDateString())||'0');
-  document.getElementById('dAi').textContent = user.plan==='free'? Math.max(0,10-used) : '∞';
+  document.getElementById('dAi').textContent = (user.plan==='free' || (user.plan==='pro' && !user.plan_active)) ? Math.max(0,10-used) : '∞';
   if(!document.querySelector('#chatBox .msg-a')){ makeMsg('<b>A</b>'); }
 }
 function renderTasks(){ const el=document.getElementById('taskList'); el.innerHTML=tasks.map(x=>`
@@ -588,19 +652,19 @@ function copyRef(){
   const old=el.value; el.value = t('copied','Copied!'); setTimeout(()=>el.value=old,1200);
 }
 
-// Jibāl Al-Ḥayāt Challenge Arena (60 free missions, AI text-proof, non-blocking Boost)
+// Jibāl Al-Ḥayāt Challenge Arena (120 missions, text proof, Pro/Life plans)
 let challengeData=null;
 let chTimerInt=null;
 function chStageColor(stage){
   if(!stage) return '#ff9d3c';
-  const map={seed:'#34d399',risk:'#c084fc',beast:'#fbbf24',legend:'#f472b6','starter':'#34d399','rise':'#c084fc'};
+  const map={seed:'#34d399',risk:'#c084fc',beast:'#fbbf24',legend:'#f472b6'};
   return map[stage.key] || stage.color || '#ff9d3c';
 }
 function chStageName(stage){
   if(!stage) return lang==='ar'?'جبال الحياة':'Jibāl Al-Ḥayāt';
   return lang==='ar'? (stage.name_ar||stage.name_en) : (stage.name_en||stage.name_ar);
 }
-function chStageFor(day){ day=day||0; if(day>=41) return {key:'legend',name_en:'Legend',name_ar:'الأسطورة',color:'#f472b6'}; if(day>=26) return {key:'beast',name_en:'Beast',name_ar:'الوحش',color:'#fbbf24'}; if(day>=11) return {key:'risk',name_en:'Risk',name_ar:'المخاطرة',color:'#c084fc'}; return {key:'seed',name_en:'Seed',name_ar:'البذرة',color:'#34d399'}; }
+function chStageFor(day){ day=day||0; if(day>=86) return {key:'legend',name_en:'Legend',name_ar:'الأسطورة',color:'#f472b6'}; if(day>=51) return {key:'beast',name_en:'Beast',name_ar:'الوحش',color:'#fbbf24'}; if(day>=21) return {key:'risk',name_en:'Risk',name_ar:'المخاطرة',color:'#c084fc'}; return {key:'seed',name_en:'Seed',name_ar:'البذرة',color:'#34d399'}; }
 function chConfetti(){
   const cols=['#ff9d3c','#c084fc','#34d399','#60a5fa','#f472b6'];
   for(let i=0;i<34;i++){ const c=document.createElement('div'); c.className='confetti'; c.style.left=Math.random()*100+'vw'; c.style.background=cols[Math.floor(Math.random()*cols.length)]; c.style.animationDelay=(Math.random()*.2)+'s'; document.body.appendChild(c); setTimeout(()=>c.remove(),2000); }
@@ -620,25 +684,43 @@ function chAIVerdictShow(ok, feedback){
   const el=document.getElementById('chAIVerdict'); if(!el) return;
   el.classList.remove('hidden','ch-verdict-ok','ch-verdict-bad');
   el.classList.add(ok?'ch-verdict-ok':'ch-verdict-bad');
-  el.textContent = ok ? (t('ch_ai_verdict_ok','✅ AI approved!')+' '+(feedback||'')) : (feedback || t('ch_ai_verdict_bad','❌'));
+  el.textContent = ok ? (t('ch_verdict_ok')+' '+(feedback||'')) : (feedback || t('ch_verdict_bad'));
+}
+function chIsPremium(){ return !!(challengeData && challengeData.premium) || !!(user && user.plan_active); }
+function chPremiumOnly(){
+  alert(t('ch_premium_only'));
+  go('pricing');
+}
+function chUpdatePlanBanner(){
+  const b=document.getElementById('chPlanBanner'); if(!b) return;
+  const days = challengeData && challengeData.plan_days_left;
+  if(user && user.plan==='pro' && user.plan_active && days!=null && days<=7){
+    document.getElementById('chPlanBannerText').textContent = t('plan_banner_days', days);
+    b.classList.remove('hidden');
+  } else if(user && user.plan==='pro' && !user.plan_active){
+    document.getElementById('chPlanBannerText').textContent = t('plan_banner_expired');
+    b.classList.remove('hidden');
+  } else {
+    b.classList.add('hidden');
+  }
 }
 async function loadChallenge(){
-  try{ challengeData=await api('/api/challenge',null,'GET'); }catch(e){ challengeData={started:false,day:0,points:0,streak:0,task:null,total:60}; }
+  try{ challengeData=await api('/api/challenge?lang='+(lang==='ar'?'ar':'en'),null,'GET'); }catch(e){ challengeData={started:false,day:0,points:0,streak:0,task:null,total:120}; }
   if(!challengeData) return;
+  chUpdatePlanBanner();
   const started=challengeData.started, completed=challengeData.completed;
+  const endless=!!challengeData.endless;
   const day=challengeData.day||0;
-  const total=challengeData.total||60;
+  const total=challengeData.total||120;
   const notS=document.getElementById('chNotStarted'), act=document.getElementById('chActive');
-  const card=document.getElementById('chTaskCard');
+  const card=document.getElementById('chTaskCard'), locked=document.getElementById('chLocked');
   chHideTimer();
-  document.querySelectorAll('#chActive .ch-boost').forEach(el=>el.classList.remove('hidden'));
+  const coachP=document.getElementById('chCoachPanel'); if(coachP) coachP.classList.add('hidden');
+  const statsP=document.getElementById('chStatsPanel'); if(statsP) statsP.classList.add('hidden');
+  // Helper-tool buttons show a lock for free players.
+  const prem=chIsPremium();
+  document.querySelectorAll('.ch-lock').forEach(el=>{ el.textContent = prem ? '' : '🔒'; });
   if(!started){ notS.classList.remove('hidden'); act.classList.add('hidden'); return; }
-  // Show the Day-10 surprise once (never blocks progress).
-  if(challengeData.surprise && !localStorage.getItem('ch_surprise_seen')){
-    localStorage.setItem('ch_surprise_seen','1');
-    const s=challengeData.surprise;
-    setTimeout(()=>alert(lang==='ar'?s.title_ar+' '+s.text_ar:s.title_en+' '+s.text_en),500);
-  }
   notS.classList.add('hidden'); act.classList.remove('hidden');
   document.getElementById('chStreak').textContent = challengeData.streak||0;
   document.getElementById('chPoints').textContent = challengeData.points||0;
@@ -646,30 +728,50 @@ async function loadChallenge(){
   document.getElementById('chProof').value='';
   document.getElementById('chHonest').checked=false;
   const vd=document.getElementById('chAIVerdict'); if(vd){ vd.classList.add('hidden'); vd.textContent=''; }
-  if(completed){
-    document.getElementById('chTask').textContent = lang==='ar'?'🏆 أكملت كل الـ 60 تحدياً! أسطورة حقيقية.':'🏆 You conquered all 60 missions! True legend.';
+  if(completed && !endless){
+    document.getElementById('chTask').textContent = t('ch_done_all');
     document.getElementById('chReward').textContent='';
     document.getElementById('chBadge').textContent = '🏆 '+(lang==='ar'?'أسطورة':'Legend');
     document.getElementById('chDay').textContent = total;
     document.getElementById('chBar').style.width='100%'; document.getElementById('chPct').textContent='100%';
-    card.classList.add('hidden');
+    if(card) card.classList.add('hidden');
+    if(locked) locked.classList.add('hidden');
+    loadLeaderboard();
     return;
   }
-  card.classList.remove('hidden');
+  if(challengeData.needUpgrade){
+    // Paywall card: no mission text is revealed.
+    if(card) card.classList.add('hidden');
+    if(locked) locked.classList.remove('hidden');
+    document.getElementById('chDay').textContent = day;
+    document.getElementById('chBar').style.width=Math.round(day/total*100)+'%';
+    document.getElementById('chPct').textContent=Math.round(day/total*100)+'%';
+    loadLeaderboard();
+    return;
+  }
+  if(card) card.classList.remove('hidden');
+  if(locked) locked.classList.add('hidden');
   const task=challengeData.task||{};
-  const today=Math.min(day+1, total);
+  const today=day+1;
   document.getElementById('chTask').textContent = task.text || '';
   document.getElementById('chType').textContent = task.type_name ? '🎯 '+task.type_name : '';
   document.getElementById('chType').classList.toggle('hidden', !task.type_name);
+  if(endless){
+    document.getElementById('chBadge').textContent = t('ch_endless_badge');
+    document.getElementById('chBadge').style.color='#f472b6';
+  }
   const rw=challengeData.reward;
   document.getElementById('chReward').textContent = rw ? ('🎁 '+(lang==='ar'?('+'+rw.total+' نقطة'):('+'+rw.total+' pts'))+(rw.bonus?(' '+rw.bonus):'')) : '';
-  const st=chStageFor(today) || (task.stage||{});
-  document.getElementById('chBadge').textContent = '🔥 '+chStageName(st)+' · LVL '+(st.key==='legend'?'4':(st.key==='beast'?'3':(st.key==='risk'?'2':'1')));
-  document.getElementById('chBadge').style.color=chStageColor(st);
-  document.getElementById('chDay').textContent = today+'/'+total;
-  document.getElementById('chBar').style.width=Math.round(today/total*100)+'%';
-  document.getElementById('chPct').textContent=Math.round(today/total*100)+'%';
+  const st=task.stage||chStageFor(today);
+  if(!endless){
+    document.getElementById('chBadge').textContent = '🔥 '+chStageName(st)+' · LVL '+(st.key==='legend'?'4':(st.key==='beast'?'3':(st.key==='risk'?'2':'1')));
+    document.getElementById('chBadge').style.color=chStageColor(st);
+  }
+  document.getElementById('chDay').textContent = endless ? today : (today+'/'+total);
+  document.getElementById('chBar').style.width=Math.round(Math.min(today,total)/total*100)+'%';
+  document.getElementById('chPct').textContent=Math.round(Math.min(today,total)/total*100)+'%';
   if(task.timer) chShowTimer(task.timer);
+  loadLeaderboard();
 }
 async function startChallenge(){
   try{ await api('/api/challenge/start',{}); loadChallenge(); }catch(e){ authErr(e.message); }
@@ -678,23 +780,24 @@ async function challengeValidate(){
   const note=document.getElementById('chProof').value.trim();
   if(note.length<8){ alert(lang==='ar'?'اكتب وصفاً أولاً (ماذا فعلت، أين، كم ثانية).':'Write what you did first.'); return; }
   const vd=document.getElementById('chAIVerdict');
-  if(vd){ vd.classList.remove('hidden','ch-verdict-ok','ch-verdict-bad'); vd.classList.add('ch-verdict-ok'); vd.textContent=t('ch_ai_verifying','🤖 AI is reading your proof…'); }
+  if(vd){ vd.classList.remove('hidden','ch-verdict-ok','ch-verdict-bad'); vd.classList.add('ch-verdict-ok'); vd.textContent=t('ch_reviewing'); }
   try{
     const task=(challengeData&&challengeData.task&&challengeData.task.text)||document.getElementById('chTask').textContent||'';
     const r=await api('/api/challenge/validate-proof',{note,task_text:task,locale:lang==='ar'?'ar':'en'});
     challengeData.ai_approved=!!r.approved;
     chAIVerdictShow(!!r.approved, r.feedback||'');
-  }catch(e){ 
-    if(vd){ vd.classList.add('ch-verdict-ok'); vd.textContent='🤖 check failed — claim anyway if you really did it.'; }
+  }catch(e){
+    if(vd){ vd.classList.add('ch-verdict-ok'); vd.textContent=lang==='ar'?'⚠️ تعذّر إتمام التدقيق الآن — أثبت وثبّت إن كنت أنجزتها فعلاً.':'⚠️ Review is unavailable right now — claim it if you really did it.'; }
   }
 }
 async function challengeCheckin(){
   const honest=document.getElementById('chHonest');
   if(!honest.checked){ alert(lang==='ar'?'⛔ أكّد أولاً أنك أنجزت المهمة فعلاً — لا نريد ضغطات كاذبة.':'⛔ Confirm you actually did it first — no fake clicks.'); return; }
   const note=document.getElementById('chProof').value.trim();
-  if(note.length<12){ alert(lang==='ar'?'✍ اكتب إثباتاً نصياً (ماذا فعلت، أين، كم ثانية) حتى يوافق الذكاء الاصطناعي.':'✍ Write what you actually did (where / how / seconds) so your AI referee can approve it.'); return; }
+  if(note.length<12){ alert(lang==='ar'?'✍ اكتب إثباتاً نصياً (ماذا فعلت، أين، كم ثانية) ليمر التدقيق.':'✍ Write what you actually did (where / how / seconds) so it passes review.'); return; }
   try{
-    const r=await api('/api/challenge/checkin',{note, ai_approved: !!(challengeData&&challengeData.ai_approved)});
+    const taskType=(challengeData&&challengeData.task&&challengeData.task.type)||null;
+    const r=await api('/api/challenge/checkin',{note, ai_approved: !!(challengeData&&challengeData.ai_approved), task_type: taskType});
     chConfetti();
     const rw=r.reward;
     if(rw){ alert(lang==='ar'?('⚡ ارتقيت! +'+rw.total+' نقطة'+(rw.bonus?(' '+rw.bonus):'')):('⚡ Level up! +'+rw.total+' pts'+(rw.bonus?(' '+rw.bonus):''))); }
@@ -705,23 +808,65 @@ async function challengeSkip(){
   try{ await api('/api/challenge/skip',{}); loadChallenge(); }catch(e){ authErr(e.message); }
 }
 function shareChallenge(){
-  const txt = (challengeData && challengeData.share_text) || ("I'm playing Jibāl Al-Ḥayāt — 60 free real-life missions 🏟️ #LifeOS60");
+  const txt = (challengeData && challengeData.share_text) || ("I'm playing Jibāl Al-Ḥayāt — real-life challenges. I dare you to do it 🏔️ #ChallengeArena");
   const url = 'https://lifeos-ai-1-c5qv.onrender.com/app?ref=' + (user && user.ref_code ? user.ref_code : '');
   if (navigator.share) { navigator.share({ title:'Jibāl Al-Ḥayāt Arena', text:txt, url }).catch(()=>{}); }
   else { navigator.clipboard.writeText(txt+'\n'+url); alert(lang==='ar'?'نسخنا نص المشاركة. الصقه في واتساب/ستوري.':'Copied. Paste to WhatsApp/Story.'); }
 }
-async function boostCheckout(){
+// ===== Helper tool 1: coach tips =====
+async function chCoach(){
+  if(!chIsPremium()){ chPremiumOnly(); return; }
+  const p=document.getElementById('chCoachPanel'); if(!p) return;
+  p.classList.remove('hidden');
+  p.textContent=t('ch_coach_loading');
   try{
-    const r=await api('/api/checkout',{plan:'boost20',email:user.email});
-    document.getElementById('coTitle').textContent='⚡ Boost Pack · $10 · 20 missions';
-    document.getElementById('coAmount').textContent='$10.00';
-    document.getElementById('coTx').value=''; document.getElementById('coStatus').textContent='';
-    currentPayment=r;
-    document.getElementById('coAddress').value=r.address;
-    document.getElementById('coQR').src=r.qr;
-    document.getElementById('checkout').classList.remove('hidden');
-    go('challenge');
+    const r=await api('/api/challenge/coach',{});
+    p.innerHTML='<div class="font-black text-blue-300 mb-2">'+t('ch_coach_title')+'</div>'+escape(r.tips||'');
+  }catch(e){ p.textContent='⚠ '+e.message; }
+}
+// ===== Helper tool 2: swap today's mission =====
+async function chSwap(){
+  if(!chIsPremium()){ chPremiumOnly(); return; }
+  try{
+    await api('/api/challenge/swap',{});
+    loadChallenge();
   }catch(e){ authErr(e.message); }
+}
+// ===== Helper tool 3: advanced stats =====
+async function chStats(){
+  if(!chIsPremium()){ chPremiumOnly(); return; }
+  const p=document.getElementById('chStatsPanel'); if(!p) return;
+  p.classList.remove('hidden');
+  try{
+    const r=await api('/api/challenge/stats',null,'GET');
+    const catNames={action:(lang==='ar'?'حركي':'Action'),social:(lang==='ar'?'اجتماعي':'Social'),creative:(lang==='ar'?'إبداعي':'Creative'),brain:(lang==='ar'?'ذكاء':'Brain'),physical:(lang==='ar'?'جسدي':'Physical'),laugh:(lang==='ar'?'بدون ضحك':'No-Laugh'),freeze:(lang==='ar'?'تجمّد/جليتش':'Freeze/Glitch'),film:(lang==='ar'?'تمثيل':'Improv'),other:(lang==='ar'?'أخرى':'Other')};
+    let cats=Object.entries(r.by_category||{}).map(([k,v])=>catNames[k]||k+': '+v.done).join(' · ');
+    let recent=(r.recent||[]).slice(0,5).map(x=>'#'+x.day+' '+(catNames[x.type]||'—')+' +'+(x.points||0)).join(' · ');
+    p.innerHTML=
+      '<div class="font-black text-green-300 mb-2">'+t('ch_stats_title')+'</div>'+
+      '<div class="grid grid-cols-3 gap-2 text-center mb-3">'+
+        '<div class="glass rounded-xl p-2"><div class="text-lg font-black">'+(r.total_done||0)+'</div><div class="text-[11px] text-gray-400">'+t('ch_stats_done')+'</div></div>'+
+        '<div class="glass rounded-xl p-2"><div class="text-lg font-black">'+(r.approval_rate||0)+'%</div><div class="text-[11px] text-gray-400">'+t('ch_stats_rate')+'</div></div>'+
+        '<div class="glass rounded-xl p-2"><div class="text-lg font-black">'+(r.best_streak||0)+'</div><div class="text-[11px] text-gray-400">'+t('ch_stats_best')+'</div></div>'+
+      '</div>'+
+      '<div class="text-xs text-gray-400 mb-1">'+t('ch_stats_cats')+': '+escape(cats||'—')+'</div>'+
+      '<div class="text-xs text-gray-400">'+t('ch_stats_recent')+': '+escape(recent||'—')+'</div>';
+  }catch(e){ p.textContent='⚠ '+e.message; }
+}
+// ===== champions board =====
+async function loadLeaderboard(){
+  const list=document.getElementById('chBoardList'); if(!list) return;
+  try{
+    const r=await api('/api/leaderboard',null,'GET');
+    const medals=['🥇','🥈','🥉'];
+    list.innerHTML=(r.top||[]).map(x=>
+      '<div class="flex items-center justify-between glass rounded-xl px-4 py-2">'+
+        '<span class="font-bold">'+((medals[x.rank-1]||('#'+x.rank))+' '+escape(x.name))+'</span>'+
+        '<span class="text-orange-300 font-black">'+x.points+' ⚡</span>'+
+      '</div>').join('') || '<div class="text-gray-500 text-center py-2">—</div>';
+    const me=document.getElementById('chBoardMe');
+    if(me) me.textContent=t('ch_board_rank', r.my_rank);
+  }catch(e){ /* board is optional */ }
 }
 
 // checkout
@@ -762,7 +907,7 @@ window.addEventListener('error', function(ev){
       localStorage.setItem('lifeos_user',JSON.stringify(user));
       showMain();
       await refreshUI();
-      go('challenge');
+      go('dashboard');
     }catch(error){
       const msg = String(error && (error.message||error) || '');
       if(msg.includes('Unauthorized')){ logout(); }

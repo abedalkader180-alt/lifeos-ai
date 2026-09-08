@@ -312,6 +312,32 @@ Keep feedback 1 sentence, encouraging if false.`;
   }
 }
 
+// Premium helper: short practical coaching tips for the current challenge.
+async function challengeCoach({ user, task = '', locale = 'en' }) {
+  const ar = locale === 'ar';
+  const lang = ar ? 'Arabic' : 'English';
+  const system = `You are the coach of a real-life challenge game. The player drew this challenge: "${task}".
+Give exactly 3 very short, practical tips (max 12 words each) that make completing it easy and fun.
+Reply in ${lang} only. Format: exactly 3 lines, each starting with "1." "2." "3." — no intro, no outro.`;
+
+  try {
+    if (AI_ENABLED) {
+      const available = await listModels();
+      const text = await chatWithProvider(system, `Give me 3 tips for: ${task}`, [], locale, pickWorkingModel(available));
+      const clean = String(text || '').trim();
+      if (clean) return { tips: clean.slice(0, 700) };
+    }
+  } catch (e) {
+    lastError = 'Coach error: ' + (e && e.message ? e.message : String(e));
+  }
+  // Honest, generic fallback if the provider is unreachable.
+  return {
+    tips: ar
+      ? '1. جهّز المكان والأدوات قبل أن تبدأ.\n2. ابدأ خلال ٥ دقائق دون تفكير زائد.\n3. ركّز على إنهاء المحاولة لا الكمال.'
+      : '1. Prepare your spot and tools first.\n2. Start within 5 minutes, no overthinking.\n3. Focus on finishing, not perfection.',
+  };
+}
+
 function heuristicProof(proof, task) {
   const p = String(proof || '').trim();
   const specific = /(\d+|\bseconds\b|متر|دقيقة|ثانية|public|مكان|شارع|ناس|people|house|room|seconds|مرة|مرتين|person|friend|سلطة|سلة|ورقة|خطاء|قفز|squat|push)/i.test(p);
@@ -331,4 +357,4 @@ function parseProofVerdict(text) {
   return { approved: /true/i.test(String(text)), feedback: String(text).slice(0, 160) };
 }
 
-module.exports = { chat, buildWeeklyPlan, validateChallengeProof, AI_ENABLED, AI_MODEL, AI_BASE_URL, getLastError, listModels, pickWorkingModel };
+module.exports = { chat, buildWeeklyPlan, validateChallengeProof, challengeCoach, AI_ENABLED, AI_MODEL, AI_BASE_URL, getLastError, listModels, pickWorkingModel };
