@@ -113,6 +113,8 @@ async function ownerAuth(req, res, next) {
 app.get('/api/ai/status', async (req, res) => {
   let reachable = false;
   let detail = 'AI provider was not reachable from this environment.';
+  let models = [];
+  let chosen = ai.AI_MODEL;
   if (ai.AI_ENABLED) {
     try {
       const base = ai.AI_BASE_URL;
@@ -125,11 +127,16 @@ app.get('/api/ai/status', async (req, res) => {
       clearTimeout(timer);
       reachable = r.ok;
       detail = reachable ? 'AI provider reachable.' : `Provider responded HTTP ${r.status}.`;
+      if (r.ok) {
+        const data = await r.json().catch(() => ({}));
+        models = (data.data || []).map(m => m.id);
+        chosen = ai.pickWorkingModel(models);
+      }
     } catch (e) {
       detail = `Reachability check failed: ${e.message}`;
     }
   }
-  res.json({ enabled: ai.AI_ENABLED, reachable, detail, base_url: ai.AI_BASE_URL, model: ai.AI_MODEL, last_error: ai.getLastError ? ai.getLastError() : null });
+  res.json({ enabled: ai.AI_ENABLED, reachable, detail, base_url: ai.AI_BASE_URL, model: chosen, available_models: models.slice(0, 30), last_error: ai.getLastError ? ai.getLastError() : null });
 });
 
 // ===== real AI live test (GET or POST so it can be opened in a browser) =====

@@ -17,20 +17,66 @@ const AI_BASE_URL = (process.env.AI_BASE_URL || provider.base).replace(/\/$/, ''
 const AI_MODEL = process.env.AI_MODEL || provider.model;
 
 let lastError = null;
+let modelsCache = null;
 function getLastError() { return lastError; }
+
+// Try a list of strong models, in order. As soon as one is actually accepted by
+// the provider, we switch to it permanently (in-memory). This fixes the common
+// case where a key is valid but a specific model id is not available/authorized.
+const MODEL_CANDIDATES = [
+  process.env.AI_MODEL,
+  'llama-3.3-70b-versatile',
+  'llama-3.1-8b-instant',
+  'llama-3.1-70b-versatile',
+  'llama-3.3-70b-specdec',
+  'llama-3.3-70b-instruct',
+  'llama-3.2-3b-preview',
+  'llama-3.2-1b-preview',
+  'llama3-70b-8192',
+  'llama3-8b-8192',
+  'mixtral-8x7b-32768',
+  'gemma2-9b-it',
+  'qwen-2.5-32b',
+].filter(Boolean);
+
+async function listModels() {
+  if (modelsCache) return modelsCache;
+  try {
+    const ctrl = new AbortController();
+    const timer = setTimeout(() => ctrl.abort(), 6000);
+    const res = await fetch(`${AI_BASE_URL}/models`, {
+      headers: { Authorization: `Bearer ${KEY}` },
+      signal: ctrl.signal,
+    });
+    clearTimeout(timer);
+    const data = await res.json().catch(() => ({}));
+    const ids = (data.data || []).map(m => m.id);
+    modelsCache = ids;
+    return ids;
+  } catch (e) {
+    return [];
+  }
+}
+
+function pickWorkingModel(available) {
+  for (const cand of MODEL_CANDIDATES) {
+    if (available && available.length && available.includes(cand)) return cand;
+  }
+  return AI_MODEL;
+}
 
 async function chat({ user, message, history = [], locale = 'en' }) {
   const system = buildSystemPrompt(user, locale);
   if (AI_ENABLED) {
     try {
-      const reply = await chatWithProvider(system, message, history, locale);
+      const available = await listModels();
+      if (!available.length) console.warn('[ai] could not list models; trying configured model');
+      const reply = await chatWithProvider(system, message, history, locale, pickWorkingModel(available));
       lastError = null;
       return reply;
     } catch (err) {
       lastError = 'Provider error: ' + (err && err.message ? err.message : String(err));
       console.error('[ai] provider error:', lastError);
-      // Only fall back to canned when explicitly allowed; otherwise fail visibly
-      // so the owner knows the AI key/model needs attention.
       if (process.env.AI_ALLOW_FALLBACK === 'true') {
         return fallbackAssistant(user, message, locale);
       }
@@ -40,7 +86,7 @@ async function chat({ user, message, history = [], locale = 'en' }) {
   return fallbackAssistant(user, message, locale);
 }
 
-async function chatWithProvider(system, message, history, locale) {
+async function chatWithProvider(system, message, history, locale, model) {
   const messages = [
     { role: 'system', content: system },
     ...history.map(m => ({ role: m.role === 'ai' ? 'assistant' : 'user', content: m.content })),
@@ -51,10 +97,10 @@ async function chatWithProvider(system, message, history, locale) {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
-      Authorization: `Bearer ${process.env.AI_API_KEY}`,
+      Authorization: `Bearer ${KEY}`,
     },
     body: JSON.stringify({
-      model: AI_MODEL,
+      model: model || AI_MODEL,
       messages,
       temperature: 0.7,
       max_tokens: 900,
@@ -127,4 +173,4 @@ function fallbackAssistant(user, message, locale) {
   return blocks.join('\n\n');
 }
 
-module.exports = { chat, AI_ENABLED, AI_MODEL, AI_BASE_URL, getLastError };
+module.exports = { chat, AI_ENABLED, AI_MODEL, AI_BASE_URL, getLastError, listModels, pickWorkingModel };
