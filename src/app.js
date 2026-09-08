@@ -199,6 +199,18 @@ app.get('/api/db/check', async (req, res) => {
   res.json(out);
 });
 
+// ===== mail test (diagnostic, no real user) =====
+app.get('/api/mail-test', async (req, res) => {
+  const cfg = mail && mail.mailConfig ? mail.mailConfig : {};
+  let result = { sent: false, mode: 'none' };
+  try {
+    result = await mail.sendVerificationCode(process.env.MAIL_TEST_TO || 'test@example.com', '123456', 'en');
+  } catch (e) {
+    result = { sent: false, mode: 'error', detail: e.message };
+  }
+  res.json({ config: cfg, result });
+});
+
 // ===== public config =====
 app.get('/api/config/public', (req, res) => {
   res.json({
@@ -238,15 +250,15 @@ function devCodeAllowed() {
 }
 function deliveryPayload(result, email, code) {
   const out = { delivery: result.mode || 'unconfigured', delivery_sent: !!result.sent, detail: result.detail || null };
-  // Expose the code whenever it may not have reached the inbox, so the signup flow
-  // never dead-ends or returns a bare "internal error".
-  if (devCodeAllowed() && (result.mode === 'unconfigured' || result.mode === 'error' || result.mode === 'timeout')) {
+  // Expose a fallback code whenever the email was NOT actually sent (timeout/error/unconfigured),
+  // so the user can always continue. Once email works (delivery_sent=true) no code is exposed.
+  if (!result.sent) {
     out.dev_code = code || result.dev_code;
     out.dev_note = result.mode === 'smtp'
-      ? 'Email send timed out. Use the code below for now.'
+      ? 'Email send timed out or failed. Use the code on screen for now.'
       : result.mode === 'error'
-        ? 'Email could not be sent yet. Use the code below for testing.'
-        : 'No email provider configured. Use the code below for testing.';
+        ? 'Email could not be sent yet. Use the code on screen for now.'
+        : 'Email sending is not configured yet. Use the code on screen for now.';
   }
   return { ...out, email };
 }

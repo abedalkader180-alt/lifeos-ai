@@ -497,7 +497,15 @@ window.addEventListener('error', function(ev){
     }catch(error){
       const msg = String(error && (error.message||error) || '');
       if(msg.includes('Unauthorized')){ logout(); }
-      else if(msg.includes('email_not_verified')){ showVerify(UserEmailLocal(), null, ''); }
+      else if((error && error.data && error.data.error)==='email_not_verified' || msg.includes('email_not_verified')){
+        const email = (user && user.email) || UserEmailLocal() || '';
+        let devCode = null, note = '';
+        try {
+          const r = await api('/api/auth/resend', { email });
+          devCode = r.dev_code || null; note = r.dev_note || '';
+        } catch(e){}
+        showVerify(email, devCode, note);
+      }
       else { authErr(lang==='ar' ? 'يوجد خطأ في الخادم: '+msg : 'Server error: '+msg); }
     }
   }

@@ -23,7 +23,11 @@ function cleanFrom(value, fallback) {
   return fallback;
 }
 const derivedFrom = SMTP_USER && /@/.test(SMTP_USER) ? `LifeOS AI <${SMTP_USER}>` : 'LifeOS AI <onboarding@resend.dev>';
-const MAIL_FROM = cleanFrom(process.env.MAIL_FROM, derivedFrom);
+// For SMTP (Gmail), the From must be the authenticated account itself. We always
+// prefer SMTP_USER there; MAIL_FROM is only used for Resend or as fallback.
+const MAIL_FROM = SMTP_HOST && SMTP_USER && /@/.test(SMTP_USER)
+  ? `LifeOS AI <${SMTP_USER}>`
+  : cleanFrom(process.env.MAIL_FROM, derivedFrom);
 
 let transporter = null;
 if (SMTP_HOST && SMTP_USER && SMTP_PASS) {
