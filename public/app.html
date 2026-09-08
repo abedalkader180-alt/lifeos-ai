@@ -5,8 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
 <title>LifeOS AI — App</title>
 <script src="https://cdn.tailwindcss.com"></script>
-<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Cairo:wght@400;600;700;800&display=swap" rel="stylesheet"/>
-<script src="https://unpkg.com/lucide@latest"></script>
+<script src="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Cairo:wght@400;600;700;800&display=swap" rel="stylesheet"/>
 <style>
   *{font-family:'Inter',sans-serif}
   html[dir="rtl"] *{font-family:'Cairo',sans-serif}
@@ -219,7 +218,15 @@ let lang = localStorage.getItem('lifeos_lang') || 'en';
 let token = localStorage.getItem('lifeos_token') || '';
 let user = null, tasks = [], habits = [];
 function t(k){ const v=(I18[lang]||I18.en)[k]; return typeof v==='function' ? v(...Array.prototype.slice.call(arguments,1)) : (v||k); }
-function applyLang(){ document.documentElement.lang=lang; document.documentElement.dir=lang==='ar'?'rtl':'ltr'; document.querySelectorAll('[data-k]').forEach(e=>{ e.textContent=t(e.getAttribute('data-k')); }); document.getElementById('langBtn').textContent = lang==='ar'?'English':'العربية'; document.getElementById('langBtn2').textContent = lang==='ar'?'English':'العربية'; lucide.createIcons(); }
+const LUCIDE_EMOJI = { brain:'🧠', 'layout-dashboard':'📊', 'message-square':'💬', 'check-square':'✅', 'trending-up':'📈', wallet:'👛', 'share-2':'🔗', sparkles:'✨', send:'➤', gift:'🎁', 'user-plus':'👤', 'log-out':'↩' };
+function renderIcons(){
+  document.querySelectorAll('i[data-lucide]').forEach(i=>{
+    const n = i.getAttribute('data-lucide');
+    const old = i.getAttribute('data-emoji');
+    if(old !== n){ i.textContent = LUCIDE_EMOJI[n] || '•'; i.setAttribute('data-emoji', n); i.style.fontStyle='normal'; i.style.lineHeight='1'; }
+  });
+}
+function applyLang(){ document.documentElement.lang=lang; document.documentElement.dir=lang==='ar'?'rtl':'ltr'; document.querySelectorAll('[data-k]').forEach(e=>{ e.textContent=t(e.getAttribute('data-k')); }); document.getElementById('langBtn').textContent = lang==='ar'?'English':'العربية'; document.getElementById('langBtn2').textContent = lang==='ar'?'English':'العربية'; renderIcons(); }
 function toggleLang(){ lang=lang==='ar'?'en':'ar'; localStorage.setItem('lifeos_lang',lang); applyLang(); refreshUI(); }
 
 // auth
@@ -235,7 +242,7 @@ function val(id){ return document.getElementById(id).value.trim(); }
 async function api(path, body, method='POST'){ const res=await fetch(path,{method,headers:{'Content-Type':'application/json',...(token?{Authorization:'Bearer '+token}:{})},body:body?JSON.stringify(body):undefined}); const data=await res.json().catch(()=>({})); if(!res.ok){ if(data.error==='free_daily_limit') throw new Error(lang==='ar'?'وصلت للحد المجاني اليوم':'You reached the free daily AI limit.'); const msg = (data && data.error) ? data.error : (res.status===404 ? ((lang==='ar')?'المسار غير متوفر حالياً':'Endpoint not available') : 'HTTP '+res.status); throw new Error(msg); } return data; }
 
 // UI
-function go(name){ ['dashboard','chat','tasks','habits','pricing','refer'].forEach(n=>{ document.getElementById('s-'+n).classList.toggle('hidden', n!==name); }); document.getElementById('pageTitle').textContent = t('title_'+name); if(name==='refer') loadReferral(); lucide.createIcons(); }
+function go(name){ ['dashboard','chat','tasks','habits','pricing','refer'].forEach(n=>{ document.getElementById('s-'+n).classList.toggle('hidden', n!==name); }); document.getElementById('pageTitle').textContent = t('title_'+name); if(name==='refer') loadReferral(); renderIcons(); }
 async function refreshUI(){
   if(!token) return;
   try { if(!user){ const r=await api('/api/me',null,'GET'); user=r.user; } } catch(e) { logout(); return; }
@@ -317,8 +324,31 @@ function escape(s){ return String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&l
 // pageview analytics
 fetch('/api/events',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({type:'pageview',path:'/app'})}).catch(()=>{});
 
+// Show any JS error instead of silently breaking buttons.
+window.addEventListener('error', function(ev){
+  var msg = (ev && ev.message) || 'Script error';
+  try { if(document.getElementById('authErr')) authErr('⚠ JS: '+msg); } catch(e){}
+});
+
 // init
-(async function init(){ applyLang(); const saved=localStorage.getItem('lifeos_user'); if(saved) try{user=JSON.parse(saved);}catch{} if(token){ try{ const r=await api('/api/me',null,'GET'); user=r.user; localStorage.setItem('lifeos_user',JSON.stringify(user)); document.getElementById('auth').classList.add('hidden'); document.getElementById('main').classList.remove('hidden'); refreshUI(); }catch(error){ if(String(error).includes('Unauthorized')){ logout(); } else { authErr(lang==='ar' ? 'يوجد خطأ في الخادم: '+error.message : 'Server error: '+error.message); } } } } })();
+(async function init(){
+  applyLang();
+  const saved=localStorage.getItem('lifeos_user'); if(saved) try{user=JSON.parse(saved);}catch{}
+  if(token){
+    try{
+      const r=await api('/api/me',null,'GET');
+      user=r.user;
+      localStorage.setItem('lifeos_user',JSON.stringify(user));
+      document.getElementById('auth').classList.add('hidden');
+      document.getElementById('main').classList.remove('hidden');
+      await refreshUI();
+    }catch(error){
+      const msg = String(error && error.message || error);
+      if(msg.includes('Unauthorized')){ logout(); }
+      else { authErr(lang==='ar' ? 'يوجد خطأ في الخادم: '+msg : 'Server error: '+msg); }
+    }
+  }
+})();
 </script>
 </body>
 </html>
