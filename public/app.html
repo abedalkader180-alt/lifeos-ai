@@ -26,7 +26,7 @@
   #appShell{display:flex;width:100%;min-height:100vh}
   #main{width:100%;min-height:100vh;position:relative}
   #auth{position:fixed;inset:0;z-index:50;display:flex;align-items:center;justify-content:center;background:#0b0b14;padding:16px}
-  #auth.hidden,#main.hidden{display:none!important}
+  #auth.hidden,#main.hidden,#verify.hidden,#checkout.hidden{display:none!important}
   .rightbox{width:100%;max-width:28rem;background:rgba(30,30,50,.6);border:1px solid rgba(255,255,255,.08);border-radius:16px;padding:32px}
   .field{width:100%;background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.1);border-radius:8px;padding:12px;color:#fff;margin-bottom:12px;font-size:15px}
   .btn{width:100%;background:#7c3aed;border:none;color:#fff;border-radius:8px;padding:12px;font-weight:600;cursor:pointer;font-size:15px}
@@ -336,8 +336,8 @@ function applyLang(){ document.documentElement.lang=lang; document.documentEleme
 function toggleLang(){ lang=lang==='ar'?'en':'ar'; localStorage.setItem('lifeos_lang',lang); applyLang(); refreshUI(); }
 
 // auth
-function showRegister(){ document.getElementById('loginForm').classList.add('hidden'); document.getElementById('regForm').classList.remove('hidden'); authErr(''); }
-function showLogin(){ document.getElementById('regForm').classList.add('hidden'); document.getElementById('loginForm').classList.remove('hidden'); authErr(''); }
+function showRegister(){ var a=document.getElementById('loginForm'); var b=document.getElementById('regForm'); if(a){a.classList.add('hidden'); a.style.display='none';} if(b){b.classList.remove('hidden'); b.style.display='block';} authErr(''); }
+function showLogin(){ var a=document.getElementById('regForm'); var b=document.getElementById('loginForm'); if(a){a.classList.add('hidden'); a.style.display='none';} if(b){b.classList.remove('hidden'); b.style.display='block';} authErr(''); }
 function authErr(m){ document.getElementById('authErr').textContent = m || ''; }
 async function doLogin(){ const email=val('email'),password=val('password'); if(!email||!password)return authErr(lang==='ar'?'أدخل الإيميل وكلمة المرور':'Enter email and password'); authErr(''); try{ const r=await api('/api/auth/login',{email,password}); setAuth(r); }catch(e){ if(e.data&&e.data.error==='email_not_verified'){ showVerify(email,e.data.dev_code,e.data.dev_note); } else authErr(e.message); } }
 async function doRegister(){ const name=val('rName'),email=val('rEmail'),password=val('rPassword'); if(!name||!email||!password)return authErr(lang==='ar'?'أكمل البيانات':'Fill all fields'); authErr(''); try{ const r=await api('/api/auth/register',{name,email,password,locale:lang}); if(r.needs_verification){ showVerify(r.email,r.dev_code,r.dev_note); } else setAuth(r); }catch(e){ if(e.data&&e.data.error==='email_not_verified'){ showVerify(email,e.data.dev_code,e.data.dev_note); } else authErr(e.message); } }
@@ -352,10 +352,12 @@ function showVerify(email, devCode, devNote){
   if(devCode){ dev.classList.remove('hidden'); dev.textContent='⏳ '+(lang==='ar'?'وضع تجريبي (بدون إعداد بريد بعد). رمزك: ':'Testing mode (no mail configured yet). Your code: ')+devCode+' — '+devNote; }
   else { dev.classList.add('hidden'); dev.textContent=''; }
   document.getElementById('auth').classList.add('hidden');
+  document.getElementById('auth').style.display='none';
   document.getElementById('verify').classList.remove('hidden');
+  document.getElementById('verify').style.display='flex';
   setTimeout(()=>document.getElementById('verifyCodeInput').focus(),50);
 }
-function hideVerify(){ document.getElementById('verify').classList.add('hidden'); document.getElementById('auth').classList.remove('hidden'); }
+function hideVerify(){ document.getElementById('verify').classList.add('hidden'); document.getElementById('verify').style.display='none'; document.getElementById('auth').classList.remove('hidden'); document.getElementById('auth').style.display='flex'; }
 async function verifyCode(){
   const code=val('verifyCodeInput');
   if(!code) return verifyErr(lang==='ar'?'أدخل الرمز':'Enter code');
@@ -369,7 +371,7 @@ async function resendCode(){
   catch(e){ verifyErr(e.message); }
 }
 function verifyErr(m){ document.getElementById('verifyErr').textContent=m||''; }
-function showMain(){ try { document.getElementById('verify').classList.add('hidden'); document.getElementById('auth').classList.add('hidden'); document.getElementById('main').classList.remove('hidden'); } catch(e){} }
+function showMain(){ try { const v=document.getElementById('verify'); const a=document.getElementById('auth'); const m=document.getElementById('main'); if(v){v.classList.add('hidden'); v.style.display='none';} if(a){a.classList.add('hidden'); a.style.display='none';} if(m){m.classList.remove('hidden'); m.style.display='block';} } catch(e){} }
 function setAuth(r){ token=r.token; user=r.user; applyLang(); localStorage.setItem('lifeos_token',token); localStorage.setItem('lifeos_user',JSON.stringify(user)); showMain(); refreshUI(); }
 function logout(){ token=''; user=null; localStorage.removeItem('lifeos_token'); localStorage.removeItem('lifeos_user'); location.reload(); }
 
