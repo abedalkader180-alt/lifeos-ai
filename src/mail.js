@@ -30,7 +30,8 @@ const MAIL_FROM = SMTP_HOST && SMTP_USER && /@/.test(SMTP_USER)
   : cleanFrom(process.env.MAIL_FROM, derivedFrom);
 
 let transporter = null;
-if (SMTP_HOST && SMTP_USER && SMTP_PASS) {
+// Prioritize Resend (simplest, most reliable); fall back to SMTP only when no Resend key.
+if (!RESEND_KEY && SMTP_HOST && SMTP_USER && SMTP_PASS) {
   transporter = nodemailer.createTransport({
     host: SMTP_HOST,
     port: SMTP_PORT,
@@ -40,6 +41,7 @@ if (SMTP_HOST && SMTP_USER && SMTP_PASS) {
 }
 
 const mailEnabled = !!(RESEND_KEY || transporter);
+const MAIL_MODE = RESEND_KEY ? 'resend' : (transporter ? 'smtp' : 'unconfigured');
 
 function subject(lang) {
   return lang === 'ar'
@@ -99,4 +101,4 @@ async function sendVerificationCode(email, code, lang) {
   }
 }
 
-module.exports = { sendVerificationCode, mailEnabled, mailConfig: { mode: RESEND_KEY ? 'resend' : (transporter ? 'smtp' : 'unconfigured'), from: MAIL_FROM, host: SMTP_HOST, user: SMTP_USER, hasPassword: !!SMTP_PASS } };
+module.exports = { sendVerificationCode, mailEnabled, mailConfig: { mode: MAIL_MODE, from: MAIL_FROM, host: SMTP_HOST, user: SMTP_USER, hasPassword: !!SMTP_PASS, resendKey: !!RESEND_KEY } };

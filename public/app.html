@@ -108,6 +108,7 @@
       <p id="verifyErr" class="text-red-400 text-center text-sm mt-3 min-h-4"></p>
       <p id="verifyDev" class="hidden text-center text-xs text-yellow-300 bg-yellow-500/10 border border-yellow-400/20 rounded-lg p-3 mt-2"></p>
       <p class="text-center text-sm mt-4"><span data-k="verify_no">Didn't get it?</span> <button onclick="resendCode()" class="text-purple-400 underline" data-k="verify_resend">Resend code</button></p>
+      <button onclick="hideVerify()" class="btn-ghost mt-2 w-full" style="background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.16);text-align:center;padding:12px;"><span data-k="verify_back">← Back to login / create account</span></button>
       <p class="text-center text-xs text-gray-500 mt-3" data-k="verify_providers">Works with Gmail, iCloud, Outlook, Yahoo, Zoho and any email.</p>
     </div>
   </div>
@@ -307,7 +308,7 @@ const I18 = {
     refer:"Refer & earn", refer_title:"Invite friends, earn rewards", refer_p:"Share your link. When a friend joins and upgrades, you both get a bonus.", copy:"Copy", ref_count:(n)=>`You invited ${n} ${n===1?'person':'people'} so far.`,
     send_to:"Send exact amount to:", tx_label:"Transaction hash (TX)", submit_pay:"I paid — submit for review", coupon_label:"Have a launch coupon?", apply_coupon:"Apply", coupon_on:"Coupon applied: 50% off", coupon_err:"Invalid coupon",
     free_chat_left:"chats left today", done:"Done", target:"target", t_free:"Free", greeting:"Welcome", upd:"Upgrade to Pro", title_dash:"Dashboard", title_chat:"AI Assistant", title_tasks:"Tasks", title_habits:"Habits", title_pricing:"Upgrade", title_refer:"Refer & earn", copied:"Copied!",
-    verify_title:"Verify your email", verify_sub:"We sent a 6-digit code to", verify_btn:"Confirm code", verify_no:"Didn't get it?", verify_resend:"Resend code", verify_providers:"Works with Gmail, iCloud, Outlook, Yahoo, Zoho and any email.", verify_ok:"Verifying...", verify_sent:"New code sent.", auth_providers:"Use any email: Gmail · iCloud · Outlook · Yahoo · Zoho", loading:"Please wait..." },
+    verify_title:"Verify your email", verify_sub:"We sent a 6-digit code to", verify_btn:"Confirm code", verify_no:"Didn't get it?", verify_resend:"Resend code", verify_back:"← Back to login / create account", verify_providers:"Works with Gmail, iCloud, Outlook, Yahoo, Zoho and any email.", verify_ok:"Verifying...", verify_sent:"New code sent.", auth_providers:"Use any email: Gmail · iCloud · Outlook · Yahoo · Zoho", loading:"Please wait..." },
   ar:{ dash:"الرئيسية", chat:"المساعد الذكي", tasks:"المهام", habits:"العادات", upgrade:"الاشتراك", add:"إضافة", buy_pro:"اشترك بـ USDT", buy_life:"اختر حياة",
     t_tasks:"مهام اليوم", t_habits:"العادات المنجزة", t_plan:"خطتك", t_ai:"محادثات الذكاء المتبقية",
     d_ai_hint:"اطلب من الذكاء بناء يومك", d_ai_p:"اذهب إلى المساعد الذكي واحكي له أهدافك ومشاكلك، وسيبني لك خطة عملية.", d_ai_btn:"افتح المساعد الذكي",
@@ -319,7 +320,7 @@ const I18 = {
     refer:"ادعُ واربح", refer_title:"ادعُ أصدقاءك واربح مكافآت", refer_p:"شارك رابطك. عندما ينضم صديق ويشترك، تحصلان معاً على مكافأة.", copy:"نسخ", ref_count:(n)=>`دعوت ${n} ${n===1?'شخص':'أشخاص'} حتى الآن.`,
     send_to:"أرسل المبلغ بالضبط إلى:", tx_label:"Hash المعاملة (TX)", submit_pay:"دفعت — أرسل للمراجعة", coupon_label:"عندك كوبون إطلاق؟", apply_coupon:"تطبيق", coupon_on:"تم تطبيق الكوبون: خصم 50%", coupon_err:"كوبون غير صحيح",
     free_chat_left:"محادثات متبقية اليوم", done:"تم", target:"الهدف", t_free:"مجاني", greeting:"أهلاً", upd:"طوّر إلى برو", title_dash:"الرئيسية", title_chat:"المساعد الذكي", title_tasks:"المهام", title_habits:"العادات", title_pricing:"الاشتراك", title_refer:"ادعُ واربح", copied:"تم النسخ!",
-    verify_title:"أكّد بريدك الإلكتروني", verify_sub:"أرسلنا رمزاً من 6 أرقام إلى", verify_btn:"تأكيد الرمز", verify_no:"لم يصلك؟", verify_resend:"أعد إرسال الرمز", verify_providers:"يدعم Gmail و iCloud و Outlook و Yahoo و Zoho وأي بريد آخر.", verify_ok:"جاري التحقق...", verify_sent:"تم إرسال رمز جديد.", auth_providers:"استخدم أي بريد: Gmail · iCloud · Outlook · Yahoo · Zoho", loading:"لحظة من فضلك..." }
+    verify_title:"أكّد بريدك الإلكتروني", verify_sub:"أرسلنا رمزاً من 6 أرقام إلى", verify_btn:"تأكيد الرمز", verify_no:"لم يصلك؟", verify_resend:"أعد إرسال الرمز", verify_back:"← رجوع إلى تسجيل الدخول / إنشاء حساب", verify_providers:"يدعم Gmail و iCloud و Outlook و Yahoo و Zoho وأي بريد آخر.", verify_ok:"جاري التحقق...", verify_sent:"تم إرسال رمز جديد.", auth_providers:"استخدم أي بريد: Gmail · iCloud · Outlook · Yahoo · Zoho", loading:"لحظة من فضلك..." }
 };
 let lang = localStorage.getItem('lifeos_lang') || 'en';
 let token = localStorage.getItem('lifeos_token') || '';
