@@ -31,11 +31,37 @@
   .field{width:100%;background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.1);border-radius:8px;padding:12px;color:#fff;margin-bottom:12px;font-size:15px}
   .btn{width:100%;background:#7c3aed;border:none;color:#fff;border-radius:8px;padding:12px;font-weight:600;cursor:pointer;font-size:15px}
   .btn:hover{background:#6d28d9}
-  .side{display:flex;align-items:center;gap:12px;border-radius:8px;padding:10px 12px;cursor:pointer;color:#fff;font-size:14px}
-  .layout{display:flex;height:100vh;overflow:hidden}
-  .sidecol{width:240px;flex-shrink:0;background:rgba(30,30,50,.6);border-right:1px solid rgba(255,255,255,.1);display:flex;flex-direction:column}
-  .maincol{flex:1;overflow-y:auto;padding:24px}
+  .side{display:flex;align-items:center;gap:12px;border-radius:12px;padding:11px 13px;cursor:pointer;color:#d5d5e2;font-size:14px;font-weight:500;transition:.18s}
+  .side.active,.side:hover{background:linear-gradient(90deg,rgba(124,58,237,.28),rgba(59,130,246,.16));color:#fff}
+  .layout{display:flex;height:100vh;overflow:hidden;background:radial-gradient(1200px 600px at 80% -10%,rgba(124,58,237,.18),transparent 60%),radial-gradient(900px 500px at 0% 0%,rgba(59,130,246,.16),transparent 55%),#08080f}
+  .sidecol{width:250px;flex-shrink:0;background:rgba(16,16,26,.78);border-right:1px solid rgba(255,255,255,.07);display:flex;flex-direction:column;backdrop-filter:blur(8px)}
+  .maincol{flex:1;overflow-y:auto;padding:26px}
   .card{background:rgba(30,30,50,.6);border:1px solid rgba(255,255,255,.08);border-radius:12px;padding:16px;margin-bottom:16px}
+  /* Richer dashboard styles */
+  .hero{background:linear-gradient(135deg,rgba(124,58,237,.55),rgba(59,130,246,.35));border:1px solid rgba(255,255,255,.14);border-radius:20px;padding:24px;margin-bottom:20px;position:relative;overflow:hidden}
+  .hero:after{content:'';position:absolute;right:-60px;top:-60px;width:190px;height:190px;background:rgba(255,255,255,.12);border-radius:50%;filter:blur(30px)}
+  .hero h2{font-size:26px;margin:0 0 6px;font-weight:800}
+  .hero p{margin:0;color:rgba(255,255,255,.85);font-size:14px}
+  .hero .upgrade-flex{display:flex;gap:10px;align-items:center;margin-top:14px;flex-wrap:wrap}
+  .btn-upgrade{background:#fff;color:#7c3aed;border:none;padding:12px 20px;border-radius:999px;font-weight:700;cursor:pointer;font-size:14px;box-shadow:0 8px 24px rgba(0,0,0,.3);transition:.18s}
+  .btn-upgrade:hover{transform:translateY(-2px);background:#f3f0ff}
+  .btn-ghost{background:rgba(255,255,255,.12);color:#fff;border:1px solid rgba(255,255,255,.2);padding:12px 18px;border-radius:999px;font-weight:600;cursor:pointer;font-size:14px}
+  .btn-ghost:hover{background:rgba(255,255,255,.2)}
+  .stat-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:14px;margin-bottom:20px}
+  .stat{background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.09);border-radius:16px;padding:18px;backdrop-filter:blur(6px)}
+  .stat .ico{width:42px;height:42px;border-radius:12px;display:flex;align-items:center;justify-content:center;font-size:22px;margin-bottom:12px}
+  .stat .lab{color:#9ca3bf;font-size:13px}
+  .stat .val{font-size:28px;font-weight:800;margin-top:2px}
+  .quick{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-bottom:18px}
+  .qbtn{background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.09);border-radius:16px;padding:18px;cursor:pointer;text-align:center;transition:.18s;color:#fff}
+  .qbtn:hover{background:rgba(124,58,237,.2);transform:translateY(-2px)}
+  .qbtn .qi{font-size:28px}
+  .qbtn .qt{margin-top:8px;font-weight:700;font-size:14px}
+  .qbtn .qs{margin-top:3px;color:#9ca3bf;font-size:12px}
+  .prog{height:9px;background:rgba(255,255,255,.1);border-radius:999px;overflow:hidden}
+  .prog>i{display:block;height:100%;border-radius:999px;background:linear-gradient(90deg,#7c3aed,#3b82f6)}
+  .quote{background:rgba(255,255,255,.04);border-left:3px solid rgba(124,58,237,.7);border-radius:12px;padding:14px 16px;color:#c6c8d6;font-size:14px;margin-bottom:18px}
+  @media(max-width:800px){.stat-grid{grid-template-columns:repeat(2,1fr)}.quick{grid-template-columns:repeat(2,1fr)}.sidecol{width:78px}.sidecol .hide-m{display:none}}
 </style>
 </head>
 <body class="h-screen overflow-hidden">
@@ -71,19 +97,20 @@
   <div id="main" class="hidden h-full">
     <div class="layout">
       <aside class="sidecol glass border-r border-white/10 flex flex-col">
-        <div class="p-5 flex items-center gap-2"><i data-lucide="brain" class="w-7 h-7 text-purple-400"></i><span class="font-bold text-lg">LifeOS<span class="text-purple-400">AI</span></span></div>
+        <div class="p-5 flex items-center gap-2"><i data-lucide="brain" class="w-7 h-7 text-purple-400"></i><span class="font-bold text-lg hide-m">LifeOS<span class="text-purple-400">AI</span></span></div>
+        <button onclick="go('pricing')" class="btn-upgrade hide-m" style="margin:0 14px 14px;text-align:center;">⭐ <span data-k="upgrade">Upgrade</span></button>
         <nav class="flex-1 px-3 space-y-1">
-          <a onclick="go('dashboard')" class="side flex items-center gap-3 px-3 py-2.5 rounded-lg cursor-pointer text-sm"><i data-lucide="layout-dashboard" class="w-5 h-5"></i><span data-k="dash">Dashboard</span></a>
-          <a onclick="go('chat')" class="side flex items-center gap-3 px-3 py-2.5 rounded-lg cursor-pointer text-sm"><i data-lucide="message-square" class="w-5 h-5"></i><span data-k="chat">AI Assistant</span></a>
-          <a onclick="go('tasks')" class="side flex items-center gap-3 px-3 py-2.5 rounded-lg cursor-pointer text-sm"><i data-lucide="check-square" class="w-5 h-5"></i><span data-k="tasks">Tasks</span></a>
-          <a onclick="go('habits')" class="side flex items-center gap-3 px-3 py-2.5 rounded-lg cursor-pointer text-sm"><i data-lucide="trending-up" class="w-5 h-5"></i><span data-k="habits">Habits</span></a>
-          <a onclick="go('pricing')" class="side flex items-center gap-3 px-3 py-2.5 rounded-lg cursor-pointer text-sm"><i data-lucide="wallet" class="w-5 h-5"></i><span data-k="upgrade">Upgrade</span></a>
-          <a onclick="go('refer')" class="side flex items-center gap-3 px-3 py-2.5 rounded-lg cursor-pointer text-sm"><i data-lucide="share-2" class="w-5 h-5"></i><span data-k="refer">Refer & earn</span></a>
+          <a id="nav-dashboard" onclick="go('dashboard')" class="side active flex items-center gap-3 px-3 py-2.5 rounded-lg cursor-pointer text-sm"><i data-lucide="layout-dashboard" class="w-5 h-5"></i><span class="hide-m" data-k="dash">Dashboard</span></a>
+          <a id="nav-chat" onclick="go('chat')" class="side flex items-center gap-3 px-3 py-2.5 rounded-lg cursor-pointer text-sm"><i data-lucide="message-square" class="w-5 h-5"></i><span class="hide-m" data-k="chat">AI Assistant</span></a>
+          <a id="nav-tasks" onclick="go('tasks')" class="side flex items-center gap-3 px-3 py-2.5 rounded-lg cursor-pointer text-sm"><i data-lucide="check-square" class="w-5 h-5"></i><span class="hide-m" data-k="tasks">Tasks</span></a>
+          <a id="nav-habits" onclick="go('habits')" class="side flex items-center gap-3 px-3 py-2.5 rounded-lg cursor-pointer text-sm"><i data-lucide="trending-up" class="w-5 h-5"></i><span class="hide-m" data-k="habits">Habits</span></a>
+          <a id="nav-pricing" onclick="go('pricing')" class="side flex items-center gap-3 px-3 py-2.5 rounded-lg cursor-pointer text-sm"><i data-lucide="wallet" class="w-5 h-5"></i><span class="hide-m" data-k="upgrade">Upgrade</span></a>
+          <a id="nav-refer" onclick="go('refer')" class="side flex items-center gap-3 px-3 py-2.5 rounded-lg cursor-pointer text-sm"><i data-lucide="share-2" class="w-5 h-5"></i><span class="hide-m" data-k="refer">Refer & earn</span></a>
         </nav>
         <div class="p-4 border-t border-white/10">
           <div class="glass rounded-lg p-3 text-sm">
-            <div class="text-gray-400">Plan: <span id="planLabel" class="text-purple-400 font-semibold">Free</span></div>
-            <div class="text-xs text-gray-500 mt-1" id="planNote">3 AI chats/day</div>
+            <div class="text-gray-400 hide-m">Plan: <span id="planLabel" class="text-purple-400 font-semibold">Free</span></div>
+            <div class="text-xs text-gray-500 mt-1 hide-m" id="planNote">3 AI chats/day</div>
           </div>
           <div class="mt-2 flex items-center justify-between">
             <button onclick="toggleLang()" id="langBtn2" class="text-gray-400 text-xs hover:text-white">العربية</button>
@@ -97,12 +124,48 @@
 
         <!-- Dashboard -->
         <div id="s-dashboard">
-          <div class="grid md:grid-cols-4 gap-4 mb-6">
-            <div class="glass rounded-xl p-5"><div class="text-gray-400 text-sm" data-k="t_tasks">Tasks today</div><div id="dTasks" class="text-3xl font-bold text-blue-400 mt-1">0/0</div></div>
-            <div class="glass rounded-xl p-5"><div class="text-gray-400 text-sm" data-k="t_habits">Habits done</div><div id="dHabits" class="text-3xl font-bold text-green-400 mt-1">0/0</div></div>
-            <div class="glass rounded-xl p-5"><div class="text-gray-400 text-sm" data-k="t_plan">Your plan</div><div id="dPlan" class="text-3xl font-bold text-purple-400 mt-1">Free</div></div>
-            <div class="glass rounded-xl p-5"><div class="text-gray-400 text-sm" data-k="t_ai">AI chats left</div><div id="dAi" class="text-3xl font-bold text-orange-400 mt-1">3</div></div>
+          <div class="hero">
+            <h2><span id="heroHi" data-k="greeting">Ahlan</span> <span id="heroName">Friend</span>! 👋</h2>
+            <p data-k="heroSub">Your AI life architect is ready. Let's build a great day together.</p>
+            <div class="upgrade-flex">
+              <button onclick="go('pricing')" class="btn-upgrade">⭐ <span data-k="upgrade_cta">Upgrade to Pro</span></button>
+              <button onclick="go('chat')" class="btn-ghost">✨ <span data-k="d_ai_btn">Open AI Assistant</span></button>
+            </div>
           </div>
+
+          <div class="stat-grid">
+            <div class="stat">
+              <div class="ico" style="background:rgba(59,130,246,.18)">✅</div>
+              <div class="lab" data-k="t_tasks">Tasks today</div>
+              <div class="val" style="color:#60a5fa" id="dTasks">0/0</div>
+            </div>
+            <div class="stat">
+              <div class="ico" style="background:rgba(34,197,94,.18)">📈</div>
+              <div class="lab" data-k="t_habits">Habits done</div>
+              <div class="val" style="color:#4ade80" id="dHabits">0/0</div>
+            </div>
+            <div class="stat">
+              <div class="ico" style="background:rgba(168,85,247,.2)">👑</div>
+              <div class="lab" data-k="t_plan">Your plan</div>
+              <div class="val" style="color:#c084fc" id="dPlan">Free</div>
+            </div>
+            <div class="stat">
+              <div class="ico" style="background:rgba(249,115,22,.18)">💬</div>
+              <div class="lab" data-k="t_ai">AI chats left</div>
+              <div class="val" style="color:#fb923c" id="dAi">3</div>
+            </div>
+          </div>
+
+          <div class="quick">
+            <button onclick="go('chat')" class="qbtn"><div class="qi">🤖</div><div class="qt" data-k="q_chat">Ask AI</div><div class="qs" data-k="q_chat_s">Plan your day</div></button>
+            <button onclick="go('tasks')" class="qbtn"><div class="qi">📝</div><div class="qt" data-k="q_tasks">Add task</div><div class="qs" data-k="q_tasks_s">Stay focused</div></button>
+            <button onclick="go('pricing')" class="qbtn"><div class="qi">🚀</div><div class="qt" data-k="q_upgrade">Go Pro</div><div class="qs" data-k="q_upgrade_s">Unlock everything</div></button>
+          </div>
+
+          <div class="quote">
+            💡 <span data-k="quote">"Small wins every day create an unstoppable life." Start with one task now.</span>
+          </div>
+
           <div class="glass rounded-xl p-6">
             <h3 class="font-bold mb-3 flex items-center gap-2"><i data-lucide="sparkles" class="w-5 h-5 text-purple-400"></i><span data-k="d_ai_hint">Ask AI to build your day</span></h3>
             <p class="text-gray-400 text-sm" data-k="d_ai_p">Go to the AI Assistant and tell it your goals or problems. It will build a practical plan for you.</p>
@@ -217,6 +280,9 @@ const I18 = {
   en:{ dash:"Dashboard", chat:"AI Assistant", tasks:"Tasks", habits:"Habits", upgrade:"Upgrade", add:"Add", buy_pro:"Upgrade with USDT", buy_life:"Go Life",
     t_tasks:"Tasks today", t_habits:"Habits done", t_plan:"Your plan", t_ai:"AI chats left",
     d_ai_hint:"Ask AI to build your day", d_ai_p:"Go to the AI Assistant and tell it your goals or problems. It will build a practical plan for you.", d_ai_btn:"Open AI Assistant",
+    heroHi:"Hola", heroSub:"Your AI life architect is ready. Let's build a great day together.", upgrade_cta:"Upgrade to Pro",
+    q_chat:"Ask AI", q_chat_s:"Plan your day", q_tasks:"Add task", q_tasks_s:"Stay focused", q_upgrade:"Go Pro", q_upgrade_s:"Unlock everything",
+    quote:"Small wins every day create an unstoppable life. Start with one task now.",
     pp1:"Unlimited AI chats", pp2:"Smart scheduling", pp3:"Problem solver AI", ll1:"Everything in Pro", ll2:"Priority support", ll3:"Advanced AI planning",
     price_intro:"Upgrade your plan by sending USDT (TRC20) from your Trust Wallet. We verify each payment manually.",
     refer:"Refer & earn", refer_title:"Invite friends, earn rewards", refer_p:"Share your link. When a friend joins and upgrades, you both get a bonus.", copy:"Copy", ref_count:(n)=>`You invited ${n} ${n===1?'person':'people'} so far.`,
@@ -225,6 +291,9 @@ const I18 = {
   ar:{ dash:"الرئيسية", chat:"المساعد الذكي", tasks:"المهام", habits:"العادات", upgrade:"الاشتراك", add:"إضافة", buy_pro:"اشترك بـ USDT", buy_life:"اختر حياة",
     t_tasks:"مهام اليوم", t_habits:"العادات المنجزة", t_plan:"خطتك", t_ai:"محادثات الذكاء المتبقية",
     d_ai_hint:"اطلب من الذكاء بناء يومك", d_ai_p:"اذهب إلى المساعد الذكي واحكي له أهدافك ومشاكلك، وسيبني لك خطة عملية.", d_ai_btn:"افتح المساعد الذكي",
+    heroHi:"أهلاً", heroSub:"أرشيتكت حياتك الذكية جاهزة. لنبنِ يوماً رائعاً معاً.", upgrade_cta:"طوّر إلى برو",
+    q_chat:"اسأل الذكاء", q_chat_s:"خطط يومك", q_tasks:"أضف مهمة", q_tasks_s:"حافظ على تركيزك", q_upgrade:"اختر برو", q_upgrade_s:"افتح كل المزايا",
+    quote:"الانتصارات الصغيرة كل يوم تصنع حياة لا تُهزم. ابدأ بمهمة واحدة الآن.",
     pp1:"محادثات ذكاء غير محدودة", pp2:"جدولة ذكية", pp3:"ذكاء حل المشاكل", ll1:"كل ميزات الاحترافي", ll2:"دعم أولوية", ll3:"تخطيط ذكاء متقدم",
     price_intro:"طوّر خطتك بإرسال USDT (TRC20) من محفظة Trust Wallet. نتحقق من كل دفعة يدوياً.",
     refer:"ادعُ واربح", refer_title:"ادعُ أصدقاءك واربح مكافآت", refer_p:"شارك رابطك. عندما ينضم صديق ويشترك، تحصلان معاً على مكافأة.", copy:"نسخ", ref_count:(n)=>`دعوت ${n} ${n===1?'شخص':'أشخاص'} حتى الآن.`,
@@ -260,7 +329,7 @@ function val(id){ return document.getElementById(id).value.trim(); }
 async function api(path, body, method='POST'){ const res=await fetch(path,{method,headers:{'Content-Type':'application/json',...(token?{Authorization:'Bearer '+token}:{})},body:body?JSON.stringify(body):undefined}); const data=await res.json().catch(()=>({})); if(!res.ok){ if(data.error==='free_daily_limit') throw new Error(lang==='ar'?'وصلت للحد المجاني اليوم':'You reached the free daily AI limit.'); const msg = (data && data.error) ? data.error : (res.status===404 ? ((lang==='ar')?'المسار غير متوفر حالياً':'Endpoint not available') : 'HTTP '+res.status); throw new Error(msg); } return data; }
 
 // UI
-function go(name){ ['dashboard','chat','tasks','habits','pricing','refer'].forEach(n=>{ document.getElementById('s-'+n).classList.toggle('hidden', n!==name); }); document.getElementById('pageTitle').textContent = t('title_'+name); if(name==='refer') loadReferral(); renderIcons(); }
+function go(name){ ['dashboard','chat','tasks','habits','pricing','refer'].forEach(n=>{ document.getElementById('s-'+n).classList.toggle('hidden', n!==name); }); document.getElementById('pageTitle').textContent = t('title_'+name); ['dashboard','chat','tasks','habits','pricing','refer'].forEach(n=>{ var el=document.getElementById('nav-'+n); if(el){ if(n===name) el.classList.add('active'); else el.classList.remove('active'); } }); if(name==='refer') loadReferral(); renderIcons(); }
 async function refreshUI(){
   if(!token) return;
   try {
@@ -269,6 +338,7 @@ async function refreshUI(){
     showMain();
     const used0=JSON.parse(localStorage.getItem('lifeos_chat_used_'+new Date().toDateString())||'0');
     document.getElementById('dAi').textContent = (user.plan==='free')? Math.max(0,3-used0) : '∞';
+    if(document.getElementById('heroName')) document.getElementById('heroName').textContent = (user && user.name) ? user.name.split(' ')[0] : 'Friend';
     renderTasks(); renderHabits();
   } catch(e) {
     console.error('refresh error', e);
