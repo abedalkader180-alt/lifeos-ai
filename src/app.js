@@ -120,9 +120,9 @@ app.get('/api/ai/status', async (req, res) => {
   res.json({ enabled: ai.AI_ENABLED, reachable, detail, base_url: ai.AI_BASE_URL, model: ai.AI_MODEL, last_error: ai.getLastError ? ai.getLastError() : null });
 });
 
-// ===== real AI live test =====
-app.post('/api/ai/test', async (req, res) => {
-  const message = (req.body && req.body.message || 'What is the quickest way to organize my morning? Reply in one short paragraph.').toString();
+// ===== real AI live test (GET or POST so it can be opened in a browser) =====
+app.all('/api/ai/test', async (req, res) => {
+  const message = (req.body && req.body.message || req.query.message || 'What is the quickest way to organize my morning? Reply in one short paragraph.').toString();
   const t0 = Date.now();
   try {
     const reply = await ai.chat({ user: { name: 'Test', plan: 'free', locale: 'en', email: 'test@example.com' }, message, history: [], locale: 'en' });
