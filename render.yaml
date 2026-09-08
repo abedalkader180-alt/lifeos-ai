@@ -22,6 +22,12 @@ services:
         value: "true"
       - key: AI_API_KEY
         sync: false
+      - key: AI_BASE_URL
+        value: "https://api.groq.com/openai/v1"
+      - key: AI_MODEL
+        value: "llama-3.3-70b-versatile"
+      - key: AI_ALLOW_FALLBACK
+        value: "false"
       - key: OWNER_EMAIL
         value: "owner@lifeos.app"
       - key: OWNER_PASSWORD
