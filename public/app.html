@@ -124,7 +124,7 @@
           <a id="nav-dashboard" onclick="go('dashboard')" class="side active flex items-center gap-3 px-3 py-2.5 rounded-lg cursor-pointer text-sm"><i data-lucide="layout-dashboard" class="w-5 h-5"></i><span class="hide-m" data-k="dash">Dashboard</span></a>
           <a id="nav-chat" onclick="go('chat')" class="side flex items-center gap-3 px-3 py-2.5 rounded-lg cursor-pointer text-sm"><i data-lucide="message-square" class="w-5 h-5"></i><span class="hide-m" data-k="chat">AI Assistant</span></a>
           <a id="nav-tasks" onclick="go('tasks')" class="side flex items-center gap-3 px-3 py-2.5 rounded-lg cursor-pointer text-sm"><i data-lucide="check-square" class="w-5 h-5"></i><span class="hide-m" data-k="tasks">Tasks</span></a>
-          <a id="nav-challenge" onclick="go('challenge')" class="side flex items-center gap-3 px-3 py-2.5 rounded-lg cursor-pointer text-sm"><i data-lucide="flame" class="w-5 h-5 text-orange-400"></i><span class="hide-m" data-k="challenge">21-Day Challenge</span></a>
+          <a id="nav-challenge" onclick="go('challenge')" class="side flex items-center gap-3 px-3 py-2.5 rounded-lg cursor-pointer text-sm"><i data-lucide="mountain" class="w-5 h-5 text-orange-400"></i><span class="hide-m" data-k="challenge">40-Day Challenge</span></a>
           <a id="nav-habits" onclick="go('habits')" class="side flex items-center gap-3 px-3 py-2.5 rounded-lg cursor-pointer text-sm"><i data-lucide="trending-up" class="w-5 h-5"></i><span class="hide-m" data-k="habits">Habits</span></a>
           <a id="nav-pricing" onclick="go('pricing')" class="side flex items-center gap-3 px-3 py-2.5 rounded-lg cursor-pointer text-sm"><i data-lucide="wallet" class="w-5 h-5"></i><span class="hide-m" data-k="upgrade">Upgrade</span></a>
           <a id="nav-refer" onclick="go('refer')" class="side flex items-center gap-3 px-3 py-2.5 rounded-lg cursor-pointer text-sm"><i data-lucide="share-2" class="w-5 h-5"></i><span class="hide-m" data-k="refer">Refer & earn</span></a>
@@ -132,7 +132,7 @@
         <div class="p-4 border-t border-white/10">
           <div class="glass rounded-lg p-3 text-sm">
             <div class="text-gray-400 hide-m">Plan: <span id="planLabel" class="text-purple-400 font-semibold">Free</span></div>
-            <div class="text-xs text-gray-500 mt-1 hide-m" id="planNote">3 AI chats/day</div>
+            <div class="text-xs text-gray-500 mt-1 hide-m" id="planNote">10 AI chats/day · Pro unlimited</div>
           </div>
           <div class="mt-2 flex items-center justify-between">
             <button onclick="toggleLang()" id="langBtn2" class="text-gray-400 text-xs hover:text-white">العربية</button>
@@ -174,7 +174,7 @@
             <div class="stat">
               <div class="ico" style="background:rgba(249,115,22,.18)">💬</div>
               <div class="lab" data-k="t_ai">AI chats left</div>
-              <div class="val" style="color:#fb923c" id="dAi">3</div>
+              <div class="val" style="color:#fb923c" id="dAi">10</div>
             </div>
           </div>
 
@@ -238,36 +238,48 @@
           </div>
         </div>
 
-        <!-- 21-Day Challenge -->
+        <!-- 40-Day Life Mountain -->
         <div id="s-challenge" class="hidden">
           <div class="glass rounded-2xl p-6 mb-6">
             <div class="flex items-center justify-between mb-3">
-              <h3 class="text-xl font-bold flex items-center gap-2"><i data-lucide="flame" class="w-6 h-6 text-orange-400"></i><span data-k="ch_title">LifeOS 21-Day Challenge</span></h3>
+              <h3 class="text-xl font-bold flex items-center gap-2"><i data-lucide="mountain" class="w-6 h-6 text-orange-400"></i><span data-k="ch_title">LifeOS 40-Day Life Mountain</span></h3>
               <span id="chBadge" class="text-xs px-3 py-1 rounded-full bg-orange-500/20 text-orange-300 border border-orange-400/30"></span>
             </div>
-            <p class="text-gray-400 text-sm mb-4" data-k="ch_sub">One small real-action task each day. Build streaks, earn a Life Score, and stage a real transformation.</p>
+            <p class="text-gray-400 text-sm mb-3" data-k="ch_sub">A unique challenge built for YOU. Escalate from Starter to Rise to Legend. Win awards, grow streaks, and share your journey.</p>
+            <div class="flex gap-2 text-[11px] mb-4 flex-wrap">
+              <span class="px-2 py-1 rounded-full bg-green-500/15 text-green-300 border border-green-400/25" data-k="ch_stage_starter">⚡ Starter · 1-10</span>
+              <span class="px-2 py-1 rounded-full bg-purple-500/15 text-purple-300 border border-purple-400/25" data-k="ch_stage_rise">🔥 Rise · Pro</span>
+              <span class="px-2 py-1 rounded-full bg-yellow-500/15 text-yellow-300 border border-yellow-400/25" data-k="ch_stage_legend">🌟 Legend · Life</span>
+            </div>
             <div class="flex gap-2 items-center mb-4">
               <div class="flex-1 h-3 bg-white/10 rounded-full overflow-hidden"><div id="chBar" class="h-full bg-gradient-to-r from-orange-400 to-purple-500 rounded-full" style="width:0%"></div></div>
               <span id="chPct" class="text-sm text-orange-300 font-semibold">0%</span>
             </div>
             <div id="chNotStarted" class="text-center py-6">
-              <div class="text-4xl mb-2">🚀</div>
-              <button onclick="startChallenge()" class="btn bg-orange-500 hover:bg-orange-600 px-6 py-3 rounded-full font-bold" data-k="ch_start">Start the 21-Day Challenge</button>
-              <p class="text-gray-400 text-xs mt-3" data-k="ch_start_sub">No account limits. Just show up every day.</p>
+              <div class="text-4xl mb-2">⛰️</div>
+              <button onclick="startChallenge()" class="btn bg-orange-500 hover:bg-orange-600 px-6 py-3 rounded-full font-bold" data-k="ch_start">Start my Life Mountain</button>
+              <p class="text-gray-400 text-xs mt-3" data-k="ch_start_sub">Your challenges are unique. No two accounts are the same.</p>
             </div>
             <div id="chActive" class="hidden">
               <div class="flex gap-4 mb-4">
-                <div class="stat"><div class="lab" data-k="ch_day">Day</div><div class="val" id="chDay" style="color:#fb923c">0/21</div></div>
+                <div class="stat"><div class="lab" data-k="ch_day">Day</div><div class="val" id="chDay" style="color:#fb923c">0</div></div>
                 <div class="stat"><div class="lab" data-k="ch_streak">Streak</div><div class="val" id="chStreak" style="color:#4ade80">0</div></div>
                 <div class="stat"><div class="lab" data-k="ch_points">Life Score</div><div class="val" id="chPoints" style="color:#c084fc">0</div></div>
               </div>
-              <div class="glass rounded-xl p-5 border border-orange-400/30">
+              <div id="chUpgrade" class="hidden text-center glass rounded-xl p-5 border border-yellow-400/40 mb-4">
+                <div class="text-2xl mb-2">🔒</div>
+                <p class="font-semibold" data-k="ch_upgrade_t">You finished this stage!</p>
+                <p class="text-sm text-gray-400 mt-1" data-k="ch_upgrade_sub">Upgrade to Pro/Life to climb higher and unlock stronger, wilder challenges.</p>
+                <button onclick="go('pricing')" class="btn bg-purple-600 hover:bg-purple-700 mt-4 px-5 py-2.5 rounded-full font-semibold" data-k="ch_upgrade_btn">Unlock the next stage</button>
+              </div>
+              <div id="chTaskCard" class="glass rounded-xl p-5 border border-orange-400/30">
                 <div class="text-xs text-orange-300 mb-2" data-k="today_task">TODAY'S TASK</div>
-                <p id="chTask" class="text-lg font-semibold text-white mb-4"></p>
-                <button onclick="challengeCheckin()" class="btn bg-green-600 hover:bg-green-700 w-full py-2.5 rounded-full font-semibold" data-k="ch_done">I did it today ✅</button>
+                <p id="chTask" class="text-lg font-semibold text-white mb-3"></p>
+                <p id="chReward" class="text-sm text-green-300 mb-4"></p>
+                <button onclick="challengeCheckin()" class="btn bg-green-600 hover:bg-green-700 w-full py-2.5 rounded-full font-semibold" data-k="ch_done">I did it — claim my reward ✅</button>
                 <button onclick="challengeSkip()" class="btn-ghost w-full mt-2 py-2 rounded-full text-gray-400" data-k="ch_skip">Skip today</button>
               </div>
-              <button onclick="shareChallenge()" class="btn-ghost mt-4 w-full py-3 rounded-full" style="background:rgba(59,130,246,.12);border:1px solid rgba(59,130,246,.3);"><span data-k="ch_share">Share my progress</span> 📣</button>
+              <button onclick="shareChallenge()" class="btn-ghost mt-4 w-full py-3 rounded-full" style="background:rgba(59,130,246,.12);border:1px solid rgba(59,130,246,.3);"><span data-k="ch_share">Share my journey</span> 📣</button>
             </div>
           </div>
         </div>
@@ -343,7 +355,7 @@ const I18 = {
     price_intro:"Upgrade your plan by sending USDT (TRC20) from your Trust Wallet. We verify each payment manually.",
     refer:"Refer & earn", refer_title:"Invite friends, earn rewards", refer_p:"Share your link. When a friend joins and upgrades, you both get a bonus.", copy:"Copy", ref_count:(n)=>`You invited ${n} ${n===1?'person':'people'} so far.`,
     send_to:"Send exact amount to:", tx_label:"Transaction hash (TX)", submit_pay:"I paid — submit for review", coupon_label:"Have a launch coupon?", apply_coupon:"Apply", coupon_on:"Coupon applied: 50% off", coupon_err:"Invalid coupon",
-    free_chat_left:"chats left today", done:"Done", target:"target", t_free:"Free", greeting:"Welcome", upd:"Upgrade to Pro", title_dash:"Dashboard", title_chat:"AI Assistant", title_tasks:"Tasks", title_habits:"Habits", title_pricing:"Upgrade", title_refer:"Refer & earn", title_challenge:"21-Day Challenge", challenge:"21-Day Challenge", ch_title:"LifeOS 21-Day Challenge", ch_sub:"One small real-action task each day. Build streaks, earn a Life Score, and stage a real transformation.", ch_start:"Start the 21-Day Challenge", ch_start_sub:"No limits. Just show up every day.", ch_day:"Day", ch_streak:"Streak", ch_points:"Life Score", today_task:"TODAY'S TASK", ch_done:"I did it today ✅", ch_skip:"Skip today", ch_share:"Share my progress", copied:"Copied!",
+    free_chat_left:"chats left today", done:"Done", target:"target", t_free:"Free", greeting:"Welcome", upd:"Upgrade to Pro", title_dash:"Dashboard", title_chat:"AI Assistant", title_tasks:"Tasks", title_habits:"Habits", title_pricing:"Upgrade", title_refer:"Refer & earn", title_challenge:"40-Day Challenge", challenge:"40-Day Challenge", ch_title:"LifeOS 40-Day Life Mountain", ch_sub:"A unique challenge built for YOU. Escalate from Starter to Rise to Legend. Win awards, grow streaks, and share your journey.", ch_stage_starter:"⚡ Starter · 1-10", ch_stage_rise:"🔥 Rise · Pro", ch_stage_legend:"🌟 Legend · Life", ch_start:"Start my Life Mountain", ch_start_sub:"Your challenges are unique. No two accounts are the same.", ch_day:"Day", ch_streak:"Streak", ch_points:"Life Score", today_task:"TODAY'S TASK", ch_done:"I did it — claim my reward ✅", ch_skip:"Skip today", ch_share:"Share my journey", ch_upgrade_t:"You finished this stage!", ch_upgrade_sub:"Upgrade to Pro/Life to climb higher and unlock stronger, wilder challenges.", ch_upgrade_btn:"Unlock the next stage", copied:"Copied!",
     verify_title:"Verify your email", verify_sub:"We sent a 6-digit code to", verify_btn:"Confirm code", verify_no:"Didn't get it?", verify_resend:"Resend code", verify_back:"← Back to login / create account", verify_providers:"Works with Gmail, iCloud, Outlook, Yahoo, Zoho and any email.", verify_ok:"Verifying...", verify_sent:"New code sent.", auth_providers:"Use any email: Gmail · iCloud · Outlook · Yahoo · Zoho", loading:"Please wait..." },
   ar:{ dash:"الرئيسية", chat:"المساعد الذكي", tasks:"المهام", habits:"العادات", upgrade:"الاشتراك", add:"إضافة", buy_pro:"اشترك بـ USDT", buy_life:"اختر حياة",
     t_tasks:"مهام اليوم", t_habits:"العادات المنجزة", t_plan:"خطتك", t_ai:"محادثات الذكاء المتبقية",
@@ -355,7 +367,7 @@ const I18 = {
     price_intro:"طوّر خطتك بإرسال USDT (TRC20) من محفظة Trust Wallet. نتحقق من كل دفعة يدوياً.",
     refer:"ادعُ واربح", refer_title:"ادعُ أصدقاءك واربح مكافآت", refer_p:"شارك رابطك. عندما ينضم صديق ويشترك، تحصلان معاً على مكافأة.", copy:"نسخ", ref_count:(n)=>`دعوت ${n} ${n===1?'شخص':'أشخاص'} حتى الآن.`,
     send_to:"أرسل المبلغ بالضبط إلى:", tx_label:"Hash المعاملة (TX)", submit_pay:"دفعت — أرسل للمراجعة", coupon_label:"عندك كوبون إطلاق؟", apply_coupon:"تطبيق", coupon_on:"تم تطبيق الكوبون: خصم 50%", coupon_err:"كوبون غير صحيح",
-    free_chat_left:"محادثات متبقية اليوم", done:"تم", target:"الهدف", t_free:"مجاني", greeting:"أهلاً", upd:"طوّر إلى برو", title_dash:"الرئيسية", title_chat:"المساعد الذكي", title_tasks:"المهام", title_habits:"العادات", title_pricing:"الاشتراك", title_refer:"ادعُ واربح", title_challenge:"تحدي 21 يوم", challenge:"تحدي 21 يوم", ch_title:"تحدي حياتك 21 يوماً", ch_sub:"مهمة صغيرة حقيقية كل يوم. ابنِ سلسلة أيام، واكسب نقاط حياة، وصنع تحوّل حقيقي.", ch_start:"ابدأ تحدي 21 يوماً", ch_start_sub:"بلا حدود. فقط التزم كل يوم.", ch_day:"اليوم", ch_streak:"السلسلة", ch_points:"نقاط الحياة", today_task:"مهمة اليوم", ch_done:"أنجزتها اليوم ✅", ch_skip:"تخطّي اليوم", ch_share:"شارك تقدمي", copied:"تم النسخ!",
+    free_chat_left:"محادثات متبقية اليوم", done:"تم", target:"الهدف", t_free:"مجاني", greeting:"أهلاً", upd:"طوّر إلى برو", title_dash:"الرئيسية", title_chat:"المساعد الذكي", title_tasks:"المهام", title_habits:"العادات", title_pricing:"الاشتراك", title_refer:"ادعُ واربح", title_challenge:"جبل الحياة 40 يوم", challenge:"جبل الحياة 40 يوم", ch_title:"جبل حياتك 40 يوماً", ch_sub:"تحدٍّ فريد صُمم خصيصاً لك. ارتفع من البداية إلى الصعود إلى الأسطورة. اربح جوائز، وزد سلاسلك، وشارك رحلتك.", ch_stage_starter:"⚡ البداية · 1-10", ch_stage_rise:"🔥 الصعود · برو", ch_stage_legend:"🌟 الأسطورة · لايف", ch_start:"ابدأ جبل حياتي", ch_start_sub:"تحدياتك فريدة. لا يوجد حسابان متشابهان.", ch_day:"اليوم", ch_streak:"السلسلة", ch_points:"نقاط الحياة", today_task:"مهمة اليوم", ch_done:"أنجزت — آخذ مكافأتي ✅", ch_skip:"تخطّي اليوم", ch_share:"شارك رحلتي", ch_upgrade_t:"أكملت هذه المرحلة!", ch_upgrade_sub:"طوّر إلى برو/لايف لتكمل الصعود وتفتح تحديات أقوى وأكثر متعة.", ch_upgrade_btn:"افتح المرحلة التالية", copied:"تم النسخ!",
     verify_title:"أكّد بريدك الإلكتروني", verify_sub:"أرسلنا رمزاً من 6 أرقام إلى", verify_btn:"تأكيد الرمز", verify_no:"لم يصلك؟", verify_resend:"أعد إرسال الرمز", verify_back:"← رجوع إلى تسجيل الدخول / إنشاء حساب", verify_providers:"يدعم Gmail و iCloud و Outlook و Yahoo و Zoho وأي بريد آخر.", verify_ok:"جاري التحقق...", verify_sent:"تم إرسال رمز جديد.", auth_providers:"استخدم أي بريد: Gmail · iCloud · Outlook · Yahoo · Zoho", loading:"لحظة من فضلك..." }
 };
 let lang = localStorage.getItem('lifeos_lang') || 'en';
@@ -439,7 +451,7 @@ async function refreshUI(){
     applyLang();
     showMain();
     const used0=JSON.parse(localStorage.getItem('lifeos_chat_used_'+new Date().toDateString())||'0');
-    document.getElementById('dAi').textContent = (user.plan==='free')? Math.max(0,3-used0) : '∞';
+    document.getElementById('dAi').textContent = (user.plan==='free')? Math.max(0,10-used0) : '∞';
     if(document.getElementById('heroName')) document.getElementById('heroName').textContent = (user && user.name) ? user.name.split(' ')[0] : 'Friend';
     renderTasks(); renderHabits();
   } catch(e) {
@@ -457,7 +469,7 @@ async function refreshUI(){
   document.getElementById('dHabits').textContent = habits.reduce((s,h)=>s+Math.min(h.completed_today,h.target),0)+'/'+habits.reduce((s,h)=>s+h.target,0);
   document.getElementById('dPlan').textContent = user.plan==='free'?'Free':user.plan;
   document.getElementById('planLabel').textContent = user.plan==='free'?'Free':user.plan;
-  document.getElementById('planNote').textContent = user.plan==='free'? t('free_chat_left')+' · 3' : (user.plan==='life'?'Life':'Pro');
+  document.getElementById('planNote').textContent = user.plan==='free'? t('free_chat_left')+' · 10' : (user.plan==='life'?'Life · Unlimited':'Pro · Unlimited');
   renderTasks(); renderHabits();
   const used = JSON.parse(localStorage.getItem('lifeos_chat_used_'+new Date().toDateString())||'0');
   document.getElementById('dAi').textContent = user.plan==='free'? Math.max(0,3-used) : '∞';
@@ -505,47 +517,72 @@ function copyRef(){
   const old=el.value; el.value = t('copied','Copied!'); setTimeout(()=>el.value=old,1200);
 }
 
-// 21-day challenge
+// 40-Day Life Mountain
 let challengeData=null;
+function chStageColor(stage){
+  if(!stage) return '#fb923c';
+  if(stage.key==='starter') return '#34d399';
+  if(stage.key==='rise') return '#c084fc';
+  return '#fbbf24';
+}
+function chStageName(stage){
+  if(!stage) return lang==='ar'?'جبل الحياة':'Life Mountain';
+  return lang==='ar'?stage.name_ar:stage.name_en;
+}
 async function loadChallenge(){
   try{ challengeData=await api('/api/challenge',null,'GET'); }catch(e){ challengeData={started:false,day:0,points:0,streak:0,task:null}; }
   if(!challengeData) return;
   const started=challengeData.started, completed=challengeData.completed;
   const day=challengeData.day||0;
   const notS=document.getElementById('chNotStarted'), act=document.getElementById('chActive');
-  if(!started){ notS.classList.remove('hidden'); act.classList.add('hidden'); }
-  else {
-    if(completed){
-      document.getElementById('chTask').textContent = lang==='ar'?'🎉 أكملت تحدي 21 يوماً! أنت نموذج حياة حقيقي.':'🎉 You completed the 21-Day Challenge! You are a true life model.';
-      document.getElementById('chBadge').textContent = '🏆 '+(lang==='ar'?'مكتمل':'Completed');
-      document.getElementById('chDay').textContent = '21/21';
-      document.getElementById('chBar').style.width='100%'; document.getElementById('chPct').textContent='100%';
-    } else {
-      const today=Math.min(day+1,21);
-      document.getElementById('chTask').textContent = (challengeData.task && (challengeData.task.ar||challengeData.task.en)) || '';
-      document.getElementById('chBadge').textContent = '🔥 '+(lang==='ar'?('يوم '+today+' / 21'):('Day '+today+' / 21'));
-      document.getElementById('chDay').textContent = today+'/21';
-      document.getElementById('chBar').style.width=Math.round(today/21*100)+'%';
-      document.getElementById('chPct').textContent=Math.round(today/21*100)+'%';
-    }
-    document.getElementById('chStreak').textContent = challengeData.streak||0;
-    document.getElementById('chPoints').textContent = challengeData.points||0;
-    notS.classList.add('hidden'); act.classList.remove('hidden');
+  if(!started){ notS.classList.remove('hidden'); act.classList.add('hidden'); return; }
+  notS.classList.add('hidden'); act.classList.remove('hidden');
+  document.getElementById('chStreak').textContent = challengeData.streak||0;
+  document.getElementById('chPoints').textContent = challengeData.points||0;
+  const upg=document.getElementById('chUpgrade'), card=document.getElementById('chTaskCard');
+  if(completed){
+    document.getElementById('chTask').textContent = lang==='ar'?'🎉 أكملت جبل الحياة 40 يوماً! أنت نسخة حقيقية من نفسك.':'🎉 You conquered the 40-Day Life Mountain! You are a real version of yourself.';
+    document.getElementById('chReward').textContent='';
+    document.getElementById('chBadge').textContent = '🏆 '+(lang==='ar'?'أسطورة':'Legend');
+    document.getElementById('chDay').textContent = challengeData.total||40;
+    document.getElementById('chBar').style.width='100%'; document.getElementById('chPct').textContent='100%';
+    upg.classList.add('hidden'); card.classList.add('hidden');
+    return;
   }
+  if(challengeData.needUpgrade){
+    upg.classList.remove('hidden'); card.classList.add('hidden');
+    document.getElementById('chBadge').textContent = '🔒 '+(lang==='ar'?'مقفل':'Locked');
+    document.getElementById('chDay').textContent = (challengeData.maxAllowed||challengeData.day||0)+'/'+(challengeData.total||40);
+    document.getElementById('chBar').style.width=Math.round((challengeData.maxAllowed||0)/(challengeData.total||40)*100)+'%';
+    document.getElementById('chPct').textContent=Math.round((challengeData.maxAllowed||0)/(challengeData.total||40)*100)+'%';
+    return;
+  }
+  // active task
+  upg.classList.add('hidden'); card.classList.remove('hidden');
+  const today=Math.min(day+1, challengeData.maxAllowed||40);
+  document.getElementById('chTask').textContent = (challengeData.task && challengeData.task.text) || '';
+  const rw=challengeData.reward;
+  document.getElementById('chReward').textContent = rw ? (lang==='ar'?('🎁 مكافأة اليوم: +'+rw.total+' نقطة'+(rw.bonus?(' ('+rw.bonus+')'):'')):('🎁 Today reward: +'+rw.total+' pts'+(rw.bonus?(' ('+rw.bonus+')'):''))) : '';
+  const st=challengeData.stage;
+  document.getElementById('chBadge').textContent = '🔥 '+chStageName(st)+' · '+(lang==='ar'?('يوم '+today+' / '+(challengeData.total||40)):('Day '+today+' / '+(challengeData.total||40)));
+  document.getElementById('chBadge').style.color=chStageColor(st);
+  document.getElementById('chDay').textContent = today+'/'+(challengeData.total||40);
+  document.getElementById('chBar').style.width=Math.round(today/(challengeData.total||40)*100)+'%';
+  document.getElementById('chPct').textContent=Math.round(today/(challengeData.total||40)*100)+'%';
 }
 async function startChallenge(){
   try{ await api('/api/challenge/start',{}); loadChallenge(); }catch(e){ authErr(e.message); }
 }
 async function challengeCheckin(){
-  try{ const r=await api('/api/challenge/checkin',{}); if(r.challenge&&r.challenge.completed){ loadChallenge(); } else loadChallenge(); }catch(e){ authErr(e.message); }
+  try{ const r=await api('/api/challenge/checkin',{}); const rw=r.reward; if(rw){ alert(lang==='ar'?('🎁 مكافأتك: +'+rw.total+' نقطة'+(rw.bonus?(' ('+rw.bonus+')'):'')):('🎁 Reward: +'+rw.total+' pts'+(rw.bonus?(' ('+rw.bonus+')'):''))); } loadChallenge(); }catch(e){ authErr(e.message); }
 }
 async function challengeSkip(){
   try{ await api('/api/challenge/skip',{}); loadChallenge(); }catch(e){ authErr(e.message); }
 }
 function shareChallenge(){
-  const txt = (challengeData && challengeData.share_text) || ("I'm on the LifeOS AI 21-Day Life Challenge 🚀 #LifeOS21");
+  const txt = (challengeData && challengeData.share_text) || ("I'm climbing the LifeOS 40-Day Life Mountain 🚀 #LifeOS40");
   const url = 'https://lifeos-ai-1-c5qv.onrender.com/app?ref=' + (user && user.ref_code ? user.ref_code : '');
-  if (navigator.share) { navigator.share({ title:'LifeOS AI 21-Day Challenge', text:txt, url }).catch(()=>{}); }
+  if (navigator.share) { navigator.share({ title:'LifeOS 40-Day Life Mountain', text:txt, url }).catch(()=>{}); }
   else { navigator.clipboard.writeText(txt+'\n'+url); alert(lang==='ar'?'نسخنا نص المشاركة. الصقه في واتساب/ستوري.':'Copied. Paste to WhatsApp/Story.'); }
 }
 

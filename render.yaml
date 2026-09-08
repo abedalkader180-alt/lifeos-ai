@@ -26,6 +26,8 @@ services:
         value: "https://api.groq.com/openai/v1"
       - key: AI_ALLOW_FALLBACK
         value: "false"
+      - key: FREE_AI_DAILY_LIMIT
+        value: "10"
       - key: OWNER_EMAIL
         value: "owner@lifeos.app"
       - key: OWNER_PASSWORD

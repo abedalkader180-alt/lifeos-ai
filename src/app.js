@@ -555,6 +555,9 @@ app.get('/api/conversations', auth, async (req, res) => {
   res.json(rows.reverse());
 });
 
+// Free users get a generous daily limit (default 10). Pro/Life is unlimited.
+const FREE_AI_DAILY_LIMIT = parseInt(process.env.FREE_AI_DAILY_LIMIT || '10', 10);
+
 app.post('/api/chat', auth, async (req, res) => {
   const { message } = req.body || {};
   if (!message || !message.trim()) return res.status(400).json({ error: 'message required' });
@@ -564,7 +567,7 @@ app.post('/api/chat', auth, async (req, res) => {
       "SELECT COUNT(*) n FROM conversations WHERE user_id = ? AND role = 'ai' AND date(created_at) = date('now')",
       [req.user.id]
     );
-    if ((usedToday?.n || 0) >= 3) {
+    if ((usedToday?.n || 0) >= FREE_AI_DAILY_LIMIT) {
       return res.status(402).json({ error: 'free_daily_limit', message: 'You reached the free daily AI limit.' });
     }
   }
@@ -581,46 +584,124 @@ app.post('/api/chat', auth, async (req, res) => {
   res.json({ reply: response });
 });
 
-// ===== LifeOS 21 challenge =====
-const CHALLENGE_DAYS = [
-  { en: 'Write down your #1 goal in one sentence.', ar: 'اكتب هدفك الأول في جملة واحدة.' },
-  { en: 'Pick the 3 most important tasks for today.', ar: 'اختر أهم ٣ مهام لهذا اليوم.' },
-  { en: 'Do 20 minutes of deep, focused work.', ar: 'أنجز ٢٠ دقيقة عمل عميق ومركّز.' },
+// ===== LifeOS 40-Day Life Mountain =====
+// Free: days 1-10 (Starter) - motivating, easy wins.
+// Pro:  days 11-30 (Rise)   - creative, viral, harder.
+// Life: days 31-40 (Legend) - intense, unforgettable.
+// Every account gets a DIFFERENT sequence (seeded by user id), difficulty grows,
+// and each check-in earns points/streak/milestone rewards.
+
+const CH_FREE_DAYS = 10;
+const CH_PRO_DAYS = 30;
+const CH_TOTAL_DAYS = 40;
+const CH_MILESTONES = { 7: 20, 10: 30, 14: 30, 21: 40, 30: 60, 40: 120 };
+
+const CH_FREE_POOL = [
+  { en: 'Write your #1 goal in one sentence and read it out loud.', ar: 'اكتب هدفك الأول بجملة واحدة واقرأه بصوت عالٍ.' },
+  { en: 'Choose the 3 most important tasks for today; write them down.', ar: 'اختر أهم ٣ مهام لهذا اليوم واكتبها.' },
+  { en: 'Do 20 minutes of focused work with zero phone.', ar: 'اعمل ٢٠ دقيقة بتركيز كامل بدون هاتف.' },
   { en: 'Drink 8 glasses of water today.', ar: 'اشرب ٨ أكواب ماء اليوم.' },
-  { en: 'Walk at least 15 minutes outside.', ar: 'امشِ ١٥ دقيقة على الأقل في الخارج.' },
-  { en: 'Review your week: what went well, what to change?', ar: 'راجع أسبوعك: ما الذي نجح، وما الذي تريد تغييره؟' },
-  { en: 'Remove one distraction from your routine today.', ar: 'أزل مشتّتاً واحداً من روتينك اليوم.' },
-  { en: 'Do one small thing for your health.', ar: 'اعمل شيئاً صغيراً لصحتك اليوم.' },
-  { en: 'Message or call someone you care about.', ar: 'تواصل مع شخص تهتم لأمره اليوم.' },
-  { en: 'Plan tomorrow tonight before you sleep.', ar: 'خطط ليومك غداً قبل النوم.' },
-  { en: 'Read or listen to something useful for 10 minutes.', ar: 'اقرأ أو اسمع شيئاً مفيداً ١٠ دقائق.' },
-  { en: 'Say no to one thing that drains you.', ar: 'قل لا لشيء يستنزف طاقتك.' },
-  { en: 'Do a 5-minute brain reset: breathe, stretch, refocus.', ar: 'خذ استراحة ٥ دقائق: تنفّس، تمدّد، أعد التركيز.' },
+  { en: 'Walk or move outside for 15 minutes.', ar: 'امشِ أو تحرك خارجاً لمدة ١٥ دقيقة.' },
+  { en: 'Make your bed first thing in the morning.', ar: 'رتّب سريرك أول ما تصحى.' },
   { en: 'Write 3 things you are grateful for.', ar: 'اكتب ٣ أشياء أنت ممتن لها.' },
-  { en: 'Finish one task you have been avoiding.', ar: 'أنهِ مهمة كنت تؤجلها.' },
-  { en: 'Improve your sleep routine tonight.', ar: 'حسّن روتين نومك الليلة.' },
+  { en: 'Plan tomorrow tonight before you sleep.', ar: 'خطط ليوم غدٍ قبل النوم.' },
+  { en: 'Read or listen to 10 minutes of something useful.', ar: 'اقرأ أو اسمع ١٠ دقائق شيئاً مفيداً.' },
+  { en: 'Do one small healthy meal choice today.', ar: 'اختر وجبة صحية واحدة اليوم.' },
+  { en: 'Remove one distraction from your environment.', ar: 'أزل مشتّتاً واحداً من بيئتك.' },
+  { en: 'Message or call someone you care about.', ar: 'تواصل مع شخص تهتم لأمره.' },
+  { en: 'Do 5 minutes of breathing or stretching.', ar: 'خذ ٥ دقائق تنفّس أو تمدّد.' },
+  { en: 'Identify one thing that drains you and say no to it.', ar: 'حدد شيئاً يستنزفك وقل له لا.' },
+  { en: 'Write one sentence about the person you want to become.', ar: 'اكتب جملة عن الشخص الذي تريد أن تصبحه.' },
   { en: 'Do one act of kindness, big or small.', ar: 'قدّم لطفاً واحداً، كبيراً أو صغيراً.' },
-  { en: 'Set one realistic goal for next week.', ar: 'ضع هدفاً واقعياً واحداً للأسبوع القادم.' },
-  { en: 'Optimize one system in your life (money, time, space).', ar: 'حسّن نظاماً واحداً في حياتك (مال، وقت، مساحة).' },
-  { en: 'Create a simple daily routine you can keep.', ar: 'أنشئ روتيناً يومياً بسيطاً تستطيع الالتزام به.' },
-  { en: 'Reflect: write 3 sentences for the version of you in 3 months.', ar: 'تأمل: اكتب ٣ جمل لنسختك بعد ٣ أشهر.' },
+  { en: 'Check your energy: sleep, water, food. Fix one.', ar: 'افحص طاقتك: نوم، ماء، طعام. أصلح واحداً.' },
+  { en: 'Set one realistic goal for next week.', ar: 'ضع هدفاً واقعياً للأسبوع القادم.' },
 ];
+
+const CH_PRO_POOL = [
+  { en: 'Record a 15-second video explaining your #1 goal. Post it if you dare.', ar: 'سجّل فيديو ١٥ ثانية تشرح فيه هدفك. انشره إذا تجرأت.' },
+  { en: 'Do a "smart hour": one hour, no distractions, one important thing.', ar: 'اعمل "ساعة ذكية": ساعة واحدة بلا تشتيت لشيء مهم واحد.' },
+  { en: 'Take a photo of your workspace and improve one thing about it.', ar: 'صوّر مكان عملك ثم حسّن شيئاً واحداً فيه.' },
+  { en: 'Send a specific compliment to 3 different people.', ar: 'أرسل إطراءً محدداً إلى ٣ أشخاص مختلفين.' },
+  { en: 'Do 30 minutes of exercise you actually enjoy (not punishment).', ar: 'أنجز ٣٠ دقيقة تمرين تستمتع به فعلاً.' },
+  { en: 'Delete one app that wastes your time and note how it feels.', ar: 'احذف تطبيقاً يضيع وقتك ولاحظ شعورك.' },
+  { en: 'Plan the next 7 days in 10 minutes. Take a screenshot.', ar: 'خطط الأيام السبعة القادمة في ١٠ دقائق. خذ لقطة شاشة.' },
+  { en: 'Eat one meal without any screen. Fully present.', ar: 'تناول وجبة كاملة بدون شاشة. حضور كامل.' },
+  { en: 'Write a 3-line "anti-routine": what you will NOT do tomorrow.', ar: 'اكتب "روتيناً مضاداً": ما الذي لن تفعله غداً.' },
+  { en: 'Call someone who used to matter to you.', ar: 'اتصل بشخص كان يهمك يوماً ما.' },
+  { en: 'Do one thing you have been postponing for over a week.', ar: 'أنهِ شيئاً تؤجله منذ أكثر من أسبوع.' },
+  { en: 'Create a 1-minute morning ritual and actually do it.', ar: 'أنشئ طقس صباحي مدته دقيقة ونفّذه فعلاً.' },
+  { en: 'Write 5 things you are proud of. Read them aloud.', ar: 'اكتب ٥ أشياء تفتخر بها واقرأها بصوت عالٍ.' },
+  { en: 'Improve your sleep: no screens 30 minutes before bed.', ar: 'حسّن نومك: بلا شاشات قبل النوم ب٣٠ دقيقة.' },
+  { en: 'Do one "brave" thing that scares you a little.', ar: 'افعل شيئاً "شجاعاً" يخيفك قليلاً.' },
+  { en: 'Make a short list of people who lift you up. Thank one.', ar: 'اكتب قائمة الأشخاص الذين يرفعونك. اشكر واحداً.' },
+  { en: 'Do a digital detox for 2 hours and notice everything.', ar: 'افصل عن العالم الرقمي ساعتين ولاحظ كل شيء.' },
+  { en: 'Take a photo of what you did today and share why it matters.', ar: 'صوّر ما أنجزته اليوم وشارك سبب أهميته.' },
+  { en: 'Say one hard truth you have been avoiding.', ar: 'قل حقيقة صعبة كنت تتجنبها.' },
+  { en: 'Write down 10 ideas for your future. Keep all of them.', ar: 'اكتب ١٠ أفكار لمستقبلك. احتفظ بها كلها.' },
+];
+
+const CH_LIFE_POOL = [
+  { en: 'Do a full 5-hour personal "deep work" marathon on your biggest goal.', ar: 'أنجز ماراثون "عمل عميق" ٥ ساعات كاملة على هدفك الأكبر.' },
+  { en: 'Write a 30-day plan for your #1 life area and print/save it.', ar: 'اكتب خطة ٣٠ يوماً لأهم مجال في حياتك واحفظها.' },
+  { en: 'Complete a project you have been putting off and document it.', ar: 'أنهِ مشروعاً يؤجله منذ زمن وتوثّقه.' },
+  { en: 'Do a 24-hour challenge: no complaining, no negativity.', ar: 'تحدي ٢٤ ساعة: لا شكوى، لا سلبية.' },
+  { en: 'Create something (article, video, design) and publish it.', ar: 'أنشئ شيئاً (مقال، فيديو، تصميم) وانشره.' },
+  { en: 'Do 50 minutes of hard physical training that pushes you.', ar: 'أنجز ٥٠ دقيقة تمرين جسدي صعب يدفعك للحد.' },
+  { en: 'Have one deep, honest 1-hour conversation with someone important.', ar: 'اخض محادثة صادقة وعميقة لساعة مع شخص مهم.' },
+  { en: 'Reinvent your routine: design a "1% better" system for one life area.', ar: 'أعد تصميم روتينك: نظام "أفضل ١٪" لمجال واحد.' },
+  { en: 'Do something public that shows your progress. Be proud.', ar: 'افعل شيئاً علنياً يعرض تقدمك. كن فخوراً.' },
+  { en: 'Give 30 minutes to help someone achieve a goal.', ar: 'ساعد شخصاً لتحقيق هدفه لمدة ٣٠ دقيقة.' },
+  { en: 'Write your own 5-year vision and read it aloud.', ar: 'اكتب رؤيتك لخمس سنوات واقرأها بصوت عالٍ.' },
+  { en: 'Do one thing today that your future self will thank you for.', ar: 'افعل شيئاً يشكرك عليه "نسختك المستقبلية".' },
+];
+
+function chStage(day) {
+  if (day <= 10) return { key: 'starter', name_en: 'Starter', name_ar: 'البداية', tier: 'free', color: '#34d399' };
+  if (day <= 30) return { key: 'rise', name_en: 'Rise', name_ar: 'الصعود', tier: 'pro', color: '#c084fc' };
+  return { key: 'legend', name_en: 'Legend', name_ar: 'الأسطورة', tier: 'life', color: '#fbbf24' };
+}
+
+function chTaskFor(day, userId, lang) {
+  const stage = chStage(day);
+  let pool;
+  if (stage.tier === 'free') pool = CH_FREE_POOL;
+  else if (stage.tier === 'pro') pool = CH_PRO_POOL;
+  else pool = CH_LIFE_POOL;
+  const idx = Math.abs(((userId * 37 + day * 53) % 97) % pool.length);
+  const item = pool[idx];
+  return { day, tier: stage.tier, stage: stage, text: lang === 'ar' ? item.ar : item.en };
+}
+
+function chReward(day, streak) {
+  const base = 10 + Math.min(streak, 10); // streak bonus
+  const milestone = CH_MILESTONES[day] || 0;
+  const total = base + milestone;
+  return { base, milestone, total, bonus: streak > 1 ? `+${Math.min(streak, 10)} streak` : null };
+}
 
 app.get('/api/challenge', auth, async (req, res) => {
   const u = req.user;
   const started = !!u.challenge_start;
   const day = u.challenge_day || 0;
   const completed = u.challenge_completed;
+  const plan = u.plan || 'free';
+  const lang = req.query.lang || u.locale || 'en';
   const logs = await db.all('SELECT day_number, status, note, created_at FROM challenge_logs WHERE user_id = ? ORDER BY day_number ASC', [u.id]);
-  const today = started && !completed ? Math.min(day + 1, 21) : day;
-  const task = started ? CHALLENGE_DAYS[Math.min(day, 20)] : null;
+  const maxAllowed = plan === 'life' ? CH_TOTAL_DAYS : (plan === 'pro' ? CH_PRO_DAYS : CH_FREE_DAYS);
+  const total = CH_TOTAL_DAYS;
+  const canContinue = started && !completed && (day < maxAllowed);
+  const needUpgrade = started && !completed && (day >= maxAllowed) && (maxAllowed < total);
+  const today = started && !completed ? Math.min(day + 1, maxAllowed) : day;
+  const task = (started && !completed && canContinue) ? chTaskFor(Math.min(day + 1, maxAllowed), u.id, lang) : null;
+  const nextStage = started && !completed && canContinue ? chStage(Math.min(day + 1, maxAllowed)) : null;
   res.json({
     started, completed, streak: u.challenge_streak || 0, points: u.challenge_points || 0,
-    day, today, task, logs,
-    full_task: task,
+    day, today, task, logs, plan, maxAllowed, total, needUpgrade, canContinue,
+    stage: nextStage, all_stages: ['starter', 'rise', 'legend'],
+    reward: task ? chReward(Math.min(day + 1, maxAllowed), (u.challenge_streak || 0) + 1) : null,
     share_text: started
-      ? `I'm on Day ${day + 1} of the LifeOS AI 21-Day Life Challenge 🚀 #LifeOS21 #مرشد_حياتك`
-      : 'I just joined the LifeOS AI 21-Day Life Challenge 🚀 #LifeOS21 #مرشد_حياتك',
+      ? `I'm on Day ${Math.min(day + 1, maxAllowed)} of the LifeOS 40-Day Life Mountain 🚀 ${chStage(Math.min(day + 1, maxAllowed)).name_en} #LifeOS40 #مرشد_حياتك`
+      : 'I just joined the LifeOS 40-Day Life Mountain 🚀 #LifeOS40 #مرشد_حياتك',
   });
 });
 
@@ -636,17 +717,26 @@ app.post('/api/challenge/start', auth, async (req, res) => {
 app.post('/api/challenge/checkin', auth, async (req, res) => {
   const u = req.user;
   if (u.challenge_completed) return res.status(400).json({ error: 'already_completed' });
+  const plan = u.plan || 'free';
+  const maxAllowed = plan === 'life' ? CH_TOTAL_DAYS : (plan === 'pro' ? CH_PRO_DAYS : CH_FREE_DAYS);
   const day = (u.challenge_day || 0) + 1;
+  if (day > maxAllowed) return res.status(403).json({ error: 'upgrade_required', message: 'Upgrade to continue this challenge.' });
   const doneToday = await db.get('SELECT id FROM challenge_logs WHERE user_id = ? AND day_number = ? AND status = ?', [u.id, day, 'done']);
   if (doneToday) return res.status(400).json({ error: 'already_checked' });
   const note = (req.body && req.body.note || '').toString().slice(0, 200);
   await db.run('INSERT INTO challenge_logs (user_id, day_number, status, note) VALUES (?, ?, ?, ?)', [u.id, day, 'done', note]);
-  const completed = day >= 21 ? 1 : 0;
-  const points = (u.challenge_points || 0) + (day === 21 ? 50 : 10);
+  const reward = chReward(day, (u.challenge_streak || 0) + 1);
+  const completed = day >= CH_TOTAL_DAYS ? 1 : 0;
+  const points = (u.challenge_points || 0) + reward.total;
   const streak = (u.challenge_streak || 0) + 1;
   await db.run('UPDATE users SET challenge_day = ?, challenge_points = ?, challenge_streak = ?, challenge_completed = ? WHERE id = ?', [day, points, streak, completed, u.id]);
   const fresh = await db.get('SELECT * FROM users WHERE id = ?', [u.id]);
-  res.json({ ok: true, challenge: { day: fresh.challenge_day, points: fresh.challenge_points, streak: fresh.challenge_streak, completed: !!fresh.challenge_completed }, task: completed ? null : CHALLENGE_DAYS[Math.min(fresh.challenge_day, 20)] });
+  res.json({
+    ok: true, reward,
+    challenge: { day: fresh.challenge_day, points: fresh.challenge_points, streak: fresh.challenge_streak, completed: !!fresh.challenge_completed },
+    task: (completed || fresh.challenge_day >= maxAllowed) ? null : chTaskFor(fresh.challenge_day + 1, u.id, u.locale),
+    needUpgrade: fresh.challenge_day >= maxAllowed && maxAllowed < CH_TOTAL_DAYS,
+  });
 });
 
 app.post('/api/challenge/skip', auth, async (req, res) => {
