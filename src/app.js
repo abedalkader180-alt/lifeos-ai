@@ -238,13 +238,15 @@ function devCodeAllowed() {
 }
 function deliveryPayload(result, email, code) {
   const out = { delivery: result.mode || 'unconfigured', delivery_sent: !!result.sent, detail: result.detail || null };
-  // Expose the code when a real email could not be sent and testing mode is enabled,
-  // so the signup flow never dead-ends or returns a bare "internal error".
-  if (devCodeAllowed() && (result.mode === 'unconfigured' || result.mode === 'error')) {
+  // Expose the code whenever it may not have reached the inbox, so the signup flow
+  // never dead-ends or returns a bare "internal error".
+  if (devCodeAllowed() && (result.mode === 'unconfigured' || result.mode === 'error' || result.mode === 'timeout')) {
     out.dev_code = code || result.dev_code;
-    out.dev_note = result.mode === 'error'
-      ? 'Email could not be sent yet. Code shown here for testing.'
-      : 'No email provider configured yet: verification is in testing mode. Set RESEND_API_KEY or SMTP_* to send real emails.';
+    out.dev_note = result.mode === 'smtp'
+      ? 'Email send timed out. Use the code below for now.'
+      : result.mode === 'error'
+        ? 'Email could not be sent yet. Use the code below for testing.'
+        : 'No email provider configured. Use the code below for testing.';
   }
   return { ...out, email };
 }
@@ -253,8 +255,12 @@ async function sendCode(user, lang) {
   const code = makeVerifyCode();
   const expires = verifyExpiry();
   await db.run('UPDATE users SET verify_code = ?, verify_expires = ?, verify_attempts = 0 WHERE id = ?', [code, expires, user.id]);
-  const result = await mail.sendVerificationCode(user.email, code, lang);
-  if (result.mode === 'unconfigured') result.dev_code = code;
+  // Try to email, but never block the response waiting for a slow/failing provider.
+  const result = await Promise.race([
+    mail.sendVerificationCode(user.email, code, lang).catch(e => ({ sent: false, mode: 'error', detail: 'Email failed: ' + e.message })),
+    new Promise(resolve => setTimeout(() => resolve({ sent: false, mode: 'timeout', detail: 'Email sending timed out. Code shown for testing.' }), 2500)),
+  ]);
+  if (result.mode === 'unconfigured' || result.mode === 'error' || result.mode === 'timeout') result.dev_code = code;
   return { code, result };
 }
 

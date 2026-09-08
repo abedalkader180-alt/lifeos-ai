@@ -89,6 +89,7 @@
         <p class="text-center text-gray-400 mt-4 text-sm">Have account? <button onclick="showLogin()" class="text-purple-400 underline">Log in</button></p>
       </div>
       <p id="authErr" class="text-red-400 text-center text-sm mt-3 min-h-4"></p>
+      <div id="authSpinner" class="hidden flex items-center justify-center gap-2 text-sm text-purple-300 mt-2"><span class="w-2 h-2 bg-purple-400 rounded-full dot"></span><span class="w-2 h-2 bg-purple-400 rounded-full dot"></span><span class="w-2 h-2 bg-purple-400 rounded-full dot"></span><span data-k="loading">Please wait...</span></div>
       <button onclick="toggleLang()" id="langBtn" class="mt-2 w-full text-gray-400 text-sm hover:text-white">العربية</button>
       <div class="text-center text-xs text-gray-500 mt-4"><span data-k="auth_providers">Use any email: Gmail · iCloud · Outlook · Yahoo · Zoho</span></div>
     </div>
@@ -306,7 +307,7 @@ const I18 = {
     refer:"Refer & earn", refer_title:"Invite friends, earn rewards", refer_p:"Share your link. When a friend joins and upgrades, you both get a bonus.", copy:"Copy", ref_count:(n)=>`You invited ${n} ${n===1?'person':'people'} so far.`,
     send_to:"Send exact amount to:", tx_label:"Transaction hash (TX)", submit_pay:"I paid — submit for review", coupon_label:"Have a launch coupon?", apply_coupon:"Apply", coupon_on:"Coupon applied: 50% off", coupon_err:"Invalid coupon",
     free_chat_left:"chats left today", done:"Done", target:"target", t_free:"Free", greeting:"Welcome", upd:"Upgrade to Pro", title_dash:"Dashboard", title_chat:"AI Assistant", title_tasks:"Tasks", title_habits:"Habits", title_pricing:"Upgrade", title_refer:"Refer & earn", copied:"Copied!",
-    verify_title:"Verify your email", verify_sub:"We sent a 6-digit code to", verify_btn:"Confirm code", verify_no:"Didn't get it?", verify_resend:"Resend code", verify_providers:"Works with Gmail, iCloud, Outlook, Yahoo, Zoho and any email.", verify_ok:"Verifying...", verify_sent:"New code sent.", auth_providers:"Use any email: Gmail · iCloud · Outlook · Yahoo · Zoho" },
+    verify_title:"Verify your email", verify_sub:"We sent a 6-digit code to", verify_btn:"Confirm code", verify_no:"Didn't get it?", verify_resend:"Resend code", verify_providers:"Works with Gmail, iCloud, Outlook, Yahoo, Zoho and any email.", verify_ok:"Verifying...", verify_sent:"New code sent.", auth_providers:"Use any email: Gmail · iCloud · Outlook · Yahoo · Zoho", loading:"Please wait..." },
   ar:{ dash:"الرئيسية", chat:"المساعد الذكي", tasks:"المهام", habits:"العادات", upgrade:"الاشتراك", add:"إضافة", buy_pro:"اشترك بـ USDT", buy_life:"اختر حياة",
     t_tasks:"مهام اليوم", t_habits:"العادات المنجزة", t_plan:"خطتك", t_ai:"محادثات الذكاء المتبقية",
     d_ai_hint:"اطلب من الذكاء بناء يومك", d_ai_p:"اذهب إلى المساعد الذكي واحكي له أهدافك ومشاكلك، وسيبني لك خطة عملية.", d_ai_btn:"افتح المساعد الذكي",
@@ -318,7 +319,7 @@ const I18 = {
     refer:"ادعُ واربح", refer_title:"ادعُ أصدقاءك واربح مكافآت", refer_p:"شارك رابطك. عندما ينضم صديق ويشترك، تحصلان معاً على مكافأة.", copy:"نسخ", ref_count:(n)=>`دعوت ${n} ${n===1?'شخص':'أشخاص'} حتى الآن.`,
     send_to:"أرسل المبلغ بالضبط إلى:", tx_label:"Hash المعاملة (TX)", submit_pay:"دفعت — أرسل للمراجعة", coupon_label:"عندك كوبون إطلاق؟", apply_coupon:"تطبيق", coupon_on:"تم تطبيق الكوبون: خصم 50%", coupon_err:"كوبون غير صحيح",
     free_chat_left:"محادثات متبقية اليوم", done:"تم", target:"الهدف", t_free:"مجاني", greeting:"أهلاً", upd:"طوّر إلى برو", title_dash:"الرئيسية", title_chat:"المساعد الذكي", title_tasks:"المهام", title_habits:"العادات", title_pricing:"الاشتراك", title_refer:"ادعُ واربح", copied:"تم النسخ!",
-    verify_title:"أكّد بريدك الإلكتروني", verify_sub:"أرسلنا رمزاً من 6 أرقام إلى", verify_btn:"تأكيد الرمز", verify_no:"لم يصلك؟", verify_resend:"أعد إرسال الرمز", verify_providers:"يدعم Gmail و iCloud و Outlook و Yahoo و Zoho وأي بريد آخر.", verify_ok:"جاري التحقق...", verify_sent:"تم إرسال رمز جديد.", auth_providers:"استخدم أي بريد: Gmail · iCloud · Outlook · Yahoo · Zoho" }
+    verify_title:"أكّد بريدك الإلكتروني", verify_sub:"أرسلنا رمزاً من 6 أرقام إلى", verify_btn:"تأكيد الرمز", verify_no:"لم يصلك؟", verify_resend:"أعد إرسال الرمز", verify_providers:"يدعم Gmail و iCloud و Outlook و Yahoo و Zoho وأي بريد آخر.", verify_ok:"جاري التحقق...", verify_sent:"تم إرسال رمز جديد.", auth_providers:"استخدم أي بريد: Gmail · iCloud · Outlook · Yahoo · Zoho", loading:"لحظة من فضلك..." }
 };
 let lang = localStorage.getItem('lifeos_lang') || 'en';
 let token = localStorage.getItem('lifeos_token') || '';
@@ -339,10 +340,12 @@ function toggleLang(){ lang=lang==='ar'?'en':'ar'; localStorage.setItem('lifeos_
 function showRegister(){ var a=document.getElementById('loginForm'); var b=document.getElementById('regForm'); if(a){a.classList.add('hidden'); a.style.display='none';} if(b){b.classList.remove('hidden'); b.style.display='block';} authErr(''); }
 function showLogin(){ var a=document.getElementById('regForm'); var b=document.getElementById('loginForm'); if(a){a.classList.add('hidden'); a.style.display='none';} if(b){b.classList.remove('hidden'); b.style.display='block';} authErr(''); }
 function authErr(m){ document.getElementById('authErr').textContent = m || ''; }
-async function doLogin(){ const email=val('email'),password=val('password'); if(!email||!password)return authErr(lang==='ar'?'أدخل الإيميل وكلمة المرور':'Enter email and password'); authErr(''); try{ const r=await api('/api/auth/login',{email,password}); setAuth(r); }catch(e){ if(e.data&&e.data.error==='email_not_verified'){ showVerify(email,e.data.dev_code,e.data.dev_note); } else authErr(e.message); } }
-async function doRegister(){ const name=val('rName'),email=val('rEmail'),password=val('rPassword'); if(!name||!email||!password)return authErr(lang==='ar'?'أكمل البيانات':'Fill all fields'); authErr(''); try{ const r=await api('/api/auth/register',{name,email,password,locale:lang}); if(r.needs_verification){ showVerify(r.email,r.dev_code,r.dev_note); } else setAuth(r); }catch(e){ if(e.data&&e.data.error==='email_not_verified'){ showVerify(email,e.data.dev_code,e.data.dev_note); } else authErr(e.message||(lang==='ar'?'حدث خطأ غير متوقع':'Unexpected error')); } }
+function setBusy(on){ try{ const s=document.getElementById('authSpinner'); if(s){ s.classList.toggle('hidden',!on); s.style.display=on?'flex':'none'; } }catch(e){} }
+async function doLogin(){ const email=val('email'),password=val('password'); if(!email||!password)return authErr(lang==='ar'?'أدخل الإيميل وكلمة المرور':'Enter email and password'); authErr(''); setBusy(true); try{ const r=await api('/api/auth/login',{email,password}); setAuth(r); }catch(e){ if(e.data&&e.data.error==='email_not_verified'){ showVerify(email,e.data.dev_code,e.data.dev_note); } else authErr(e.message); } finally{ setBusy(false); } }
+async function doRegister(){ const name=val('rName'),email=val('rEmail'),password=val('rPassword'); if(!name||!email||!password)return authErr(lang==='ar'?'أكمل البيانات':'Fill all fields'); authErr(''); setBusy(true); try{ const r=await api('/api/auth/register',{name,email,password,locale:lang}); if(r.needs_verification){ showVerify(r.email,r.dev_code,r.dev_note); } else setAuth(r); }catch(e){ if(e.data&&e.data.error==='email_not_verified'){ showVerify(email,e.data.dev_code,e.data.dev_note); } else authErr(e.message||(lang==='ar'?'حدث خطأ غير متوقع':'Unexpected error')); } finally{ setBusy(false); } }
 
 let pendingEmail='';
+function UserEmailLocal(){ try { const u=localStorage.getItem('lifeos_user'); if(u){ const o=JSON.parse(u); if(o && o.email) return o.email; } } catch(e){} return ''; }
 function showVerify(email, devCode, devNote){
   pendingEmail=email||'';
   document.getElementById('verifyEmail').textContent=pendingEmail;
@@ -492,8 +495,9 @@ window.addEventListener('error', function(ev){
       showMain();
       await refreshUI();
     }catch(error){
-      const msg = String(error && error.message || error);
+      const msg = String(error && (error.message||error) || '');
       if(msg.includes('Unauthorized')){ logout(); }
+      else if(msg.includes('email_not_verified')){ showVerify(UserEmailLocal(), null, ''); }
       else { authErr(lang==='ar' ? 'يوجد خطأ في الخادم: '+msg : 'Server error: '+msg); }
     }
   }
