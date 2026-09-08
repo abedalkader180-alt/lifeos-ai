@@ -31,6 +31,8 @@ function tokenFor(user) {
 
 function publicUser(u) {
   const isOwner = u.email.toLowerCase() === OWNER_EMAIL;
+  let life_profile = null;
+  try { life_profile = u.life_profile ? JSON.parse(u.life_profile) : null; } catch (e) {}
   return {
     id: u.id,
     email: u.email,
@@ -39,6 +41,13 @@ function publicUser(u) {
     plan: u.plan,
     plan_until: u.plan_until,
     is_owner: isOwner,
+    life_mode: (u.life_mode || 'general'),
+    life_profile,
+    challenge_start: u.challenge_start,
+    challenge_day: u.challenge_day || 0,
+    challenge_streak: u.challenge_streak || 0,
+    challenge_points: u.challenge_points || 0,
+    challenge_completed: !!(u.challenge_completed),
   };
 }
 
@@ -570,6 +579,83 @@ app.post('/api/chat', auth, async (req, res) => {
   await db.run('INSERT INTO conversations (user_id, role, content) VALUES (?, ?, ?)', [req.user.id, 'ai', response]);
 
   res.json({ reply: response });
+});
+
+// ===== LifeOS 21 challenge =====
+const CHALLENGE_DAYS = [
+  { en: 'Write down your #1 goal in one sentence.', ar: 'اكتب هدفك الأول في جملة واحدة.' },
+  { en: 'Pick the 3 most important tasks for today.', ar: 'اختر أهم ٣ مهام لهذا اليوم.' },
+  { en: 'Do 20 minutes of deep, focused work.', ar: 'أنجز ٢٠ دقيقة عمل عميق ومركّز.' },
+  { en: 'Drink 8 glasses of water today.', ar: 'اشرب ٨ أكواب ماء اليوم.' },
+  { en: 'Walk at least 15 minutes outside.', ar: 'امشِ ١٥ دقيقة على الأقل في الخارج.' },
+  { en: 'Review your week: what went well, what to change?', ar: 'راجع أسبوعك: ما الذي نجح، وما الذي تريد تغييره؟' },
+  { en: 'Remove one distraction from your routine today.', ar: 'أزل مشتّتاً واحداً من روتينك اليوم.' },
+  { en: 'Do one small thing for your health.', ar: 'اعمل شيئاً صغيراً لصحتك اليوم.' },
+  { en: 'Message or call someone you care about.', ar: 'تواصل مع شخص تهتم لأمره اليوم.' },
+  { en: 'Plan tomorrow tonight before you sleep.', ar: 'خطط ليومك غداً قبل النوم.' },
+  { en: 'Read or listen to something useful for 10 minutes.', ar: 'اقرأ أو اسمع شيئاً مفيداً ١٠ دقائق.' },
+  { en: 'Say no to one thing that drains you.', ar: 'قل لا لشيء يستنزف طاقتك.' },
+  { en: 'Do a 5-minute brain reset: breathe, stretch, refocus.', ar: 'خذ استراحة ٥ دقائق: تنفّس، تمدّد، أعد التركيز.' },
+  { en: 'Write 3 things you are grateful for.', ar: 'اكتب ٣ أشياء أنت ممتن لها.' },
+  { en: 'Finish one task you have been avoiding.', ar: 'أنهِ مهمة كنت تؤجلها.' },
+  { en: 'Improve your sleep routine tonight.', ar: 'حسّن روتين نومك الليلة.' },
+  { en: 'Do one act of kindness, big or small.', ar: 'قدّم لطفاً واحداً، كبيراً أو صغيراً.' },
+  { en: 'Set one realistic goal for next week.', ar: 'ضع هدفاً واقعياً واحداً للأسبوع القادم.' },
+  { en: 'Optimize one system in your life (money, time, space).', ar: 'حسّن نظاماً واحداً في حياتك (مال، وقت، مساحة).' },
+  { en: 'Create a simple daily routine you can keep.', ar: 'أنشئ روتيناً يومياً بسيطاً تستطيع الالتزام به.' },
+  { en: 'Reflect: write 3 sentences for the version of you in 3 months.', ar: 'تأمل: اكتب ٣ جمل لنسختك بعد ٣ أشهر.' },
+];
+
+app.get('/api/challenge', auth, async (req, res) => {
+  const u = req.user;
+  const started = !!u.challenge_start;
+  const day = u.challenge_day || 0;
+  const completed = u.challenge_completed;
+  const logs = await db.all('SELECT day_number, status, note, created_at FROM challenge_logs WHERE user_id = ? ORDER BY day_number ASC', [u.id]);
+  const today = started && !completed ? Math.min(day + 1, 21) : day;
+  const task = started ? CHALLENGE_DAYS[Math.min(day, 20)] : null;
+  res.json({
+    started, completed, streak: u.challenge_streak || 0, points: u.challenge_points || 0,
+    day, today, task, logs,
+    full_task: task,
+    share_text: started
+      ? `I'm on Day ${day + 1} of the LifeOS AI 21-Day Life Challenge 🚀 #LifeOS21 #مرشد_حياتك`
+      : 'I just joined the LifeOS AI 21-Day Life Challenge 🚀 #LifeOS21 #مرشد_حياتك',
+  });
+});
+
+app.post('/api/challenge/start', auth, async (req, res) => {
+  const u = req.user;
+  if (!u.challenge_start) {
+    await db.run('UPDATE users SET challenge_start = ?, challenge_day = 0, challenge_streak = 0, challenge_points = 10, challenge_completed = 0 WHERE id = ?', [new Date().toISOString(), u.id]);
+  }
+  const fresh = await db.get('SELECT * FROM users WHERE id = ?', [u.id]);
+  res.json({ ok: true, challenge: { started: !!fresh.challenge_start, day: fresh.challenge_day, points: fresh.challenge_points, streak: fresh.challenge_streak } });
+});
+
+app.post('/api/challenge/checkin', auth, async (req, res) => {
+  const u = req.user;
+  if (u.challenge_completed) return res.status(400).json({ error: 'already_completed' });
+  const day = (u.challenge_day || 0) + 1;
+  const doneToday = await db.get('SELECT id FROM challenge_logs WHERE user_id = ? AND day_number = ? AND status = ?', [u.id, day, 'done']);
+  if (doneToday) return res.status(400).json({ error: 'already_checked' });
+  const note = (req.body && req.body.note || '').toString().slice(0, 200);
+  await db.run('INSERT INTO challenge_logs (user_id, day_number, status, note) VALUES (?, ?, ?, ?)', [u.id, day, 'done', note]);
+  const completed = day >= 21 ? 1 : 0;
+  const points = (u.challenge_points || 0) + (day === 21 ? 50 : 10);
+  const streak = (u.challenge_streak || 0) + 1;
+  await db.run('UPDATE users SET challenge_day = ?, challenge_points = ?, challenge_streak = ?, challenge_completed = ? WHERE id = ?', [day, points, streak, completed, u.id]);
+  const fresh = await db.get('SELECT * FROM users WHERE id = ?', [u.id]);
+  res.json({ ok: true, challenge: { day: fresh.challenge_day, points: fresh.challenge_points, streak: fresh.challenge_streak, completed: !!fresh.challenge_completed }, task: completed ? null : CHALLENGE_DAYS[Math.min(fresh.challenge_day, 20)] });
+});
+
+app.post('/api/challenge/skip', auth, async (req, res) => {
+  const u = req.user;
+  const day = (u.challenge_day || 0) + 1;
+  await db.run('INSERT INTO challenge_logs (user_id, day_number, status, note) VALUES (?, ?, ?, ?)', [u.id, day, 'skipped', 'skipped']);
+  await db.run('UPDATE users SET challenge_day = ?, challenge_streak = 0 WHERE id = ?', [day, u.id]);
+  const fresh = await db.get('SELECT * FROM users WHERE id = ?', [u.id]);
+  res.json({ ok: true, challenge: { day: fresh.challenge_day, streak: fresh.challenge_streak, points: fresh.challenge_points } });
 });
 
 // ===== checkout / payments =====

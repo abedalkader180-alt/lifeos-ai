@@ -124,6 +124,7 @@
           <a id="nav-dashboard" onclick="go('dashboard')" class="side active flex items-center gap-3 px-3 py-2.5 rounded-lg cursor-pointer text-sm"><i data-lucide="layout-dashboard" class="w-5 h-5"></i><span class="hide-m" data-k="dash">Dashboard</span></a>
           <a id="nav-chat" onclick="go('chat')" class="side flex items-center gap-3 px-3 py-2.5 rounded-lg cursor-pointer text-sm"><i data-lucide="message-square" class="w-5 h-5"></i><span class="hide-m" data-k="chat">AI Assistant</span></a>
           <a id="nav-tasks" onclick="go('tasks')" class="side flex items-center gap-3 px-3 py-2.5 rounded-lg cursor-pointer text-sm"><i data-lucide="check-square" class="w-5 h-5"></i><span class="hide-m" data-k="tasks">Tasks</span></a>
+          <a id="nav-challenge" onclick="go('challenge')" class="side flex items-center gap-3 px-3 py-2.5 rounded-lg cursor-pointer text-sm"><i data-lucide="flame" class="w-5 h-5 text-orange-400"></i><span class="hide-m" data-k="challenge">21-Day Challenge</span></a>
           <a id="nav-habits" onclick="go('habits')" class="side flex items-center gap-3 px-3 py-2.5 rounded-lg cursor-pointer text-sm"><i data-lucide="trending-up" class="w-5 h-5"></i><span class="hide-m" data-k="habits">Habits</span></a>
           <a id="nav-pricing" onclick="go('pricing')" class="side flex items-center gap-3 px-3 py-2.5 rounded-lg cursor-pointer text-sm"><i data-lucide="wallet" class="w-5 h-5"></i><span class="hide-m" data-k="upgrade">Upgrade</span></a>
           <a id="nav-refer" onclick="go('refer')" class="side flex items-center gap-3 px-3 py-2.5 rounded-lg cursor-pointer text-sm"><i data-lucide="share-2" class="w-5 h-5"></i><span class="hide-m" data-k="refer">Refer & earn</span></a>
@@ -237,6 +238,40 @@
           </div>
         </div>
 
+        <!-- 21-Day Challenge -->
+        <div id="s-challenge" class="hidden">
+          <div class="glass rounded-2xl p-6 mb-6">
+            <div class="flex items-center justify-between mb-3">
+              <h3 class="text-xl font-bold flex items-center gap-2"><i data-lucide="flame" class="w-6 h-6 text-orange-400"></i><span data-k="ch_title">LifeOS 21-Day Challenge</span></h3>
+              <span id="chBadge" class="text-xs px-3 py-1 rounded-full bg-orange-500/20 text-orange-300 border border-orange-400/30"></span>
+            </div>
+            <p class="text-gray-400 text-sm mb-4" data-k="ch_sub">One small real-action task each day. Build streaks, earn a Life Score, and stage a real transformation.</p>
+            <div class="flex gap-2 items-center mb-4">
+              <div class="flex-1 h-3 bg-white/10 rounded-full overflow-hidden"><div id="chBar" class="h-full bg-gradient-to-r from-orange-400 to-purple-500 rounded-full" style="width:0%"></div></div>
+              <span id="chPct" class="text-sm text-orange-300 font-semibold">0%</span>
+            </div>
+            <div id="chNotStarted" class="text-center py-6">
+              <div class="text-4xl mb-2">🚀</div>
+              <button onclick="startChallenge()" class="btn bg-orange-500 hover:bg-orange-600 px-6 py-3 rounded-full font-bold" data-k="ch_start">Start the 21-Day Challenge</button>
+              <p class="text-gray-400 text-xs mt-3" data-k="ch_start_sub">No account limits. Just show up every day.</p>
+            </div>
+            <div id="chActive" class="hidden">
+              <div class="flex gap-4 mb-4">
+                <div class="stat"><div class="lab" data-k="ch_day">Day</div><div class="val" id="chDay" style="color:#fb923c">0/21</div></div>
+                <div class="stat"><div class="lab" data-k="ch_streak">Streak</div><div class="val" id="chStreak" style="color:#4ade80">0</div></div>
+                <div class="stat"><div class="lab" data-k="ch_points">Life Score</div><div class="val" id="chPoints" style="color:#c084fc">0</div></div>
+              </div>
+              <div class="glass rounded-xl p-5 border border-orange-400/30">
+                <div class="text-xs text-orange-300 mb-2" data-k="today_task">TODAY'S TASK</div>
+                <p id="chTask" class="text-lg font-semibold text-white mb-4"></p>
+                <button onclick="challengeCheckin()" class="btn bg-green-600 hover:bg-green-700 w-full py-2.5 rounded-full font-semibold" data-k="ch_done">I did it today ✅</button>
+                <button onclick="challengeSkip()" class="btn-ghost w-full mt-2 py-2 rounded-full text-gray-400" data-k="ch_skip">Skip today</button>
+              </div>
+              <button onclick="shareChallenge()" class="btn-ghost mt-4 w-full py-3 rounded-full" style="background:rgba(59,130,246,.12);border:1px solid rgba(59,130,246,.3);"><span data-k="ch_share">Share my progress</span> 📣</button>
+            </div>
+          </div>
+        </div>
+
         <!-- Pricing -->
         <div id="s-pricing" class="hidden">
           <p class="text-gray-400 mb-6" data-k="price_intro">Upgrade your plan by sending USDT (TRC20) from your Trust Wallet. We verify each payment manually.</p>
@@ -308,7 +343,7 @@ const I18 = {
     price_intro:"Upgrade your plan by sending USDT (TRC20) from your Trust Wallet. We verify each payment manually.",
     refer:"Refer & earn", refer_title:"Invite friends, earn rewards", refer_p:"Share your link. When a friend joins and upgrades, you both get a bonus.", copy:"Copy", ref_count:(n)=>`You invited ${n} ${n===1?'person':'people'} so far.`,
     send_to:"Send exact amount to:", tx_label:"Transaction hash (TX)", submit_pay:"I paid — submit for review", coupon_label:"Have a launch coupon?", apply_coupon:"Apply", coupon_on:"Coupon applied: 50% off", coupon_err:"Invalid coupon",
-    free_chat_left:"chats left today", done:"Done", target:"target", t_free:"Free", greeting:"Welcome", upd:"Upgrade to Pro", title_dash:"Dashboard", title_chat:"AI Assistant", title_tasks:"Tasks", title_habits:"Habits", title_pricing:"Upgrade", title_refer:"Refer & earn", copied:"Copied!",
+    free_chat_left:"chats left today", done:"Done", target:"target", t_free:"Free", greeting:"Welcome", upd:"Upgrade to Pro", title_dash:"Dashboard", title_chat:"AI Assistant", title_tasks:"Tasks", title_habits:"Habits", title_pricing:"Upgrade", title_refer:"Refer & earn", title_challenge:"21-Day Challenge", challenge:"21-Day Challenge", ch_title:"LifeOS 21-Day Challenge", ch_sub:"One small real-action task each day. Build streaks, earn a Life Score, and stage a real transformation.", ch_start:"Start the 21-Day Challenge", ch_start_sub:"No limits. Just show up every day.", ch_day:"Day", ch_streak:"Streak", ch_points:"Life Score", today_task:"TODAY'S TASK", ch_done:"I did it today ✅", ch_skip:"Skip today", ch_share:"Share my progress", copied:"Copied!",
     verify_title:"Verify your email", verify_sub:"We sent a 6-digit code to", verify_btn:"Confirm code", verify_no:"Didn't get it?", verify_resend:"Resend code", verify_back:"← Back to login / create account", verify_providers:"Works with Gmail, iCloud, Outlook, Yahoo, Zoho and any email.", verify_ok:"Verifying...", verify_sent:"New code sent.", auth_providers:"Use any email: Gmail · iCloud · Outlook · Yahoo · Zoho", loading:"Please wait..." },
   ar:{ dash:"الرئيسية", chat:"المساعد الذكي", tasks:"المهام", habits:"العادات", upgrade:"الاشتراك", add:"إضافة", buy_pro:"اشترك بـ USDT", buy_life:"اختر حياة",
     t_tasks:"مهام اليوم", t_habits:"العادات المنجزة", t_plan:"خطتك", t_ai:"محادثات الذكاء المتبقية",
@@ -320,7 +355,7 @@ const I18 = {
     price_intro:"طوّر خطتك بإرسال USDT (TRC20) من محفظة Trust Wallet. نتحقق من كل دفعة يدوياً.",
     refer:"ادعُ واربح", refer_title:"ادعُ أصدقاءك واربح مكافآت", refer_p:"شارك رابطك. عندما ينضم صديق ويشترك، تحصلان معاً على مكافأة.", copy:"نسخ", ref_count:(n)=>`دعوت ${n} ${n===1?'شخص':'أشخاص'} حتى الآن.`,
     send_to:"أرسل المبلغ بالضبط إلى:", tx_label:"Hash المعاملة (TX)", submit_pay:"دفعت — أرسل للمراجعة", coupon_label:"عندك كوبون إطلاق؟", apply_coupon:"تطبيق", coupon_on:"تم تطبيق الكوبون: خصم 50%", coupon_err:"كوبون غير صحيح",
-    free_chat_left:"محادثات متبقية اليوم", done:"تم", target:"الهدف", t_free:"مجاني", greeting:"أهلاً", upd:"طوّر إلى برو", title_dash:"الرئيسية", title_chat:"المساعد الذكي", title_tasks:"المهام", title_habits:"العادات", title_pricing:"الاشتراك", title_refer:"ادعُ واربح", copied:"تم النسخ!",
+    free_chat_left:"محادثات متبقية اليوم", done:"تم", target:"الهدف", t_free:"مجاني", greeting:"أهلاً", upd:"طوّر إلى برو", title_dash:"الرئيسية", title_chat:"المساعد الذكي", title_tasks:"المهام", title_habits:"العادات", title_pricing:"الاشتراك", title_refer:"ادعُ واربح", title_challenge:"تحدي 21 يوم", challenge:"تحدي 21 يوم", ch_title:"تحدي حياتك 21 يوماً", ch_sub:"مهمة صغيرة حقيقية كل يوم. ابنِ سلسلة أيام، واكسب نقاط حياة، وصنع تحوّل حقيقي.", ch_start:"ابدأ تحدي 21 يوماً", ch_start_sub:"بلا حدود. فقط التزم كل يوم.", ch_day:"اليوم", ch_streak:"السلسلة", ch_points:"نقاط الحياة", today_task:"مهمة اليوم", ch_done:"أنجزتها اليوم ✅", ch_skip:"تخطّي اليوم", ch_share:"شارك تقدمي", copied:"تم النسخ!",
     verify_title:"أكّد بريدك الإلكتروني", verify_sub:"أرسلنا رمزاً من 6 أرقام إلى", verify_btn:"تأكيد الرمز", verify_no:"لم يصلك؟", verify_resend:"أعد إرسال الرمز", verify_back:"← رجوع إلى تسجيل الدخول / إنشاء حساب", verify_providers:"يدعم Gmail و iCloud و Outlook و Yahoo و Zoho وأي بريد آخر.", verify_ok:"جاري التحقق...", verify_sent:"تم إرسال رمز جديد.", auth_providers:"استخدم أي بريد: Gmail · iCloud · Outlook · Yahoo · Zoho", loading:"لحظة من فضلك..." }
 };
 let lang = localStorage.getItem('lifeos_lang') || 'en';
@@ -396,7 +431,7 @@ function val(id){ return document.getElementById(id).value.trim(); }
 async function api(path, body, method='POST'){ const res=await fetch(path,{method,headers:{'Content-Type':'application/json',...(token?{Authorization:'Bearer '+token}:{})},body:body?JSON.stringify(body):undefined}); const data=await res.json().catch(()=>({})); if(!res.ok){ const err=new Error(data&&data.error||'Error'); err.data=data; if(data.error==='free_daily_limit') err.message=(lang==='ar'?'وصلت للحد المجاني اليوم':'You reached the free daily AI limit.'); else if(data.error==='email_not_verified') err.message=(lang==='ar'?'حسابك مفعّل، حاول الدخول مجدداً.':'Your account is active, try logging in again.'); else if(data.error==='invalid_code') err.message=(lang==='ar'?'الرمز غير صحيح':'Incorrect code.'); else if(data.error==='code_expired') err.message=(lang==='ar'?'انتهت صلاحية الرمز':'Code expired.'); else if(data.error==='too_many_attempts') err.message=(lang==='ar'?'محاولات كثيرة، اطلب رمزاً جديداً':'Too many attempts.'); else if(data.error==='already_verified') err.message=(lang==='ar'?'الحساب موثّق مسبقاً':'Already verified.'); else err.message=(data&&data.message)||data.error||'Error'; throw err; } return data; }
 
 // UI
-function go(name){ ['dashboard','chat','tasks','habits','pricing','refer'].forEach(n=>{ document.getElementById('s-'+n).classList.toggle('hidden', n!==name); }); document.getElementById('pageTitle').textContent = t('title_'+name); ['dashboard','chat','tasks','habits','pricing','refer'].forEach(n=>{ var el=document.getElementById('nav-'+n); if(el){ if(n===name) el.classList.add('active'); else el.classList.remove('active'); } }); if(name==='refer') loadReferral(); renderIcons(); }
+function go(name){ const views=['dashboard','chat','tasks','habits','pricing','refer','challenge']; views.forEach(n=>{ const e=document.getElementById('s-'+n); if(e) e.classList.toggle('hidden', n!==name); }); document.getElementById('pageTitle').textContent = t('title_'+name); views.forEach(n=>{ const el=document.getElementById('nav-'+n); if(el){ if(n===name) el.classList.add('active'); else el.classList.remove('active'); } }); if(name==='refer') loadReferral(); if(name==='challenge') loadChallenge(); renderIcons(); }
 async function refreshUI(){
   if(!token) return;
   try {
@@ -468,6 +503,50 @@ function copyRef(){
   const el=document.getElementById('refLink');
   navigator.clipboard.writeText(el.value);
   const old=el.value; el.value = t('copied','Copied!'); setTimeout(()=>el.value=old,1200);
+}
+
+// 21-day challenge
+let challengeData=null;
+async function loadChallenge(){
+  try{ challengeData=await api('/api/challenge',null,'GET'); }catch(e){ challengeData={started:false,day:0,points:0,streak:0,task:null}; }
+  if(!challengeData) return;
+  const started=challengeData.started, completed=challengeData.completed;
+  const day=challengeData.day||0;
+  const notS=document.getElementById('chNotStarted'), act=document.getElementById('chActive');
+  if(!started){ notS.classList.remove('hidden'); act.classList.add('hidden'); }
+  else {
+    if(completed){
+      document.getElementById('chTask').textContent = lang==='ar'?'🎉 أكملت تحدي 21 يوماً! أنت نموذج حياة حقيقي.':'🎉 You completed the 21-Day Challenge! You are a true life model.';
+      document.getElementById('chBadge').textContent = '🏆 '+(lang==='ar'?'مكتمل':'Completed');
+      document.getElementById('chDay').textContent = '21/21';
+      document.getElementById('chBar').style.width='100%'; document.getElementById('chPct').textContent='100%';
+    } else {
+      const today=Math.min(day+1,21);
+      document.getElementById('chTask').textContent = (challengeData.task && (challengeData.task.ar||challengeData.task.en)) || '';
+      document.getElementById('chBadge').textContent = '🔥 '+(lang==='ar'?('يوم '+today+' / 21'):('Day '+today+' / 21'));
+      document.getElementById('chDay').textContent = today+'/21';
+      document.getElementById('chBar').style.width=Math.round(today/21*100)+'%';
+      document.getElementById('chPct').textContent=Math.round(today/21*100)+'%';
+    }
+    document.getElementById('chStreak').textContent = challengeData.streak||0;
+    document.getElementById('chPoints').textContent = challengeData.points||0;
+    notS.classList.add('hidden'); act.classList.remove('hidden');
+  }
+}
+async function startChallenge(){
+  try{ await api('/api/challenge/start',{}); loadChallenge(); }catch(e){ authErr(e.message); }
+}
+async function challengeCheckin(){
+  try{ const r=await api('/api/challenge/checkin',{}); if(r.challenge&&r.challenge.completed){ loadChallenge(); } else loadChallenge(); }catch(e){ authErr(e.message); }
+}
+async function challengeSkip(){
+  try{ await api('/api/challenge/skip',{}); loadChallenge(); }catch(e){ authErr(e.message); }
+}
+function shareChallenge(){
+  const txt = (challengeData && challengeData.share_text) || ("I'm on the LifeOS AI 21-Day Life Challenge 🚀 #LifeOS21");
+  const url = 'https://lifeos-ai-1-c5qv.onrender.com/app?ref=' + (user && user.ref_code ? user.ref_code : '');
+  if (navigator.share) { navigator.share({ title:'LifeOS AI 21-Day Challenge', text:txt, url }).catch(()=>{}); }
+  else { navigator.clipboard.writeText(txt+'\n'+url); alert(lang==='ar'?'نسخنا نص المشاركة. الصقه في واتساب/ستوري.':'Copied. Paste to WhatsApp/Story.'); }
 }
 
 // checkout

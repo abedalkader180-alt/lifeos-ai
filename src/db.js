@@ -104,6 +104,13 @@ const SCHEMA_SQLITE = `
     verify_code TEXT,
     verify_expires TEXT,
     verify_attempts INTEGER NOT NULL DEFAULT 0,
+    life_mode TEXT NOT NULL DEFAULT 'general',
+    life_profile TEXT,
+    challenge_start TEXT,
+    challenge_day INTEGER NOT NULL DEFAULT 0,
+    challenge_streak INTEGER NOT NULL DEFAULT 0,
+    challenge_points INTEGER NOT NULL DEFAULT 0,
+    challenge_completed INTEGER NOT NULL DEFAULT 0,
     created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP
   );
   CREATE TABLE IF NOT EXISTS tasks (
@@ -195,6 +202,25 @@ const SCHEMA_SQLITE = `
     mail_from TEXT,
     created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP
   );
+  CREATE TABLE IF NOT EXISTS life_plans (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    user_id INTEGER NOT NULL,
+    mode TEXT,
+    goals TEXT,
+    struggles TEXT,
+    hours_per_day REAL DEFAULT 2,
+    plan_json TEXT,
+    summary TEXT,
+    created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP
+  );
+  CREATE TABLE IF NOT EXISTS challenge_logs (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    user_id INTEGER NOT NULL,
+    day_number INTEGER NOT NULL,
+    status TEXT NOT NULL DEFAULT 'done',
+    note TEXT,
+    created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP
+  );
 `;
 
 const SCHEMA_PG = `
@@ -212,6 +238,13 @@ const SCHEMA_PG = `
     verify_code TEXT,
     verify_expires TEXT,
     verify_attempts INTEGER NOT NULL DEFAULT 0,
+    life_mode TEXT NOT NULL DEFAULT 'general',
+    life_profile TEXT,
+    challenge_start TEXT,
+    challenge_day INTEGER NOT NULL DEFAULT 0,
+    challenge_streak INTEGER NOT NULL DEFAULT 0,
+    challenge_points INTEGER NOT NULL DEFAULT 0,
+    challenge_completed INTEGER NOT NULL DEFAULT 0,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
   );
   CREATE TABLE IF NOT EXISTS tasks (
@@ -296,6 +329,25 @@ const SCHEMA_PG = `
     mail_from TEXT,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
   );
+  CREATE TABLE IF NOT EXISTS life_plans (
+    id SERIAL PRIMARY KEY,
+    user_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+    mode TEXT,
+    goals TEXT,
+    struggles TEXT,
+    hours_per_day REAL DEFAULT 2,
+    plan_json TEXT,
+    summary TEXT,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+  );
+  CREATE TABLE IF NOT EXISTS challenge_logs (
+    id SERIAL PRIMARY KEY,
+    user_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+    day_number INTEGER NOT NULL,
+    status TEXT NOT NULL DEFAULT 'done',
+    note TEXT,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+  );
 `;
 
 async function ensureColumn(table, column, ddl) {
@@ -328,6 +380,13 @@ async function initSchema() {
   await ensureColumn('users', 'verify_code', 'verify_code TEXT');
   await ensureColumn('users', 'verify_expires', 'verify_expires TEXT');
   await ensureColumn('users', 'verify_attempts', 'verify_attempts INTEGER DEFAULT 0');
+  await ensureColumn('users', 'life_profile', 'life_profile TEXT');
+  await ensureColumn('users', 'life_mode', 'life_mode TEXT DEFAULT \'general\'');
+  await ensureColumn('users', 'challenge_start', 'challenge_start TEXT');
+  await ensureColumn('users', 'challenge_day', 'challenge_day INTEGER DEFAULT 0');
+  await ensureColumn('users', 'challenge_streak', 'challenge_streak INTEGER DEFAULT 0');
+  await ensureColumn('users', 'challenge_points', 'challenge_points INTEGER DEFAULT 0');
+  await ensureColumn('users', 'challenge_completed', 'challenge_completed INTEGER DEFAULT 0');
   await ensureColumn('payments', 'coupon', 'coupon TEXT');
   await ensureColumn('payments', 'discount_percent', 'discount_percent REAL');
   await ensureColumn('payments', 'verified', 'verified INTEGER DEFAULT 0');

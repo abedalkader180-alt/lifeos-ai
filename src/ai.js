@@ -128,13 +128,110 @@ async function chatWithProvider(system, message, history, locale, model) {
   return data.choices?.[0]?.message?.content?.trim() || 'Sorry, I could not generate a response.';
 }
 
+const MODE_GUIDE = {
+  work: { en: 'Work & productivity', ar: 'العمل والإنتاجية' },
+  health: { en: 'Health & fitness', ar: 'الصحة واللياقة' },
+  family: { en: 'Family & life balance', ar: 'الأسرة والتوازن' },
+  money: { en: 'Money & goals', ar: 'المال والأهداف' },
+  faith: { en: 'Spirituality & prayer', ar: 'العبادة والصلاة' },
+  general: { en: 'General life', ar: 'الحياة العامة' },
+};
+
 function buildSystemPrompt(user, locale) {
   const lang = locale === 'ar' ? 'Arabic' : 'English';
-  return `You are LifeOS AI, a helpful, warm, and practical AI life guide.
+  const mode = (user && user.life_mode) || 'general';
+  const guide = MODE_GUIDE[mode] || MODE_GUIDE.general;
+  const modeDesc = (locale === 'ar' ? guide.ar : guide.en);
+  const profile = (user && user.life_profile && user.life_profile.goals)
+    ? `The user's personal context (goals/struggles): ${user.life_profile.goals || ''} ${user.life_profile.struggles ? '| Challenges: ' + user.life_profile.struggles : ''}`
+    : '';
+  return `You are LifeOS AI, a warm, practical AI life guide. Your specialty right now is: ${modeDesc}.
 Language: respond in ${lang}. Keep answers concise (under ~180 words), structured, and actionable.
-You help the user organize their daily and weekly routine, solve productivity problems, and balance work, health, relationships, and growth.
+You help the user organize their daily and weekly routine, solve productivity problems, and balance work, health, relationships, family, money, and growth.
 Always ask clarifying questions when needed, and propose concrete steps the user can do today.
-Use simple bullet lists. Do not promise income, medical advice, or financial opportunities. Users: ${user.name}, plan ${user.plan}.`;
+Use simple bullet lists. Be honest and do not promise income, medical advice, or financial opportunities. ${profile}
+Users: ${user && user.name || 'friend'}, plan ${user && user.plan || 'free'}.`;
+}
+
+// Build a structured weekly life plan. Returns a JSON object the frontend can render.
+async function buildWeeklyPlan({ user, mode = 'general', goals = '', struggles = '', hoursPerDay = 2, locale = 'en' }) {
+  const lang = locale === 'ar' ? 'Arabic' : 'English';
+  const guide = MODE_GUIDE[mode] || MODE_GUIDE.general;
+  const modeName = (locale === 'ar' ? guide.ar : guide.en);
+  const system = `You are LifeOS AI, a practical life-plan builder. Create a weekly life plan in ${lang}.
+Specialty: ${modeName}. Available time per day: ${hoursPerDay} hours.
+User goals: ${goals || 'improve daily life and productivity'}. User challenges: ${struggles || 'not specified'}.
+Return ONLY valid JSON with this exact shape:
+{
+  "summary": "1-2 sentence overview of the plan",
+  "focus": "The single most important area this week",
+  "tasks": [{"text":"concrete task","priority":"high|medium|low"}],
+  "habits": [{"name":"daily habit","target":1}],
+  "goals": ["goal 1","goal 2","goal 3"],
+  "daily_plan": [{"day":"Monday","focus":"short text"}]
+}
+Tasks: 7-10 concrete, realistic tasks. Habits: 4-6 easy daily habits. Goals: 3 clear goals. Do not include markdown or talk outside JSON.`;
+  const message = 'Build my weekly life plan.';
+  try {
+    let text;
+    if (AI_ENABLED) {
+      const available = await listModels();
+      text = await chatWithProvider(system, message, [], locale, pickWorkingModel(available));
+    } else {
+      text = fallbackPlan(system);
+    }
+    return parsePlan(text, goalDefault(goals), habitsDefault(mode, locale));
+  } catch (e) {
+    lastError = 'Plan build error: ' + (e && e.message ? e.message : String(e));
+    console.error('[ai] plan build error:', lastError);
+    return fallbackPlanObject(mode, goals, struggles, hoursPerDay, locale);
+  }
+}
+
+function parsePlan(text, fallbackGoals, fallbackHabits) {
+  const jsonMatch = String(text).match(/\{[\s\S]*\}/);
+  if (jsonMatch) {
+    try {
+      const p = JSON.parse(jsonMatch[0]);
+      if (p && typeof p === 'object') return p;
+    } catch (e) {}
+  }
+  return fallbackPlanObject('general', '', '', 2, 'en', fallbackGoals, fallbackHabits);
+}
+
+function goalDefault(g) { return g ? String(g).split(',').map(s => s.trim()).slice(0, 3) : ['Improve daily routine', 'Increase focus', 'Build consistency']; }
+function habitsDefault(mode, locale) {
+  const ar = locale === 'ar';
+  if (mode === 'health') return [{ name: ar ? 'تمرين خفيف' : 'Light exercise', target: 1 }, { name: ar ? 'ماء كافٍ' : 'Drink water', target: 1 }, { name: ar ? 'نوم ٧ ساعات' : 'Sleep 7h', target: 1 }];
+  if (mode === 'faith') return [{ name: ar ? 'صلاة في وقتها' : 'Pray on time', target: 1 }, { name: ar ? 'قراءة قرآن' : 'Quran reading', target: 1 }, { name: ar ? 'ذكر الصباح' : 'Morning dhikr', target: 1 }];
+  return [{ name: ar ? 'خطط يومك صباحاً' : 'Plan morning', target: 1 }, { name: ar ? 'راجع ٣ أهداف' : 'Review 3 goals', target: 1 }];
+}
+function fallbackPlan(system) {
+  const m = String(system);
+  const ar = /Arabic/.test(m);
+  return JSON.stringify({
+    summary: ar ? 'خطة أسبوعية عملية تركز على بناء روتين مستقر. ابدأ بخطوة واحدة صغيرة كل يوم.' : 'A practical weekly plan focused on consistent routine. Start with one small step each day.',
+    focus: ar ? 'الروتين اليومي' : 'Daily routine',
+    tasks: [
+      { text: ar ? 'حدد أهم ٣ مهام اليوم' : 'Pick your top 3 tasks for today', priority: 'high' },
+      { text: ar ? 'خصص ٣٠ دقيقة عمل عميق' : 'Block 30 min of deep work', priority: 'medium' },
+      { text: ar ? 'راجع تقدمك مساءً' : 'Review progress tonight', priority: 'low' }
+    ],
+    habits: habitsDefault('general', ar ? 'ar' : 'en'),
+    goals: goalDefault(''),
+    daily_plan: [{ day: ar ? 'الإثنين' : 'Monday', focus: ar ? 'أساس الروتين' : 'Foundation routine' }, { day: ar ? 'الثلاثاء' : 'Tuesday', focus: ar ? 'استمرارية' : 'Consistency' }, { day: ar ? 'الأربعاء' : 'Wednesday', focus: ar ? 'تركيز' : 'Focus' }, { day: ar ? 'الخميس' : 'Thursday', focus: ar ? 'توازن' : 'Balance' }, { day: ar ? 'الجمعة' : 'Friday', focus: ar ? 'راحة وتجديد' : 'Rest & recharge' }, { day: ar ? 'السبت' : 'Saturday', focus: ar ? 'إنجاز' : 'Progress' }, { day: ar ? 'الأحد' : 'Sunday', focus: ar ? 'تخطيط' : 'Planning' }]
+  });
+}
+function fallbackPlanObject(mode, goals, struggles, hours, locale, fg, fh) {
+  const ar = locale === 'ar';
+  return {
+    summary: ar ? 'أنشأنا لك خطة عملية بديلة. اضبط أهدافك واطلب خطة جديدة لتحسينها.' : 'We built a practical backup plan for you. Refine your goals and rebuild for a better one.',
+    focus: ar ? 'الروتين والاتساق' : 'Routine & consistency',
+    tasks: [{ text: ar ? 'اكتب هدفك الأسبوعي' : 'Write your weekly goal', priority: 'high' }, { text: ar ? 'خطط ٣ أيام الأولى' : 'Plan the first 3 days', priority: 'medium' }, { text: ar ? 'ثبّت موعد يومي' : 'Lock a daily time', priority: 'medium' }],
+    habits: habitsDefault(mode, locale) || [],
+    goals: fg || goalDefault(goals || ''),
+    daily_plan: [{ day: ar ? 'اليوم' : 'Today', focus: ar ? 'ابدأ بخطوة صغيرة' : 'Start small' }]
+  };
 }
 
 // ===== مساعد داخلي بدون مفتاح =====
@@ -187,4 +284,4 @@ function fallbackAssistant(user, message, locale) {
   return blocks.join('\n\n');
 }
 
-module.exports = { chat, AI_ENABLED, AI_MODEL, AI_BASE_URL, getLastError, listModels, pickWorkingModel };
+module.exports = { chat, buildWeeklyPlan, AI_ENABLED, AI_MODEL, AI_BASE_URL, getLastError, listModels, pickWorkingModel };
