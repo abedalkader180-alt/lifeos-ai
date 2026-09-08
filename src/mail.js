@@ -6,6 +6,8 @@
 //   MAIL_DEV        -> when "1", no real email is sent; code is returned/logged for local testing
 
 const nodemailer = require('nodemailer');
+const dns = require('dns');
+const net = require('net');
 const { NODE_ENV } = process.env;
 
 const RESEND_KEY = (process.env.RESEND_API_KEY || '').trim();
@@ -30,13 +32,41 @@ const MAIL_FROM = SMTP_HOST && SMTP_USER && /@/.test(SMTP_USER)
   : cleanFrom(process.env.MAIL_FROM, derivedFrom);
 
 let transporter = null;
+let resolvedIpv4 = SMTP_HOST;
+let resolverState = 'idle';
+
+// Force IPv4 for SMTP. Render's egress has no IPv6 route, and nodemailer can
+// randomly pick Gmail's IPv6 address (2607:f8b0...), causing ENETUNREACH.
+// We resolve smtp.gmail.com to an IPv4 literal ourselves (kept stable by DNS)
+// and connect to that literal with servername set for TLS SNI.
+function resolveIpv4(host) {
+  if (!host || net.isIP(host)) return host;
+  try {
+    const found = dns.resolve4Sync(host);
+    if (found && found[0]) {
+      resolvedIpv4 = found[0];
+      resolverState = 'ipv4';
+      return found[0];
+    }
+  } catch (e) {
+    // fall through to original hostname
+  }
+  resolvedIpv4 = host;
+  resolverState = 'hostname';
+  return host;
+}
+
 // Prioritize Resend (simplest, most reliable); fall back to SMTP only when no Resend key.
 if (!RESEND_KEY && SMTP_HOST && SMTP_USER && SMTP_PASS) {
+  const connectHost = resolveIpv4(SMTP_HOST);
   transporter = nodemailer.createTransport({
-    host: SMTP_HOST,
+    host: connectHost,
     port: SMTP_PORT,
     secure: SMTP_PORT === 465,
     auth: { user: SMTP_USER, pass: SMTP_PASS },
+    // Keep original hostname for TLS SNI / HELO even though we connect by IP.
+    tls: { servername: SMTP_HOST },
+    name: SMTP_HOST,
     connectionTimeout: 20000,
     greetingTimeout: 20000,
     socketTimeout: 25000,
@@ -104,4 +134,4 @@ async function sendVerificationCode(email, code, lang) {
   }
 }
 
-module.exports = { sendVerificationCode, mailEnabled, mailConfig: { mode: MAIL_MODE, from: MAIL_FROM, host: SMTP_HOST, user: SMTP_USER, hasPassword: !!SMTP_PASS, resendKey: !!RESEND_KEY } };
+module.exports = { sendVerificationCode, mailEnabled, mailConfig: { mode: MAIL_MODE, from: MAIL_FROM, host: SMTP_HOST, resolved_host: resolvedIpv4, resolver: resolverState, user: SMTP_USER, hasPassword: !!SMTP_PASS, resendKey: !!RESEND_KEY } };
