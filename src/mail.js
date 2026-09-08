@@ -15,9 +15,15 @@ const SMTP_USER = (process.env.SMTP_USER || '').trim();
 const SMTP_PASS = (process.env.SMTP_PASS || '').trim();
 const MAIL_DEV = process.env.MAIL_DEV === '1';
 // For Gmail SMTP the From address MUST be the authenticated account, otherwise
-// Gmail rejects the send. If MAIL_FROM is not set explicitly, derive it from SMTP_USER.
-const MAIL_FROM = (process.env.MAIL_FROM || '').trim() ||
-  (SMTP_USER ? `LifeOS AI <${SMTP_USER}>` : 'LifeOS AI <onboarding@resend.dev>');
+// Gmail rejects the send. We defensively derive it from SMTP_USER when MAIL_FROM
+// is empty OR malformed (e.g. a value that lost the email part).
+function cleanFrom(value, fallback) {
+  const v = String(value || '').trim();
+  if (/<[^>]+@[^>]+>/.test(v) || /^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(v)) return v;
+  return fallback;
+}
+const derivedFrom = SMTP_USER && /@/.test(SMTP_USER) ? `LifeOS AI <${SMTP_USER}>` : 'LifeOS AI <onboarding@resend.dev>';
+const MAIL_FROM = cleanFrom(process.env.MAIL_FROM, derivedFrom);
 
 let transporter = null;
 if (SMTP_HOST && SMTP_USER && SMTP_PASS) {
